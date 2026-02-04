@@ -313,15 +313,31 @@ const DeliveryTrackingPage: React.FC<DeliveryTrackingPageProps> = ({ darkMode, o
                   </p>
                 </div>
 
-                <div className={`w-full h-2 rounded-full overflow-hidden ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                }`}>
-                  <div
-                    className={`h-full transition-all ${
-                      delivery.status === 'delivered' ? 'bg-green-500' : 'bg-blue-500'
-                    }`}
-                    style={{ width: `${delivery.progress}%` }}
-                  />
+                <div
+                  className={`w-full h-2 rounded-full overflow-hidden ${
+                    darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}
+                >
+                  {(() => {
+                    const p = delivery.progress;
+                    const widthClass =
+                      p >= 100
+                        ? 'w-full'
+                        : p >= 75
+                        ? 'w-3/4'
+                        : p >= 50
+                        ? 'w-1/2'
+                        : p >= 25
+                        ? 'w-1/3'
+                        : 'w-1/6';
+                    return (
+                      <div
+                        className={`h-full ${widthClass} transition-all ${
+                          delivery.status === 'delivered' ? 'bg-green-500' : 'bg-blue-500'
+                        }`}
+                      />
+                    );
+                  })()}
                 </div>
               </div>
 

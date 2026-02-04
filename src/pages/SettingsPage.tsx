@@ -162,10 +162,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
     <div className={`min-h-screen transition-colors duration-300 ${
       darkMode 
         ? 'bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950' 
-        : 'bg-gradient-to-br from-blue-50 via-emerald-50 to-yellow-50'
+        : 'bg-gradient-to-br from-white via-slate-50 to-slate-100'
     }`}>
       <div className="max-w-5xl mx-auto p-6 pt-20">
-        <h1 className={`text-4xl font-bold mb-8 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+        <h1 className={`text-4xl font-bold mb-8 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
           ⚙️ {t('settings')}
         </h1>
 
@@ -173,14 +173,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         <div className={`rounded-2xl transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
-            : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+            : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <button
             onClick={() => toggleSection('userDetails')}
             className={`w-full px-8 py-6 flex items-center justify-between transition-all duration-200 hover:opacity-80`}
           >
             <h2 className={`text-2xl font-bold flex items-center gap-2 ${
-              darkMode ? 'text-yellow-300' : 'text-blue-700'
+              darkMode ? 'text-yellow-300' : 'text-slate-900'
             }`}>
               👤 {t('userDetails')}
             </h2>
@@ -192,17 +192,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
           </button>
 
           {expandedSections.userDetails && (
-            <div className="px-8 pb-8 space-y-4 border-t" style={{
-              borderColor: darkMode ? 'rgba(217, 119, 6, 0.2)' : 'rgba(59, 130, 246, 0.2)'
-            }}>
+            <div
+              className={`px-8 pb-8 space-y-4 border-t ${
+                darkMode ? 'border-yellow-600/20' : 'border-blue-300/40'
+              }`}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-name"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('name')}
                   </label>
                   <input
+                    id="settings-name"
                     type="text"
                     name="name"
                     value={formData.name}
@@ -216,12 +222,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-email"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('email')}
                   </label>
                   <input
+                    id="settings-email"
                     type="email"
                     name="email"
                     value={formData.email}
@@ -235,12 +245,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-phone"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('phone')}
                   </label>
                   <input
+                    id="settings-phone"
                     type="tel"
                     name="phone"
                     value={formData.phone}
@@ -254,12 +268,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-address"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('address')}
                   </label>
                   <input
+                    id="settings-address"
                     type="text"
                     name="address"
                     value={formData.address}
@@ -273,12 +291,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-role"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('role')}
                   </label>
                   <select
+                    id="settings-role"
                     name="role"
                     value={formData.role}
                     onChange={handleInputChange}
@@ -302,14 +324,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         <div className={`rounded-2xl mb-8 transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
-            : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+            : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <button
             onClick={() => toggleSection('orgInfo')}
             className={`w-full px-8 py-6 flex items-center justify-between transition-all duration-200 hover:opacity-80`}
           >
             <h2 className={`text-2xl font-bold flex items-center gap-2 ${
-              darkMode ? 'text-yellow-300' : 'text-blue-700'
+              darkMode ? 'text-yellow-300' : 'text-slate-900'
             }`}>
               <Building2 className="w-6 h-6" /> {t('organizationInfo')}
             </h2>
@@ -321,17 +343,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
           </button>
 
           {expandedSections.orgInfo && (
-            <div className="px-8 pb-8 space-y-4 border-t" style={{
-              borderColor: darkMode ? 'rgba(217, 119, 6, 0.2)' : 'rgba(59, 130, 246, 0.2)'
-            }}>
+            <div
+              className={`px-8 pb-8 space-y-4 border-t ${
+                darkMode ? 'border-yellow-600/20' : 'border-blue-300/40'
+              }`}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-org-name"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('orgName')}
                   </label>
                   <input
+                    id="settings-org-name"
                     type="text"
                     name="orgName"
                     value={formData.orgName}
@@ -345,12 +373,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-org-type"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('orgType')}
                   </label>
                   <input
+                    id="settings-org-type"
                     type="text"
                     name="orgType"
                     value={formData.orgType}
@@ -364,12 +396,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-license"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('license')}
                   </label>
                   <input
+                    id="settings-license"
                     type="text"
                     name="license"
                     value={formData.license}
@@ -383,12 +419,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-website"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('website')}
                   </label>
                   <input
+                    id="settings-website"
                     type="text"
                     name="website"
                     value={formData.website}
@@ -402,12 +442,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${
-                    darkMode ? 'text-blue-200' : 'text-slate-700'
-                  }`}>
+                  <label
+                    htmlFor="settings-registration-date"
+                    className={`block text-sm font-semibold mb-2 ${
+                      darkMode ? 'text-blue-200' : 'text-slate-700'
+                    }`}
+                  >
                     {t('registrationDate')}
                   </label>
                   <input
+                    id="settings-registration-date"
                     type="date"
                     name="registrationDate"
                     value={formData.registrationDate}
@@ -428,14 +472,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         <div className={`rounded-2xl mb-8 transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
-            : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+            : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <button
             onClick={() => toggleSection('donationStats')}
             className={`w-full px-8 py-6 flex items-center justify-between transition-all duration-200 hover:opacity-80`}
           >
             <h2 className={`text-2xl font-bold flex items-center gap-2 ${
-              darkMode ? 'text-yellow-300' : 'text-blue-700'
+              darkMode ? 'text-yellow-300' : 'text-slate-900'
             }`}>
               <Heart className="w-6 h-6" /> {t('donationStats')}
             </h2>
@@ -447,9 +491,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
           </button>
 
           {expandedSections.donationStats && (
-            <div className="px-8 pb-8 pt-6 border-t space-y-6" style={{
-              borderColor: darkMode ? 'rgba(217, 119, 6, 0.2)' : 'rgba(59, 130, 246, 0.2)'
-            }}>
+            <div
+              className={`px-8 pb-8 pt-6 border-t space-y-6 ${
+                darkMode ? 'border-yellow-600/20' : 'border-blue-300/40'
+              }`}
+            >
               {/* Donation Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className={`rounded-xl p-4 ${
@@ -536,10 +582,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         <div className={`rounded-2xl p-8 mb-8 transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
-            : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+            : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-2xl font-bold mb-8 ${
-            darkMode ? 'text-yellow-300' : 'text-blue-700'
+            darkMode ? 'text-yellow-300' : 'text-slate-900'
           }`}>
             🎨 {t('preferences')}
           </h2>
@@ -567,6 +613,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' 
                   : 'bg-gradient-to-r from-blue-400 to-blue-500'
               }`}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               <div
                 className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-transform duration-300 shadow-lg ${
@@ -616,6 +663,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
               ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900 shadow-lg'
               : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg'
           }`}
+          aria-label="Save settings"
         >
           💾 {t('save')}
         </button>

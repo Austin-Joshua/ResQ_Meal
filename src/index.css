@@ -125,7 +125,7 @@
 
 @layer utilities {
   .text-balance {
-    text-wrap: balance;
+    /* Fallback: rely on normal wrapping (no unsupported text-wrap) */
   }
 
   .gradient-resq {

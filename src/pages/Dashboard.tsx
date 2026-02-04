@@ -126,7 +126,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
     <div className={`min-h-screen transition-all duration-300 ${
       darkMode 
         ? 'bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950' 
-        : 'bg-gradient-to-br from-blue-100 via-blue-200 to-emerald-50'
+        : 'bg-gradient-to-br from-white via-slate-50 to-slate-100'
     }`}>
       
       {/* Header */}
@@ -147,20 +147,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             >
               {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-              <div className="flex items-center gap-2">
-                <div className="text-3xl">🌱</div>
-                <div>
-                  <h1 className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>ResQ Meal</h1>
-                  <p className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Food Rescue Platform</p>
-                </div>
+            <button
+              onClick={() => {
+                setActivePage('dashboard');
+                setSelectedFeature(null);
+                setSidebarOpen(false);
+              }}
+              className="flex items-center gap-2 focus:outline-none"
+            >
+              <div className="text-3xl">🌱</div>
+              <div className="text-left">
+                <h1 className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>ResQ Meal</h1>
+                <p className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Food Rescue Platform</p>
               </div>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Language Switch */}
-            <div className="flex items-center gap-1 rounded-lg p-1" style={{
-              backgroundColor: darkMode ? 'rgba(217, 119, 6, 0.15)' : 'rgba(59, 130, 246, 0.15)'
-            }}>
+            <div
+              className={`flex items-center gap-1 rounded-lg p-1 ${
+                darkMode ? 'bg-amber-600/15' : 'bg-blue-500/15'
+              }`}
+            >
               {(['en', 'ta', 'hi'] as const).map((lang) => (
                 <button
                   key={lang}
@@ -255,9 +264,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
           </div>
 
           {/* Features Section */}
-          <div className="pt-6 border-t" style={{
-            borderColor: darkMode ? 'rgba(217, 119, 6, 0.3)' : 'rgba(59, 130, 246, 0.3)'
-          }}>
+          <div
+            className={`pt-6 border-t ${
+              darkMode ? 'border-amber-600/30' : 'border-blue-500/30'
+            }`}
+          >
             <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 px-2 ${
               darkMode ? 'text-yellow-400' : 'text-blue-700'
             }`}>
@@ -281,7 +292,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                       ? 'hover:bg-yellow-900/20 text-blue-100'
                       : 'hover:bg-blue-200/20 text-slate-700'
                   }`}
-                  style={{ color: selectedFeature === feature.id ? feature.color : 'inherit' }}
                 >
                   {feature.icon}
                   <div>
@@ -305,10 +315,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
         {activePage === 'dashboard' && (
           <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-fadeIn">
             {/* Welcome Card */}
-            <div className={`rounded-2xl p-8 transition-all duration-300 border ${
+            <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border ${
               darkMode
                 ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
-                : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200/70 shadow-lg'
+                : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
                 {t.welcome}

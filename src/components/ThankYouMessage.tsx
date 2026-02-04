@@ -80,6 +80,7 @@ const ThankYouMessage: React.FC<ThankYouMessageProps> = ({
               ? 'hover:bg-gray-700 text-gray-400'
               : 'hover:bg-gray-100 text-gray-600'
           }`}
+          aria-label="Close thank you message"
         >
           <X className="w-5 h-5" />
         </button>

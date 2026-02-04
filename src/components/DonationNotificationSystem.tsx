@@ -219,6 +219,7 @@ const DonationNotificationSystem: React.FC<DonationNotificationSystemProps> = ({
               ? 'hover:bg-gray-700 text-gray-300'
               : 'hover:bg-gray-100 text-gray-600'
           }`}
+          aria-label={showPanel ? 'Close notifications panel' : 'Open notifications panel'}
         >
           <Bell className="w-6 h-6" />
           {unreadCount > 0 && (
@@ -258,11 +259,12 @@ const DonationNotificationSystem: React.FC<DonationNotificationSystemProps> = ({
                   Mark all read
                 </button>
               )}
-              <button
+                <button
                 onClick={() => setShowPanel(false)}
                 className={`p-1 rounded transition ${
                   darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                 }`}
+                  aria-label="Close notifications panel"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -270,9 +272,11 @@ const DonationNotificationSystem: React.FC<DonationNotificationSystemProps> = ({
           </div>
 
           {/* Notifications List */}
-          <div className="divide-y" style={{
-            divideColor: darkMode ? 'rgba(107, 114, 128, 0.3)' : 'rgba(229, 231, 235, 1)'
-          }}>
+          <div
+            className={`divide-y ${
+              darkMode ? 'divide-gray-600/70' : 'divide-gray-200'
+            }`}
+          >
             {notifications.length === 0 ? (
               <div className="p-6 text-center">
                 <Bell className={`w-12 h-12 mx-auto mb-2 ${
@@ -317,6 +321,7 @@ const DonationNotificationSystem: React.FC<DonationNotificationSystemProps> = ({
                           className={`text-xs ${
                             darkMode ? 'text-gray-500 hover:text-gray-400' : 'text-gray-400 hover:text-gray-600'
                           }`}
+                          aria-label="Delete notification"
                         >
                           ✕
                         </button>

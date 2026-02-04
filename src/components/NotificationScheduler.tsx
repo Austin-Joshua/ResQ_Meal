@@ -218,12 +218,16 @@ const NotificationScheduler: React.FC<NotificationSchedulerProps> = ({
                       {/* Time Input */}
                       {reminder.time !== 'on_donation' && (
                         <div className="flex items-center gap-2 mb-3">
-                          <label className={`text-sm font-medium ${
-                            darkMode ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
+                          <label
+                            htmlFor={`reminder-time-${reminder.id}`}
+                            className={`text-sm font-medium ${
+                              darkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}
+                          >
                             Time:
                           </label>
                           <input
+                            id={`reminder-time-${reminder.id}`}
                             type="time"
                             value={reminder.time}
                             onChange={(e) => updateReminderTime(reminder.id, e.target.value)}
@@ -246,6 +250,7 @@ const NotificationScheduler: React.FC<NotificationSchedulerProps> = ({
                               ? 'bg-green-500'
                               : darkMode ? 'bg-gray-600' : 'bg-gray-300'
                           }`}
+                          aria-label={reminder.enabled ? 'Disable reminder' : 'Enable reminder'}
                         >
                           <div
                             className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${

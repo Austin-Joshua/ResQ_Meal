@@ -255,19 +255,34 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
 
                 {/* Quality Score Bar */}
                 <div className="mb-4">
-                  <div className={`w-full h-3 rounded-full overflow-hidden ${
-                    darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                  }`}>
-                    <div
-                      className={`h-full transition-all ${
-                        assessment.qualityScore >= 80
+                  <div
+                    className={`w-full h-3 rounded-full overflow-hidden ${
+                      darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}
+                  >
+                    {(() => {
+                      const score = assessment.qualityScore;
+                      const widthClass =
+                        score >= 90
+                          ? 'w-full'
+                          : score >= 70
+                          ? 'w-3/4'
+                          : score >= 50
+                          ? 'w-1/2'
+                          : 'w-1/4';
+                      const colorClass =
+                        score >= 80
                           ? 'bg-green-500'
-                          : assessment.qualityScore >= 60
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
-                      }`}
-                      style={{ width: `${assessment.qualityScore}%` }}
-                    />
+                          : score >= 60
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500';
+                      return (
+                        <div
+                          className={`h-full ${widthClass} ${colorClass} transition-all`}
+                          aria-hidden="true"
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
 

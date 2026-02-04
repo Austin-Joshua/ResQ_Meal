@@ -215,12 +215,16 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
 
               {/* Food Type */}
               <div>
-                <label className={`block text-sm font-medium mb-2 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+                <label
+                  htmlFor="post-food-type"
+                  className={`block text-sm font-medium mb-2 ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}
+                >
                   Food Type *
                 </label>
                 <select
+                  id="post-food-type"
                   name="foodType"
                   value={formData.foodType}
                   onChange={handleInputChange}
@@ -267,13 +271,17 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
 
               {/* Safety Window */}
               <div>
-                <label className={`block text-sm font-medium mb-2 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+                <label
+                  htmlFor="post-safety-window"
+                  className={`block text-sm font-medium mb-2 ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}
+                >
                   Safety Window (Minutes) *
                 </label>
                 <div className="flex items-center gap-2">
                   <input
+                    id="post-safety-window"
                     type="number"
                     name="safetyWindow"
                     value={formData.safetyWindow}

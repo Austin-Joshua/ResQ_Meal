@@ -173,6 +173,17 @@ const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
   const progressPercent = (elapsedTime / (deliveryRoute.estimatedTime * 60)) * 100;
   const isDelivered = timeRemaining === 0;
 
+  const progressWidthClass =
+    progressPercent >= 100
+      ? 'w-full'
+      : progressPercent >= 75
+      ? 'w-3/4'
+      : progressPercent >= 50
+      ? 'w-1/2'
+      : progressPercent >= 25
+      ? 'w-1/3'
+      : 'w-1/6';
+
   return (
     <div className={`rounded-lg overflow-hidden ${
       darkMode ? 'bg-gray-800' : 'bg-white'
@@ -229,14 +240,15 @@ const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
 
         {/* Progress Bar */}
         <div className="mt-4">
-          <div className={`w-full h-2 rounded-full overflow-hidden ${
-            darkMode ? 'bg-gray-600' : 'bg-gray-300'
-          }`}>
+          <div
+            className={`w-full h-2 rounded-full overflow-hidden ${
+              darkMode ? 'bg-gray-600' : 'bg-gray-300'
+            }`}
+          >
             <div
-              className={`h-full transition-all duration-300 ${
+              className={`h-full transition-all duration-300 ${progressWidthClass} ${
                 isDelivered ? 'bg-green-500' : 'bg-blue-500'
               }`}
-              style={{ width: `${Math.min(progressPercent, 100)}%` }}
             />
           </div>
           <div className="flex justify-between mt-1">
@@ -256,11 +268,7 @@ const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
       {/* Map Container */}
       <div
         ref={mapContainer}
-        className="w-full h-96"
-        style={{
-          minHeight: '400px',
-          backgroundColor: darkMode ? '#1F2937' : '#f5f5f5',
-        }}
+        className={`w-full h-96 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} min-h-[400px]`}
       />
 
       {/* Details Section */}
