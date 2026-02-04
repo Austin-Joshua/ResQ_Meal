@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, CheckCircle, AlertCircle, Zap, TrendingUp, Cpu, Thermometer, Droplets, Clock } from 'lucide-react';
 import { foodApi } from '@/services/api';
 
@@ -20,6 +20,8 @@ interface FoodAssessment {
     estimatedQuantity: number;
     freshnessLevel: number;
     safetyRating: number;
+    recommendedTempRange?: { min: number; max: number };
+    recommendedAvailabilityHours?: number;
   };
 }
 
@@ -43,6 +45,13 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
   const [showCheckForm, setShowCheckForm] = useState(false);
   const [checkMode, setCheckMode] = useState<CheckMode>('photo');
   const [envForm, setEnvForm] = useState({ temperature: 20, humidity: 60, time_stored_hours: 12, gas: 200 });
+  const qualityProgressRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = qualityProgressRef.current;
+    if (!el || assessment == null) return;
+    el.style.width = `${Math.min(100, assessment.qualityScore)}%`;
+  }, [assessment?.qualityScore]);
 
   const mockAssessment = (): FoodAssessment => {
     const qualityScore = Math.random() * 100;
@@ -69,6 +78,60 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
     if (score >= 70) return ['✓ Good condition – suitable for donation', '✓ Acceptable freshness', '✓ Minor packaging wear acceptable'];
     if (score >= 50) return ['⚠ Fair – acceptable with precautions', '⚠ Consume within 2–4 hours', '⚠ Inspect before distribution'];
     return ['❌ Poor – not recommended', '❌ Spoilage indicators detected', '❌ Do not distribute'];
+  };
+
+  // Get temperature recommendations based on food classification
+  const getTempRecommendations = (foodName?: string, foodClass?: string): { min: number; max: number; hours: number } | null => {
+    if (!foodName && !foodClass) return null;
+    const name = (foodName || foodClass || '').toLowerCase();
+    
+    // Temperature ranges by food type (°C) and recommended availability hours
+    const recommendations: Record<string, { min: number; max: number; hours: number }> = {
+      // Cooked meals
+      biryani: { min: 60, max: 4, hours: 4 },
+      rice: { min: 60, max: 4, hours: 4 },
+      curry: { min: 60, max: 4, hours: 4 },
+      dosa: { min: 60, max: 4, hours: 2 },
+      idli: { min: 60, max: 4, hours: 2 },
+      // Vegetables
+      vegetables: { min: 0, max: 10, hours: 48 },
+      vegetable: { min: 0, max: 10, hours: 48 },
+      // Fruits
+      fruits: { min: 0, max: 10, hours: 72 },
+      fruit: { min: 0, max: 10, hours: 72 },
+      // Dairy
+      milk: { min: 0, max: 4, hours: 24 },
+      cheese: { min: 0, max: 4, hours: 48 },
+      yogurt: { min: 0, max: 4, hours: 48 },
+      // Baked
+      bread: { min: 18, max: 25, hours: 48 },
+      cake: { min: 18, max: 25, hours: 24 },
+      cookie: { min: 18, max: 25, hours: 72 },
+    };
+
+    // Try to match food name or class
+    for (const [key, value] of Object.entries(recommendations)) {
+      if (name.includes(key)) return value;
+    }
+
+    // Default recommendations
+    if (name.includes('meal') || name.includes('cooked') || name.includes('hot')) {
+      return { min: 60, max: 4, hours: 4 };
+    }
+    if (name.includes('vegetable') || name.includes('veg')) {
+      return { min: 0, max: 10, hours: 48 };
+    }
+    if (name.includes('fruit')) {
+      return { min: 0, max: 10, hours: 72 };
+    }
+    if (name.includes('dairy') || name.includes('milk') || name.includes('cheese')) {
+      return { min: 0, max: 4, hours: 24 };
+    }
+    if (name.includes('baked') || name.includes('bread') || name.includes('cake')) {
+      return { min: 18, max: 25, hours: 48 };
+    }
+
+    return null;
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,15 +219,15 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
 
   const isDark = darkMode;
   const cardCls = isDark
-    ? 'bg-gray-800/80 border border-gray-700/80 shadow-xl shadow-black/20'
+    ? 'bg-emerald-950/90 border border-emerald-700/50 shadow-xl shadow-black/20'
     : 'bg-white border border-gray-200/80 shadow-xl shadow-gray-200/50';
   const inputCls = isDark
-    ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500'
+    ? 'bg-emerald-900/50 border-emerald-600/40 text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500'
     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400';
 
   return (
     <div className={`rounded-2xl overflow-hidden ${cardCls}`}>
-      <div className={`px-6 py-5 border-b ${isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-100 bg-gray-50/80'}`}>
+      <div className={`px-6 py-5 border-b ${isDark ? 'border-emerald-700/50 bg-emerald-900/40' : 'border-gray-100 bg-gray-50/80'}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
@@ -203,7 +266,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
           <div className="space-y-5">
             {!assessment ? (
               <>
-                <div className={`flex rounded-xl p-1 ${isDark ? 'bg-gray-700/60' : 'bg-gray-100'}`}>
+                <div className={`flex rounded-xl p-1 ${isDark ? 'bg-emerald-900/50' : 'bg-gray-100'}`}>
                   <button
                     type="button"
                     onClick={() => setCheckMode('photo')}
@@ -232,7 +295,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                   <>
                     <div
                       className={`relative rounded-xl border-2 border-dashed overflow-hidden transition-colors ${
-                        isDark ? 'border-gray-600 bg-gray-700/30 hover:border-amber-500/50' : 'border-gray-300 bg-gray-50 hover:border-amber-400'
+                        isDark ? 'border-emerald-600/40 bg-emerald-900/30 hover:border-emerald-500/50' : 'border-gray-300 bg-gray-50 hover:border-amber-400'
                       }`}
                     >
                       <label className="flex flex-col items-center justify-center min-h-[140px] cursor-pointer gap-2 py-6">
@@ -263,7 +326,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                       disabled={!file || loading}
                       className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
                         loading || !file
-                          ? isDark ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          ? isDark ? 'bg-emerald-800/50 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : isDark
                             ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-500 hover:to-teal-600 shadow-lg shadow-teal-900/30'
                             : 'bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-500 hover:to-teal-600 shadow-lg shadow-teal-500/25'
@@ -332,7 +395,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                       disabled={loading}
                       className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
                         loading
-                          ? isDark ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          ? isDark ? 'bg-emerald-800/50 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : isDark
                             ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-500 hover:to-teal-600 shadow-lg shadow-teal-900/30'
                             : 'bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-500 hover:to-teal-600 shadow-lg shadow-teal-500/25'
@@ -352,7 +415,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
 
                 <button
                   onClick={reset}
-                  className={`w-full py-2.5 rounded-xl font-medium text-sm transition ${isDark ? 'bg-gray-700/60 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`w-full py-2.5 rounded-xl font-medium text-sm transition ${isDark ? 'bg-emerald-900/50 text-gray-300 hover:bg-emerald-800/50' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                 >
                   Cancel
                 </button>
@@ -401,9 +464,9 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                     </div>
 
                     <div className="mb-4">
-                      <div className={`h-2.5 w-full rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                      <div className={`h-2.5 w-full rounded-full overflow-hidden ${isDark ? 'bg-emerald-900/60' : 'bg-gray-200'}`}>
                         <div
-                          style={{ width: `${Math.min(100, assessment.qualityScore)}%` }}
+                          ref={qualityProgressRef}
                           className={`h-full rounded-full transition-all duration-500 ${
                             assessment.qualityScore >= 80 ? 'bg-green-500' : assessment.qualityScore >= 60 ? 'bg-amber-500' : 'bg-red-500'
                           }`}
@@ -412,7 +475,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                     </div>
 
                     {classification?.food_name && (
-                      <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
+                      <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-emerald-900/40' : 'bg-gray-100'}`}>
                         <p className={`text-xs font-medium uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           Detected food (ML)
                         </p>
@@ -442,14 +505,45 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                         { label: 'Spoilage', value: assessment.analysis.spoilageDetection ? 'Detected' : 'None' },
                         { label: 'Safety', value: `${assessment.analysis.safetyRating}%` },
                       ].map(({ label, value }) => (
-                        <div key={label} className={`p-2.5 rounded-lg ${isDark ? 'bg-gray-700/40' : 'bg-white/80'}`}>
+                        <div key={label} className={`p-2.5 rounded-lg ${isDark ? 'bg-emerald-900/35' : 'bg-white/80'}`}>
                           <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</p>
                           <p className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{value}</p>
                         </div>
                       ))}
                     </div>
 
-                    <div className={`rounded-lg p-3 ${isDark ? 'bg-gray-700/40' : 'bg-gray-100/80'}`}>
+                    {/* Temperature Viability & Availability Recommendations */}
+                    {(classification?.food_name || classification?.food_class) && (() => {
+                      const tempRec = getTempRecommendations(classification.food_name, classification.food_class);
+                      return tempRec ? (
+                        <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-blue-50 border border-blue-200'}`}>
+                          <p className={`text-xs font-medium uppercase tracking-wider mb-2 flex items-center gap-1.5 ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
+                            <Thermometer className="w-3.5 h-3.5" /> Storage Recommendations
+                          </p>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className={`text-xs ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>Temperature Range</p>
+                              <p className={`font-semibold ${isDark ? 'text-blue-100' : 'text-blue-900'}`}>
+                                {tempRec.min}°C - {tempRec.max}°C
+                              </p>
+                            </div>
+                            <div>
+                              <p className={`text-xs flex items-center gap-1 ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>
+                                <Clock className="w-3 h-3" /> Available For
+                              </p>
+                              <p className={`font-semibold ${isDark ? 'text-blue-100' : 'text-blue-900'}`}>
+                                {tempRec.hours} hours
+                              </p>
+                            </div>
+                          </div>
+                          <p className={`text-xs mt-2 ${isDark ? 'text-blue-200/80' : 'text-blue-700/80'}`}>
+                            Keep food within this temperature range for optimal freshness and safety.
+                          </p>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    <div className={`rounded-lg p-3 ${isDark ? 'bg-emerald-900/35' : 'bg-gray-100/80'}`}>
                       <p className={`text-sm font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                         <TrendingUp className="w-4 h-4" /> Notes
                       </p>
@@ -465,7 +559,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={reset}
-                    className={`py-3 rounded-xl font-semibold text-sm transition ${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                    className={`py-3 rounded-xl font-semibold text-sm transition ${isDark ? 'bg-emerald-900/50 text-gray-300 hover:bg-emerald-800/50' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                   >
                     {assessment.status === 'approved' ? 'Check another' : 'Try again'}
                   </button>

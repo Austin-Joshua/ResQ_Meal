@@ -161,7 +161,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       darkMode 
-        ? 'bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950' 
+        ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-950' 
         : 'bg-gradient-to-br from-white via-slate-50 to-slate-100'
     }`}>
       <div className="max-w-5xl mx-auto p-6 pt-20">
@@ -172,7 +172,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         {/* User Details Section */}
         <div className={`rounded-2xl transition border ${
           darkMode 
-            ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
+            ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <button
@@ -323,7 +323,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         {/* Organization Information Section */}
         <div className={`rounded-2xl mb-8 transition border ${
           darkMode 
-            ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
+            ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <button
@@ -471,7 +471,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         {/* Donation Statistics Section */}
         <div className={`rounded-2xl mb-8 transition border ${
           darkMode 
-            ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
+            ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <button
@@ -581,7 +581,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         {/* Preferences Section */}
         <div className={`rounded-2xl p-8 mb-8 transition border ${
           darkMode 
-            ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
+            ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-2xl font-bold mb-8 ${

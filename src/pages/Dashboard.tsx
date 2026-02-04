@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info } from 'lucide-react';
+import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info, Thermometer, User, Crown } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import PostSurplusPage from './PostSurplus';
 import logoFull from '@/assets/logo-full.png';
@@ -64,6 +64,68 @@ const translations = {
     postFoodNow: 'Post food now',
     viewMatches: 'View matches',
     seeImpact: 'See impact',
+    settings: 'Settings',
+    profile: 'Profile',
+    goToSettings: 'Go to Settings',
+    backToDashboard: '← Back to Dashboard',
+    postsMatchedToday: 'posts matched with NGOs today',
+    deliveryCompleted: 'delivery completed',
+    matchAwaiting: 'match awaiting your response',
+    getStartedNow: 'Get started now',
+    thisWeek: 'This Week',
+    thisMonth: 'This Month',
+    thisYear: 'This Year',
+    weeklyTrend: 'Weekly Trend',
+    keyInsights: 'Key Insights',
+    periodComparison: 'Period Comparison',
+    lastWeek: 'Last Week',
+    lastMonth: 'Last Month',
+    lastYear: 'Last Year',
+    change: 'change',
+    ofTotal: 'of total',
+    yourMatches: 'Your Matches',
+    seeWhichNGOs: 'See which NGOs are interested in your food',
+    organization: 'Organization',
+    distance: 'Distance',
+    donationValue: 'Donation Value',
+    accept: 'Accept',
+    decline: 'Decline',
+    yourImpact: 'Your Impact',
+    seeHowMuch: 'See how much difference you\'re making',
+    aboutResQMeal: 'About ResQ Meal',
+    turningSurplus: 'Turning surplus into sustenance.',
+    fullStackPlatform: 'ResQ Meal is a full-stack platform that connects donors, NGOs, and volunteers to redistribute surplus food—reducing waste and fighting hunger. Post food, get matched, track delivery, and see your impact.',
+    ourMission: 'Our mission',
+    missionText: 'To ensure good food reaches people, not landfills. We help restaurants and donors post surplus, match it with NGOs in need, and track delivery so every meal counts.',
+    ourVision: 'Our vision',
+    visionText: 'A world where surplus food is routinely rescued, shared, and measured—reducing hunger and environmental impact in every community we serve.',
+    howItWorks: 'How it works',
+    postSurplus: 'Post surplus',
+    postSurplusDesc: 'Donors add surplus food with quantity, expiry, and optional AI freshness check.',
+    getMatched: 'Get matched',
+    getMatchedDesc: 'NGOs see relevant listings; our system suggests the best matches by need and distance.',
+    confirmDeliver: 'Confirm & deliver',
+    confirmDeliverDesc: 'Volunteers pick up and deliver. Track status and complete with proof of delivery.',
+    seeImpact: 'See impact',
+    seeImpactDesc: 'Meals saved, CO₂ prevented, and water saved are tracked and shown in your dashboard.',
+    websiteFeatures: 'Website features & details',
+    websiteFeaturesDesc: 'ResQ Meal includes the following features to support donors, NGOs, and volunteers:',
+    technologyAI: 'Technology & AI',
+    technologyAIText: 'The Fresh Food Checker uses optional ML models for quality and freshness: image-based (e.g. Bedrock/Claude Vision, TFLite, Roboflow YOLO, FreshVision, Food-101 classification) and environment-based (temperature, humidity, storage time). Food-Image-Recognition can classify dishes and return nutrition. All of this helps donors and NGOs trust that surplus food is safe to redistribute.',
+    getInvolved: 'Get involved',
+    getInvolvedText: 'Post surplus as a donor, request matches as an NGO, or sign up as a volunteer to deliver. Use the Dashboard, Donor, NGO, and Report sections to get started. For support or partnerships, reach out through your account or settings.',
+    eliteMode: 'Elite Mode',
+    eliteTitle: 'Elite Mode — Dignity for Elders',
+    eliteSubtitle: 'For elders left in care homes by their children',
+    eliteWho: 'Who is Elite Mode for?',
+    eliteWhoDesc: 'Elders who were left in orphanages or care homes by their children. These parents often do not prefer regular donated surplus food; they eat from marriage and celebration food and from food ordered for them by their kids.',
+    eliteWhat: 'What food do they eat?',
+    eliteWhatDesc: 'Marriage and celebration food (from weddings and events) and food ordered by their children—not typical donated surplus. Elite Mode connects care homes and elders with these preferred sources.',
+    eliteHow: 'How Elite Mode works',
+    eliteHow1: 'Care homes or elders register for Elite Mode.',
+    eliteHow2: 'Event caterers and families can list marriage/celebration food or place orders for parents in care.',
+    eliteHow3: 'Food is delivered to registered care homes so elders get the food they prefer.',
+    getInvolvedElite: 'Register your care home, list event food, or order food for a parent in care.',
   },
   ta: {
     welcome: 'திரும்பி வந்ததற்கு நன்றி! 👋',
@@ -104,6 +166,68 @@ const translations = {
     postFoodNow: 'இப்போது உணவு பதிவு',
     viewMatches: 'பொருத்தங்களைக் காண்க',
     seeImpact: 'தாக்கத்தைக் காண்க',
+    settings: 'அமைப்புகள்',
+    profile: 'சுயவிவரம்',
+    goToSettings: 'அமைப்புகளுக்குச் செல்ல',
+    backToDashboard: '← டாஷ்போர்டுக்குத் திரும்பு',
+    postsMatchedToday: 'இன்று NGO-களுடன் பொருந்திய பதிவுகள்',
+    deliveryCompleted: 'டெலிவரி முடிந்தது',
+    matchAwaiting: 'உங்கள் பதிலுக்காக காத்திருக்கும் பொருத்தம்',
+    getStartedNow: 'இப்போது தொடங்குங்கள்',
+    thisWeek: 'இந்த வாரம்',
+    thisMonth: 'இந்த மாதம்',
+    thisYear: 'இந்த ஆண்டு',
+    weeklyTrend: 'வாராந்திர போக்கு',
+    keyInsights: 'முக்கிய நுண்ணறிவுகள்',
+    periodComparison: 'காலகட்ட ஒப்பீடு',
+    lastWeek: 'கடந்த வாரம்',
+    lastMonth: 'கடந்த மாதம்',
+    lastYear: 'கடந்த ஆண்டு',
+    change: 'மாற்றம்',
+    ofTotal: 'மொத்தத்தில்',
+    yourMatches: 'உங்கள் பொருத்தங்கள்',
+    seeWhichNGOs: 'உங்கள் உணவில் எந்த NGO-கள் ஆர்வமாக உள்ளன என்பதைப் பார்க்கவும்',
+    organization: 'அமைப்பு',
+    distance: 'தூரம்',
+    donationValue: 'நன்கொடை மதிப்பு',
+    accept: 'ஏற்க',
+    decline: 'நிராகரி',
+    yourImpact: 'உங்கள் தாக்கம்',
+    seeHowMuch: 'நீங்கள் எவ்வளவு வித்தியாசத்தை ஏற்படுத்துகிறீர்கள் என்பதைப் பார்க்கவும்',
+    aboutResQMeal: 'ResQ Meal பற்றி',
+    turningSurplus: 'மிகுதியை உணவாக மாற்றுதல்.',
+    fullStackPlatform: 'ResQ Meal என்பது நன்கொடையாளர்கள், NGO-கள் மற்றும் தன்னார்வலர்களை இணைக்கும் ஒரு முழு-ஸ்டேக் தளமாகும்—மிகுதி உணவை மறுபகிர்வு செய்து கழிவுகளைக் குறைத்து பசியை எதிர்கொள்கிறது. உணவை இடுகையிடுங்கள், பொருந்தவும், டெலிவரியைக் கண்காணிக்கவும், உங்கள் தாக்கத்தைப் பார்க்கவும்.',
+    ourMission: 'எங்கள் பணி',
+    missionText: 'நல்ல உணவு மக்களை அடையும், குப்பைக் கிடங்குகளை அல்ல. நாங்கள் உணவகங்கள் மற்றும் நன்கொடையாளர்களுக்கு மிகுதியை இடுகையிட உதவுகிறோம், அதை தேவையுள்ள NGO-களுடன் பொருத்துகிறோம், மற்றும் ஒவ்வொரு உணவும் கணக்கிடப்படும் வகையில் டெலிவரியைக் கண்காணிக்கிறோம்.',
+    ourVision: 'எங்கள் பார்வை',
+    visionText: 'மிகுதி உணவு வழக்கமாக மீட்கப்பட்டு, பகிர்ந்து, அளவிடப்படும் ஒரு உலகம்—ஒவ்வொரு சமூகத்திலும் பசி மற்றும் சுற்றுச்சூழல் தாக்கத்தைக் குறைத்தல்.',
+    howItWorks: 'இது எவ்வாறு செயல்படுகிறது',
+    postSurplus: 'மிகுதியை இடுகையிடுங்கள்',
+    postSurplusDesc: 'நன்கொடையாளர்கள் அளவு, காலாவதி மற்றும் விருப்பமான AI புதுமையான சோதனையுடன் மிகுதி உணவைச் சேர்க்கிறார்கள்.',
+    getMatched: 'பொருந்தவும்',
+    getMatchedDesc: 'NGO-கள் தொடர்புடைய பட்டியல்களைப் பார்க்கின்றன; எங்கள் அமைப்பு தேவை மற்றும் தூரத்தின் அடிப்படையில் சிறந்த பொருத்தங்களை பரிந்துரைக்கிறது.',
+    confirmDeliver: 'உறுதிப்படுத்தி வழங்குங்கள்',
+    confirmDeliverDesc: 'தன்னார்வலர்கள் எடுத்துச் சென்று வழங்குகிறார்கள். நிலையைக் கண்காணித்து டெலிவரி சான்றுடன் முடிக்கவும்.',
+    seeImpact: 'தாக்கத்தைப் பார்க்கவும்',
+    seeImpactDesc: 'சேமிக்கப்பட்ட உணவு, தடுக்கப்பட்ட CO₂ மற்றும் சேமிக்கப்பட்ட நீர் உங்கள் டாஷ்போர்டில் கண்காணிக்கப்பட்டு காட்டப்படுகிறது.',
+    websiteFeatures: 'வலைத்தள அம்சங்கள் & விவரங்கள்',
+    websiteFeaturesDesc: 'ResQ Meal நன்கொடையாளர்கள், NGO-கள் மற்றும் தன்னார்வலர்களை ஆதரிக்க பின்வரும் அம்சங்களை உள்ளடக்கியது:',
+    technologyAI: 'தொழில்நுட்பம் & AI',
+    technologyAIText: 'புதிய உணவு சோதனையாளர் தரம் மற்றும் புதுமைக்கான விருப்பமான ML மாதிரிகளைப் பயன்படுத்துகிறது: பட-அடிப்படையிலான (எ.கா. Bedrock/Claude Vision, TFLite, Roboflow YOLO, FreshVision, Food-101 வகைப்பாடு) மற்றும் சுற்றுச்சூழல்-அடிப்படையிலான (வெப்பநிலை, ஈரப்பதம், சேமிப்பு நேரம்). Food-Image-Recognition உணவுகளை வகைப்படுத்தி ஊட்டச்சத்தைத் திரும்பலாம். இவை அனைத்தும் நன்கொடையாளர்கள் மற்றும் NGO-கள் மிகுதி உணவு மறுபகிர்வுக்கு பாதுகாப்பானது என்பதை நம்ப உதவுகிறது.',
+    getInvolved: 'ஈடுபடுங்கள்',
+    getInvolvedText: 'நன்கொடையாளராக மிகுதியை இடுகையிடுங்கள், NGO-ஆக பொருத்தங்களைக் கோரவும், அல்லது டெலிவரி செய்ய தன்னார்வலராக பதிவு செய்யவும். தொடங்க டாஷ்போர்டு, நன்கொடையாளர், NGO மற்றும் அறிக்கை பிரிவுகளைப் பயன்படுத்தவும். ஆதரவு அல்லது கூட்டாண்மைகளுக்கு, உங்கள் கணக்கு அல்லது அமைப்புகள் மூலம் தொடர்பு கொள்ளவும்.',
+    eliteMode: 'எலைட் மோட்',
+    eliteTitle: 'எலைட் மோட் — மூத்தோருக்கு மரியாதை',
+    eliteSubtitle: 'பிள்ளைகளால் பராமரிப்பு இல்லங்களில் விடப்பட்ட மூத்தோருக்கு',
+    eliteWho: 'எலைட் மோட் யாருக்கு?',
+    eliteWhoDesc: 'பிள்ளைகளால் அனாதை இல்லங்கள் அல்லது பராமரிப்பு இல்லங்களில் விடப்பட்ட மூத்தோர். இந்த பெற்றோர்கள் வழக்கமான நன்கொடை மிகுதி உணவை விரும்புவதில்லை; திருமணம்/விழா உணவிலிருந்தும் பிள்ளைகள் வாங்கிக் கொடுக்கும் உணவிலிருந்தும் சாப்பிடுகிறார்கள்.',
+    eliteWhat: 'அவர்கள் என்ன உணவு சாப்பிடுகிறார்கள்?',
+    eliteWhatDesc: 'திருமணம் மற்றும் விழா உணவு (திருமணங்கள் மற்றும் நிகழ்வுகளிலிருந்து) மற்றும் பிள்ளைகள் வாங்கிக் கொடுக்கும் உணவு—வழக்கமான நன்கொடை மிகுதி அல்ல. எலைட் மோட் பராமரிப்பு இல்லங்களையும் மூத்தோரையும் இந்த விருப்ப மூலங்களுடன் இணைக்கிறது.',
+    eliteHow: 'எலைட் மோட் எவ்வாறு செயல்படுகிறது',
+    eliteHow1: 'பராமரிப்பு இல்லங்கள் அல்லது மூத்தோர் எலைட் மோடிற்கு பதிவு செய்கிறார்கள்.',
+    eliteHow2: 'நிகழ்வு கேட்டரர்கள் மற்றும் குடும்பங்கள் திருமணம்/விழா உணவை பட்டியலிடலாம் அல்லது பராமரிப்பில் உள்ள பெற்றோருக்கு ஆர்டர் செய்யலாம்.',
+    eliteHow3: 'பதிவு செய்யப்பட்ட பராமரிப்பு இல்லங்களுக்கு உணவு வழங்கப்படுகிறது; மூத்தோர் விரும்பும் உணவைப் பெறுகிறார்கள்.',
+    getInvolvedElite: 'உங்கள் பராமரிப்பு இல்லத்தை பதிவு செய்யுங்கள், நிகழ்வு உணவை பட்டியலிடுங்கள், அல்லது பராமரிப்பில் உள்ள பெற்றோருக்கு உணவு ஆர்டர் செய்யுங்கள்.',
   },
   hi: {
     welcome: 'वापसी पर स्वागत है! 👋',
@@ -144,26 +268,111 @@ const translations = {
     postFoodNow: 'अभी भोजन पोस्ट करें',
     viewMatches: 'मैच देखें',
     seeImpact: 'प्रभाव देखें',
+    settings: 'सेटिंग्स',
+    profile: 'प्रोफ़ाइल',
+    goToSettings: 'सेटिंग्स पर जाएं',
+    backToDashboard: '← डैशबोर्ड पर वापस जाएं',
+    postsMatchedToday: 'आज NGO के साथ मेल खाने वाले पोस्ट',
+    deliveryCompleted: 'डिलीवरी पूरी',
+    matchAwaiting: 'आपके जवाब का इंतजार कर रहा मैच',
+    getStartedNow: 'अभी शुरू करें',
+    thisWeek: 'इस सप्ताह',
+    thisMonth: 'इस महीने',
+    thisYear: 'इस वर्ष',
+    weeklyTrend: 'साप्ताहिक प्रवृत्ति',
+    keyInsights: 'मुख्य अंतर्दृष्टि',
+    periodComparison: 'अवधि तुलना',
+    lastWeek: 'पिछला सप्ताह',
+    lastMonth: 'पिछला महीना',
+    lastYear: 'पिछला वर्ष',
+    change: 'परिवर्तन',
+    ofTotal: 'कुल का',
+    yourMatches: 'आपके मैच',
+    seeWhichNGOs: 'देखें कि कौन से NGO आपके भोजन में रुचि रखते हैं',
+    organization: 'संगठन',
+    distance: 'दूरी',
+    donationValue: 'दान मूल्य',
+    accept: 'स्वीकार करें',
+    decline: 'अस्वीकार करें',
+    yourImpact: 'आपका प्रभाव',
+    seeHowMuch: 'देखें कि आप कितना अंतर बना रहे हैं',
+    aboutResQMeal: 'ResQ Meal के बारे में',
+    turningSurplus: 'अधिशेष को भोजन में बदलना।',
+    fullStackPlatform: 'ResQ Meal एक पूर्ण-स्टैक प्लेटफॉर्म है जो दानदाताओं, NGO और स्वयंसेवकों को जोड़ता है ताकि अधिशेष भोजन का पुनर्वितरण किया जा सके—कचरे को कम करना और भूख से लड़ना। भोजन पोस्ट करें, मेल खाएं, डिलीवरी ट्रैक करें, और अपना प्रभाव देखें।',
+    ourMission: 'हमारा मिशन',
+    missionText: 'यह सुनिश्चित करना कि अच्छा भोजन लोगों तक पहुंचे, लैंडफिल नहीं। हम रेस्तरां और दानदाताओं को अधिशेष पोस्ट करने में मदद करते हैं, इसे जरूरतमंद NGO से मिलाते हैं, और डिलीवरी को ट्रैक करते हैं ताकि हर भोजन मायने रखे।',
+    ourVision: 'हमारी दृष्टि',
+    visionText: 'एक ऐसी दुनिया जहां अधिशेष भोजन नियमित रूप से बचाया, साझा और मापा जाता है—हर समुदाय में भूख और पर्यावरणीय प्रभाव को कम करना।',
+    howItWorks: 'यह कैसे काम करता है',
+    postSurplus: 'अधिशेष पोस्ट करें',
+    postSurplusDesc: 'दानदाता मात्रा, समाप्ति और वैकल्पिक AI ताजगी जांच के साथ अधिशेष भोजन जोड़ते हैं।',
+    getMatched: 'मेल खाएं',
+    getMatchedDesc: 'NGO प्रासंगिक सूचियां देखते हैं; हमारी प्रणाली आवश्यकता और दूरी के आधार पर सर्वोत्तम मैच सुझाती है।',
+    confirmDeliver: 'पुष्टि करें और वितरित करें',
+    confirmDeliverDesc: 'स्वयंसेवक ले जाते हैं और वितरित करते हैं। स्थिति ट्रैक करें और डिलीवरी प्रमाण के साथ पूरा करें।',
+    seeImpact: 'प्रभाव देखें',
+    seeImpactDesc: 'बचाए गए भोजन, रोके गए CO₂ और बचाया गया पानी आपके डैशबोर्ड में ट्रैक और दिखाया जाता है।',
+    websiteFeatures: 'वेबसाइट सुविधाएं और विवरण',
+    websiteFeaturesDesc: 'ResQ Meal में दानदाताओं, NGO और स्वयंसेवकों का समर्थन करने के लिए निम्नलिखित सुविधाएं शामिल हैं:',
+    technologyAI: 'प्रौद्योगिकी और AI',
+    technologyAIText: 'फ्रेश फूड चेकर गुणवत्ता और ताजगी के लिए वैकल्पिक ML मॉडल का उपयोग करता है: छवि-आधारित (जैसे Bedrock/Claude Vision, TFLite, Roboflow YOLO, FreshVision, Food-101 वर्गीकरण) और पर्यावरण-आधारित (तापमान, आर्द्रता, भंडारण समय)। Food-Image-Recognition व्यंजनों को वर्गीकृत कर सकता है और पोषण लौटा सकता है। यह सब दानदाताओं और NGO को भरोसा दिलाने में मदद करता है कि अधिशेष भोजन पुनर्वितरण के लिए सुरक्षित है।',
+    getInvolved: 'शामिल हों',
+    getInvolvedText: 'दानदाता के रूप में अधिशेष पोस्ट करें, NGO के रूप में मैच का अनुरोध करें, या वितरित करने के लिए स्वयंसेवक के रूप में साइन अप करें। शुरू करने के लिए डैशबोर्ड, दानदाता, NGO और रिपोर्ट अनुभागों का उपयोग करें। समर्थन या साझेदारी के लिए, अपने खाते या सेटिंग्स के माध्यम से संपर्क करें।',
+    eliteMode: 'एलीट मोड',
+    eliteTitle: 'एलीट मोड — बुजुर्गों के लिए सम्मान',
+    eliteSubtitle: 'उन बुजुर्गों के लिए जिन्हें उनके बच्चों ने देखभाल घरों में छोड़ दिया',
+    eliteWho: 'एलीट मोड किसके लिए है?',
+    eliteWhoDesc: 'बुजुर्ग जिन्हें उनके बच्चों ने अनाथालयों या देखभाल घरों में छोड़ दिया। ये माता-पिता अक्सर नियमित दान किए गए अधिशेष भोजन को पसंद नहीं करते; वे शादी/उत्सव के भोजन और बच्चों द्वारा मंगवाए गए भोजन से खाते हैं।',
+    eliteWhat: 'वे क्या भोजन खाते हैं?',
+    eliteWhatDesc: 'शादी और उत्सव का भोजन (विवाह और कार्यक्रमों से) और बच्चों द्वारा मंगवाया गया भोजन—नियमित दान अधिशेष नहीं। एलीट मोड देखभाल घरों और बुजुर्गों को इन पसंदीदा स्रोतों से जोड़ता है।',
+    eliteHow: 'एलीट मोड कैसे काम करता है',
+    eliteHow1: 'देखभाल घर या बुजुर्ग एलीट मोड के लिए पंजीकरण करते हैं।',
+    eliteHow2: 'इवेंट कैटरर और परिवार शादी/उत्सव भोजन सूचीबद्ध कर सकते हैं या देखभाल में माता-पिता के लिए ऑर्डर दे सकते हैं।',
+    eliteHow3: 'पंजीकृत देखभाल घरों को भोजन पहुंचाया जाता है ताकि बुजुर्गों को वह भोजन मिले जो वे पसंद करते हैं।',
+    getInvolvedElite: 'अपना देखभाल घर पंजीकृत करें, इवेंट भोजन सूचीबद्ध करें, या देखभाल में माता-पिता के लिए भोजन ऑर्डर करें।',
   },
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode, setDarkMode, language, setLanguage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about'>('dashboard');
+  const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
+
+  // Mock user data - in a real app, this would come from AuthContext or API
+  const [user] = useState({
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    role: 'restaurant',
+    profilePhoto: null,
+  });
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (languageMenuRef.current && !languageMenuRef.current.contains(e.target as Node)) {
         setLanguageMenuOpen(false);
       }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const features = [
     { id: 'post', icon: '📤', label: 'Post Food', color: 'from-emerald-500 to-emerald-600' },
@@ -177,8 +386,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
     { id: 'dashboard', icon: Home, label: t.dashboard },
     { id: 'post', icon: HeartHandshake, label: t.donor },
     { id: 'matches', icon: Users, label: t.ngo },
+    { id: 'elite', icon: Crown, label: t.eliteMode },
     { id: 'impact', icon: FileText, label: t.report },
     { id: 'about', icon: Info, label: t.aboutUs },
+    { id: 'settings', icon: SettingsIcon, label: t.settings },
   ];
 
   const menuFeatures = [
@@ -195,14 +406,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
   return (
     <div className={`min-h-screen transition-all duration-300 ${
       darkMode 
-        ? 'bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950' 
+        ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-950' 
         : 'bg-gradient-to-br from-white via-slate-50 to-slate-100'
     }`}>
       
       {/* Header */}
       <header className={`sticky top-0 z-40 backdrop-blur-lg transition-all duration-300 border-b ${
         darkMode 
-          ? 'bg-gradient-to-r from-slate-950/98 to-blue-950/98 border-yellow-600/30' 
+          ? 'bg-gradient-to-r from-emerald-950/98 via-blue-950/98 to-slate-950/98 border-emerald-700/40' 
           : 'bg-gradient-to-r from-white/98 to-blue-50/98 border-yellow-300/50'
       }`}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -211,11 +422,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className={`p-2 rounded-lg transition-all duration-200 ${
                 darkMode
-                  ? 'hover:bg-yellow-900/40 text-yellow-300'
+                  ? 'hover:bg-emerald-800/40 text-slate-200'
                   : 'hover:bg-slate-200 text-slate-700'
               }`}
+              aria-label="Toggle menu"
             >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <Menu className="w-6 h-6" />
             </button>
             <button
               onClick={() => {
@@ -237,7 +449,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                 type="button"
                 onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  darkMode ? 'bg-amber-600/15 text-yellow-200 hover:bg-amber-600/25' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  darkMode ? 'bg-emerald-800/30 text-slate-200 hover:bg-emerald-700/40' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
                 title={t.language}
               >
@@ -248,7 +460,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               {languageMenuOpen && (
                 <div
                   className={`absolute right-0 top-full mt-1 min-w-[140px] rounded-lg border shadow-lg py-1 z-50 ${
-                    darkMode ? 'bg-slate-800 border-amber-600/30' : 'bg-white border-gray-200'
+                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-gray-200'
                   }`}
                 >
                   {(['en', 'ta', 'hi'] as const).map((lang) => (
@@ -261,8 +473,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                       }}
                       className={`w-full text-left px-4 py-2 text-sm font-medium transition ${
                         language === lang
-                          ? darkMode ? 'bg-amber-600/30 text-yellow-300' : 'bg-slate-100 text-slate-900'
-                          : darkMode ? 'text-slate-200 hover:bg-slate-700' : 'text-gray-700 hover:bg-gray-100'
+                          ? darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-slate-100 text-slate-900'
+                          : darkMode ? 'text-slate-200 hover:bg-emerald-900/40' : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
                       {languageLabels[lang]}
@@ -277,7 +489,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               onClick={() => setDarkMode(!darkMode)}
               className={`p-2.5 rounded-lg transition-all duration-200 ${
                 darkMode
-                  ? 'hover:bg-yellow-900/40 text-yellow-300'
+                  ? 'hover:bg-emerald-800/40 text-slate-200'
                   : 'hover:bg-slate-200 text-slate-700'
               }`}
               title={darkMode ? 'Light mode' : 'Dark mode'}
@@ -285,18 +497,62 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
             </button>
 
-            {/* Settings Button */}
-            <button
-              onClick={onSettingsClick}
-              className={`p-2.5 rounded-lg transition-all duration-200 ${
-                darkMode
-                  ? 'hover:bg-yellow-900/40 text-yellow-300'
-                  : 'hover:bg-slate-200 text-slate-700'
-              }`}
-              title="Settings"
-            >
-              <SettingsIcon className="w-6 h-6" />
-            </button>
+            {/* Profile Button (replaces Settings) */}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className={`p-2.5 rounded-lg transition-all duration-200 ${
+                  darkMode
+                    ? 'hover:bg-yellow-900/40 text-yellow-300'
+                    : 'hover:bg-slate-200 text-slate-700'
+                }`}
+                title={t.profile}
+              >
+                <User className="w-6 h-6" />
+              </button>
+              {profileMenuOpen && (
+                <div
+                  className={`absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-lg py-2 z-50 ${
+                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <div className={`px-4 py-3 border-b ${darkMode ? 'border-emerald-700/50' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
+                        darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {getInitials(user.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {user.name}
+                        </p>
+                        <p className={`text-xs truncate ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                          {user.email}
+                        </p>
+                        <p className={`text-xs mt-1 capitalize ${darkMode ? 'text-amber-400' : 'text-emerald-600'}`}>
+                          {user.role}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      onSettingsClick();
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
+                      darkMode
+                        ? 'text-slate-200 hover:bg-slate-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    {t.goToSettings}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -306,7 +562,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } ${
         darkMode 
-          ? 'bg-gradient-to-b from-slate-900 to-slate-950 border-r border-yellow-600/20' 
+          ? 'bg-gradient-to-b from-emerald-950 to-blue-950 border-r border-emerald-700/30' 
           : 'bg-gradient-to-b from-slate-50 to-emerald-50/80 border-r border-slate-200/50'
       } backdrop-blur-lg z-30`}>
         <nav className="p-4 space-y-1">
@@ -317,29 +573,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               <button
                 key={item.id}
                 onClick={() => {
-                  setActivePage(item.id as any);
-                  setSidebarOpen(false);
-                  setSelectedFeature(null);
+                  if (item.id === 'settings') {
+                    setSidebarOpen(false);
+                    onSettingsClick();
+                  } else {
+                    setActivePage(item.id as any);
+                    setSidebarOpen(false);
+                    setSelectedFeature(null);
+                  }
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                   isActive
                     ? darkMode
-                      ? 'bg-gradient-to-r from-yellow-500/30 to-yellow-600/20 shadow-lg border border-yellow-500/40'
+                      ? 'bg-gradient-to-r from-emerald-600/30 to-blue-600/25 shadow-lg border border-emerald-500/40'
                       : 'bg-gradient-to-r from-emerald-400/30 to-emerald-500/20 shadow-md border border-emerald-400/40'
                     : darkMode
-                    ? 'hover:bg-yellow-900/20 text-slate-200'
+                    ? 'hover:bg-emerald-900/25 text-slate-200'
                     : 'hover:bg-slate-200/30 text-slate-800'
                 }`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 <span className={`font-semibold transition-all duration-200 ${
-                  isActive ? (darkMode ? 'text-yellow-300' : 'text-emerald-700') : (darkMode ? 'text-slate-200' : 'text-slate-700')
+                  isActive ? (darkMode ? 'text-emerald-200' : 'text-emerald-700') : (darkMode ? 'text-slate-200' : 'text-slate-700')
                 }`}>
                   {item.label}
                 </span>
-                {isActive && (
-                  <ArrowRight className={`w-4 h-4 ml-auto ${darkMode ? 'text-yellow-300' : 'text-emerald-600'}`} />
-                )}
               </button>
             );
           })}
@@ -354,7 +612,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             {/* Welcome Card */}
             <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border ${
               darkMode
-                ? 'bg-gradient-to-br from-slate-800 to-slate-900 border-yellow-600/30 shadow-xl'
+                ? 'bg-gradient-to-br from-emerald-900/50 to-blue-900/50 border-emerald-600/30 shadow-xl'
                 : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
@@ -367,7 +625,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
 
             {/* Quick Actions - Minimized */}
             <div className={`rounded-xl p-3 transition-all duration-300 border ${
-              darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+              darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                 {t.quickActions}
@@ -403,19 +661,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             {/* Today's Activity + Pending / Active */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-                darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+                darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
               }`}>
                 <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                   <Clock className="w-4 h-4" /> {t.recentActivity}
                 </h3>
                 <ul className={`space-y-2 text-sm ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                  <li className="flex items-center gap-2">✓ 2 posts matched with NGOs today</li>
-                  <li className="flex items-center gap-2">✓ 1 delivery completed</li>
-                  <li className="flex items-center gap-2">○ 1 match awaiting your response</li>
+                  <li className="flex items-center gap-2">✓ 2 {t.postsMatchedToday}</li>
+                  <li className="flex items-center gap-2">✓ 1 {t.deliveryCompleted}</li>
+                  <li className="flex items-center gap-2">○ 1 {t.matchAwaiting}</li>
                 </ul>
               </div>
               <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-                darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+                darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
               }`}>
                 <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                   {t.howYouCanHelp}
@@ -435,7 +693,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
 
             {/* Did you know tip - Minimized */}
             <div className={`rounded-xl p-3 transition-all duration-300 border ${
-              darkMode ? 'bg-amber-900/20 border-amber-600/30' : 'bg-amber-50 border-amber-200'
+              darkMode ? 'bg-emerald-900/25 border-emerald-600/30' : 'bg-amber-50 border-amber-200'
             }`}>
               <p className={`text-xs font-semibold flex items-center gap-1.5 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
                 <Leaf className="w-3 h-3" /> {t.didYouKnow}
@@ -453,7 +711,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                   onClick={() => setActivePage(feature.id as any)}
                   className={`group relative rounded-2xl p-8 transition-all duration-300 transform hover:scale-105 cursor-pointer overflow-hidden border ${
                     darkMode
-                      ? 'shadow-xl border-yellow-600/20 bg-gradient-to-br from-blue-900/60 to-slate-900/60'
+                      ? 'shadow-xl border-emerald-600/25 bg-gradient-to-br from-emerald-900/50 to-blue-900/60'
                       : 'shadow-lg border-blue-200/60 bg-gradient-to-br from-white to-blue-100'
                   }`}
                 >
@@ -474,7 +732,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                         darkMode ? 'text-blue-100/80' : 'text-slate-700'
                       }`}
                     >
-                      Get started now
+                      {t.getStartedNow}
                     </p>
                   </div>
                 </button>
@@ -484,17 +742,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
-                { icon: '🍽️', label: t.mealsSaved, value: '3,450', color: 'from-emerald-500/30 to-emerald-600/30', border: 'emerald' },
-                { icon: '⚖️', label: t.foodDiverted, value: '8,625 kg', color: 'from-blue-500/30 to-blue-600/30', border: 'blue' },
-                { icon: '💨', label: t.co2Prevented, value: '21.5 tons', color: 'from-yellow-500/30 to-yellow-600/30', border: 'yellow' },
-                { icon: '💧', label: t.waterSaved, value: '8.6M L', color: 'from-cyan-500/30 to-cyan-600/30', border: 'cyan' },
-              ].map((stat, idx) => (
-                <div
-                  key={idx}
-                  className={`rounded-2xl p-6 transition-all duration-300 border ${
+                { id: 'mealsSaved', icon: '🍽️', label: t.mealsSaved, value: '3,450', color: 'from-emerald-500/30 to-emerald-600/30', border: 'emerald' },
+                { id: 'foodDiverted', icon: '⚖️', label: t.foodDiverted, value: '8,625 kg', color: 'from-blue-500/30 to-blue-600/30', border: 'blue' },
+                { id: 'co2Prevented', icon: '💨', label: t.co2Prevented, value: '21.5 tons', color: 'from-yellow-500/30 to-yellow-600/30', border: 'yellow' },
+                { id: 'waterSaved', icon: '💧', label: t.waterSaved, value: '8.6M L', color: 'from-cyan-500/30 to-cyan-600/30', border: 'cyan' },
+              ].map((stat) => (
+                <button
+                  key={stat.id}
+                  onClick={() => {
+                    setSelectedStat(stat.id);
+                    setActivePage(stat.id as any);
+                  }}
+                  className={`rounded-2xl p-6 transition-all duration-300 border cursor-pointer transform hover:scale-105 ${
                     darkMode
-                      ? `bg-gradient-to-br ${stat.color} border-yellow-600/30 shadow-lg`
-                      : `bg-gradient-to-br ${stat.color} border-slate-300/50 shadow-md`
+                      ? `bg-gradient-to-br ${stat.color} border-emerald-600/30 shadow-lg hover:shadow-xl`
+                      : `bg-gradient-to-br ${stat.color} border-slate-300/50 shadow-md hover:shadow-lg`
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -508,14 +770,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                     </div>
                     <span className="text-4xl opacity-50">{stat.icon}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 
             {/* Chart Card */}
             <div className={`rounded-2xl p-8 transition-all duration-300 border ${
               darkMode
-                ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+                ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-emerald-600/30 shadow-xl'
                 : 'bg-gradient-to-br from-slate-50 to-emerald-50/15 border-slate-300/50 shadow-lg'
             }`}>
               <div className="flex items-center justify-between mb-6">
@@ -570,6 +832,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             darkMode={darkMode} 
             onBack={() => setActivePage('dashboard')}
             menuFeatures={menuFeatures}
+            t={t}
           />
         )}
 
@@ -580,17 +843,83 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
 
         {/* Matches Page */}
         {activePage === 'matches' && (
-          <MatchesPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} />
+          <MatchesPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
         )}
 
         {/* Impact Page */}
         {activePage === 'impact' && (
-          <ImpactPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} />
+          <ImpactPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
         )}
 
         {/* About Us Page */}
         {activePage === 'about' && (
-          <AboutPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} />
+          <AboutPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
+        )}
+
+        {/* Elite Mode Page */}
+        {activePage === 'elite' && (
+          <EliteModePage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
+        )}
+
+        {/* Stat Detail Pages */}
+        {activePage === 'mealsSaved' && (
+          <StatDetailPage
+            darkMode={darkMode}
+            onBack={() => setActivePage('dashboard')}
+            stat={{
+              id: 'mealsSaved',
+              icon: '🍽️',
+              label: t.mealsSaved,
+              value: '3,450',
+              color: 'from-emerald-500/30 to-emerald-600/30',
+            }}
+            t={t}
+          />
+        )}
+
+        {activePage === 'foodDiverted' && (
+          <StatDetailPage
+            darkMode={darkMode}
+            onBack={() => setActivePage('dashboard')}
+            stat={{
+              id: 'foodDiverted',
+              icon: '⚖️',
+              label: t.foodDiverted,
+              value: '8,625 kg',
+              color: 'from-blue-500/30 to-blue-600/30',
+            }}
+            t={t}
+          />
+        )}
+
+        {activePage === 'co2Prevented' && (
+          <StatDetailPage
+            darkMode={darkMode}
+            onBack={() => setActivePage('dashboard')}
+            stat={{
+              id: 'co2Prevented',
+              icon: '💨',
+              label: t.co2Prevented,
+              value: '21.5 tons',
+              color: 'from-yellow-500/30 to-yellow-600/30',
+            }}
+            t={t}
+          />
+        )}
+
+        {activePage === 'waterSaved' && (
+          <StatDetailPage
+            darkMode={darkMode}
+            onBack={() => setActivePage('dashboard')}
+            stat={{
+              id: 'waterSaved',
+              icon: '💧',
+              label: t.waterSaved,
+              value: '8.6M L',
+              color: 'from-cyan-500/30 to-cyan-600/30',
+            }}
+            t={t}
+          />
         )}
       </main>
 
@@ -616,7 +945,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
 };
 
 // Feature Details Page Component
-const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack: () => void; menuFeatures: any[] }> = ({ feature, darkMode, onBack, menuFeatures }) => {
+const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack: () => void; menuFeatures: any[]; t: any }> = ({ feature, darkMode, onBack, menuFeatures, t }) => {
   const selectedFeature = menuFeatures.find(f => f.id === feature);
 
   const featureDetails: Record<string, { title: string; description: string; benefits: string[]; stats: string[] }> = {
@@ -754,12 +1083,12 @@ const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack:
             : 'hover:bg-blue-200 text-blue-700'
         }`}
       >
-        ← Back to Dashboard
+        {t.backToDashboard}
       </button>
 
       <div className={`rounded-2xl p-8 mb-8 transition-all duration-300 border ${
         darkMode
-          ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+          ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl'
           : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
       }`}>
         <h1 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
@@ -774,7 +1103,7 @@ const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack:
         {/* Benefits */}
         <div className={`rounded-2xl p-8 transition-all duration-300 border ${
           darkMode
-            ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/40 border-yellow-600/30 shadow-lg'
+            ? 'bg-gradient-to-br from-emerald-900/35 to-blue-900/45 border-emerald-600/30 shadow-lg'
             : 'bg-gradient-to-br from-blue-400/10 to-emerald-400/10 border-blue-300/50 shadow-md'
         }`}>
           <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
@@ -793,7 +1122,7 @@ const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack:
         {/* Statistics */}
         <div className={`rounded-2xl p-8 transition-all duration-300 border ${
           darkMode
-            ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/40 border-yellow-600/30 shadow-lg'
+            ? 'bg-gradient-to-br from-emerald-900/35 to-blue-900/45 border-emerald-600/30 shadow-lg'
             : 'bg-gradient-to-br from-blue-400/10 to-emerald-400/10 border-blue-300/50 shadow-md'
         }`}>
           <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
@@ -814,7 +1143,7 @@ const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack:
 };
 
 // Matches Page Component
-const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMode, onBack }) => {
+const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
   const matches = [
     {
       id: 1,
@@ -825,6 +1154,9 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
       status: 'MATCHED',
       meals: 25,
       donation: '₹5,000 equivalent',
+      minTemp: 0,
+      maxTemp: 10,
+      availabilityHours: 48,
     },
     {
       id: 2,
@@ -835,6 +1167,9 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
       status: 'ACCEPTED',
       meals: 40,
       donation: '₹8,000 equivalent',
+      minTemp: 60,
+      maxTemp: 4,
+      availabilityHours: 4,
     },
   ];
 
@@ -848,19 +1183,19 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
             : 'hover:bg-blue-200 text-blue-700'
         }`}
       >
-        ← Back to Dashboard
+        {t.backToDashboard}
       </button>
 
       <div className={`rounded-2xl p-8 mb-8 transition-all duration-300 border ${
         darkMode
-          ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+          ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl'
           : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
       }`}>
         <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          🎯 Your Matches
+          🎯 {t.yourMatches}
         </h2>
         <p className={darkMode ? 'text-blue-200' : 'text-blue-700'}>
-          See which NGOs are interested in your food
+          {t.seeWhichNGOs}
         </p>
       </div>
 
@@ -870,7 +1205,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
             key={match.id}
             className={`rounded-2xl p-6 transition-all duration-300 transform hover:scale-105 cursor-pointer border ${
               darkMode
-                ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/40 border-yellow-600/30 shadow-xl hover:shadow-2xl'
+                ? 'bg-gradient-to-br from-emerald-900/35 to-blue-900/45 border-emerald-600/30 shadow-xl hover:shadow-2xl'
                 : 'bg-gradient-to-br from-blue-400/10 to-emerald-400/10 border-blue-300/50 shadow-lg hover:shadow-xl'
             }`}
           >
@@ -881,7 +1216,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
                 </h3>
                 <div className={`mb-3 ${darkMode ? 'text-blue-200' : 'text-slate-700'}`}>
                   <p className={`text-sm mb-1 font-semibold ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                    Organization: {match.ngo}
+                    {t.organization}: {match.ngo}
                   </p>
                   <p className={`text-xs ${darkMode ? 'text-blue-300/70' : 'text-slate-600'}`}>
                     📋 {match.org}
@@ -901,29 +1236,55 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
 
             <div className={`grid grid-cols-3 gap-4 mb-4 pb-4 border-b ${darkMode ? 'border-blue-600/30' : 'border-blue-200/50'}`}>
               <div>
-                <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>📍 Distance</p>
+                <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>📍 {t.distance}</p>
                 <p className={`text-sm font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>{match.distance}</p>
               </div>
               <div>
-                <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>🍽️ Meals</p>
+                <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>🍽️ {t.mealsSaved.split(' ')[0]}</p>
                 <p className={`text-sm font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>{match.meals}</p>
               </div>
               <div>
-                <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>💰 Donation Value</p>
+                <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>💰 {t.donationValue}</p>
                 <p className={`text-sm font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>{match.donation}</p>
               </div>
             </div>
 
+            {/* Temperature & Availability Info */}
+            {(match.minTemp !== undefined || match.availabilityHours !== undefined) && (
+              <div className={`grid grid-cols-2 gap-3 mb-4 pb-4 border-b ${darkMode ? 'border-blue-600/30' : 'border-blue-200/50'}`}>
+                {match.minTemp !== undefined && match.maxTemp !== undefined && (
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+                    <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                      <Thermometer className="w-3 h-3" /> Storage Temperature
+                    </p>
+                    <p className={`text-sm font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+                      {match.minTemp}°C - {match.maxTemp}°C
+                    </p>
+                  </div>
+                )}
+                {match.availabilityHours !== undefined && (
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
+                    <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}>
+                      <Clock className="w-3 h-3" /> Available For
+                    </p>
+                    <p className={`text-sm font-bold ${darkMode ? 'text-yellow-300' : 'text-emerald-700'}`}>
+                      {match.availabilityHours} hours
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-2 rounded-lg transition-all duration-200">
-                ✅ Accept
+                ✅ {t.accept}
               </button>
               <button className={`flex-1 border-2 font-bold py-2 rounded-lg transition-all duration-200 ${
                 darkMode
                   ? 'border-blue-600 text-blue-200 hover:bg-blue-700/50'
                   : 'border-blue-300 text-blue-700 hover:bg-blue-100/50'
               }`}>
-                ❌ Decline
+                ❌ {t.decline}
               </button>
             </div>
           </div>
@@ -934,7 +1295,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ dark
 };
 
 // Impact Page Component
-const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMode, onBack }) => {
+const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
   return (
     <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn`}>
       <button
@@ -945,19 +1306,19 @@ const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkM
             : 'hover:bg-blue-200 text-blue-700'
         }`}
       >
-        ← Back to Dashboard
+        {t.backToDashboard}
       </button>
 
       <div className={`rounded-2xl p-8 mb-8 transition-all duration-300 border ${
         darkMode
-          ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+          ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl'
           : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
       }`}>
         <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          📊 Your Impact
+          📊 {t.yourImpact}
         </h2>
         <p className={darkMode ? 'text-blue-200' : 'text-blue-700'}>
-          See how much difference you're making
+          {t.seeHowMuch}
         </p>
       </div>
 
@@ -972,7 +1333,7 @@ const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkM
             key={idx}
             className={`rounded-2xl p-8 transition-all duration-300 border ${
               darkMode
-                ? `bg-gradient-to-br ${stat.color} border-yellow-600/30 shadow-lg`
+                ? `bg-gradient-to-br ${stat.color} border-emerald-600/30 shadow-lg`
                 : `bg-gradient-to-br ${stat.color} border-blue-300/50 shadow-md`
             }`}
           >
@@ -994,8 +1355,101 @@ const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkM
   );
 };
 
+// Elite Mode Page – for elders in care homes who eat marriage/event food and food ordered by kids, not donated surplus
+const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
+  return (
+    <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn space-y-8`}>
+      <button
+        onClick={onBack}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
+          darkMode
+            ? 'hover:bg-emerald-800/40 text-slate-200'
+            : 'hover:bg-slate-200 text-slate-700'
+        }`}
+      >
+        {t.backToDashboard}
+      </button>
+
+      {/* Hero */}
+      <div className={`rounded-2xl p-8 transition-all duration-300 border ${
+        darkMode
+          ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl'
+          : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+      }`}>
+        <div className="flex items-center gap-3 mb-2">
+          <Crown className={`w-10 h-10 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+          <h2 className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+            {t.eliteTitle}
+          </h2>
+        </div>
+        <p className={`text-lg font-medium ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+          {t.eliteSubtitle}
+        </p>
+      </div>
+
+      {/* Who is Elite Mode for? */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          {t.eliteWho}
+        </h3>
+        <p className={`${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+          {t.eliteWhoDesc}
+        </p>
+      </div>
+
+      {/* What food do they eat? */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          {t.eliteWhat}
+        </h3>
+        <p className={`${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+          {t.eliteWhatDesc}
+        </p>
+      </div>
+
+      {/* How Elite Mode works */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          {t.eliteHow}
+        </h3>
+        <ul className="space-y-4">
+          {[
+            { step: 1, body: t.eliteHow1 },
+            { step: 2, body: t.eliteHow2 },
+            { step: 3, body: t.eliteHow3 },
+          ].map(({ step, body }) => (
+            <li key={step} className={`flex gap-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+              <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                darkMode ? 'bg-amber-600/40 text-amber-300' : 'bg-amber-100 text-amber-700'
+              }`}>
+                {step}
+              </span>
+              <span className="font-medium">{body}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Get involved */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-emerald-900/25 border-emerald-600/30' : 'bg-amber-50 border-amber-200 shadow-sm'
+      }`}>
+        <p className={`font-semibold ${darkMode ? 'text-amber-200' : 'text-amber-800'}`}>
+          {t.getInvolvedElite}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // About Us Page Component – full website details and features
-const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMode, onBack }) => {
+const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
   const aboutFeatures = [
     { icon: Zap, title: 'Fresh Food Checker (AI)', desc: 'Upload a photo or enter storage conditions. Our ML models assess freshness and quality so only safe food gets redistributed.' },
     { icon: Send, title: 'One-Click Surplus Posting', desc: 'Donors and restaurants post surplus food in seconds. Add quantity, expiry, location, and optional freshness check.' },
@@ -1024,53 +1478,58 @@ const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMo
             : 'hover:bg-blue-200 text-blue-700'
         }`}
       >
-        ← Back to Dashboard
+        {t.backToDashboard}
       </button>
 
       {/* Hero */}
       <div className={`rounded-2xl p-8 transition-all duration-300 border ${
         darkMode
-          ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+          ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl'
           : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
       }`}>
         <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          About ResQ Meal
+          {t.aboutResQMeal}
         </h2>
         <p className={`text-lg font-medium ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
-          Turning surplus into sustenance.
+          {t.turningSurplus}
         </p>
         <p className={`mt-2 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
-          ResQ Meal is a full-stack platform that connects donors, NGOs, and volunteers to redistribute surplus food—reducing waste and fighting hunger. Post food, get matched, track delivery, and see your impact.
+          {t.fullStackPlatform}
         </p>
       </div>
 
       {/* Mission & Vision */}
       <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          Our mission
+          {t.ourMission}
         </h3>
         <p className={`mb-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
-          To ensure good food reaches people, not landfills. We help restaurants and donors post surplus, match it with NGOs in need, and track delivery so every meal counts.
+          {t.missionText}
         </p>
         <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          Our vision
+          {t.ourVision}
         </h3>
         <p className={darkMode ? 'text-blue-100' : 'text-slate-700'}>
-          A world where surplus food is routinely rescued, shared, and measured—reducing hunger and environmental impact in every community we serve.
+          {t.visionText}
         </p>
       </div>
 
       {/* How it works */}
       <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          How it works
+          {t.howItWorks}
         </h3>
         <ul className="space-y-4">
-          {steps.map(({ step, title, body }) => (
+          {[
+            { step: 1, title: t.postSurplus, body: t.postSurplusDesc },
+            { step: 2, title: t.getMatched, body: t.getMatchedDesc },
+            { step: 3, title: t.confirmDeliver, body: t.confirmDeliverDesc },
+            { step: 4, title: t.seeImpact, body: t.seeImpactDesc },
+          ].map(({ step, title, body }) => (
             <li key={step} className={`flex gap-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
               <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                 darkMode ? 'bg-amber-600/40 text-amber-300' : 'bg-blue-100 text-blue-700'
@@ -1087,20 +1546,20 @@ const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMo
 
       {/* Website features */}
       <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          Website features & details
+          {t.websiteFeatures}
         </h3>
         <p className={`mb-6 text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>
-          ResQ Meal includes the following features to support donors, NGOs, and volunteers:
+          {t.websiteFeaturesDesc}
         </p>
         <ul className="space-y-4">
           {aboutFeatures.map(({ icon: Icon, title, desc }) => (
             <li
               key={title}
               className={`flex gap-4 p-4 rounded-xl ${
-                darkMode ? 'bg-slate-700/30' : 'bg-slate-50'
+                darkMode ? 'bg-emerald-900/25' : 'bg-slate-50'
               }`}
             >
               <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${darkMode ? 'text-amber-400' : 'text-blue-600'}`} />
@@ -1115,26 +1574,319 @@ const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMo
 
       {/* Technology */}
       <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-          Technology & AI
+          {t.technologyAI}
         </h3>
         <p className={`mb-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
-          The Fresh Food Checker uses optional ML models for quality and freshness: image-based (e.g. Bedrock/Claude Vision, TFLite, Roboflow YOLO, FreshVision, Food-101 classification) and environment-based (temperature, humidity, storage time). Food-Image-Recognition can classify dishes and return nutrition. All of this helps donors and NGOs trust that surplus food is safe to redistribute.
+          {t.technologyAIText}
         </p>
       </div>
 
       {/* Get involved */}
       <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-        darkMode ? 'bg-amber-900/20 border-amber-600/30' : 'bg-amber-50 border-amber-200'
+        darkMode ? 'bg-emerald-900/25 border-emerald-600/30' : 'bg-amber-50 border-amber-200'
       }`}>
         <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
-          Get involved
+          {t.getInvolved}
         </h3>
         <p className={darkMode ? 'text-blue-100' : 'text-amber-900/90'}>
-          Post surplus as a donor, request matches as an NGO, or sign up as a volunteer to deliver. Use the Dashboard, Donor, NGO, and Report sections to get started. For support or partnerships, reach out through your account or settings.
+          {t.getInvolvedText}
         </p>
+      </div>
+    </div>
+  );
+};
+
+// Stat Detail Page Component - Expanded view for each metric
+// Progress bar fill with width set via ref (no inline style for linter)
+const ProgressFill: React.FC<{ percentage: number; className: string }> = ({ percentage, className }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.style.width = `${percentage}%`;
+  }, [percentage]);
+  return <div ref={ref} className={className} />;
+};
+
+const StatDetailPage: React.FC<{ darkMode: boolean; onBack: () => void; stat: { id: string; icon: string; label: string; value: string; color: string }; t: any }> = ({ darkMode, onBack, stat, t }) => {
+  // Mock data for each stat type
+  const getStatData = () => {
+    const data: Record<string, { 
+      total: string; 
+      breakdown: { label: string; value: string; percentage: number }[];
+      timeline: { date: string; value: number }[];
+      insights: string[];
+      comparison: { period: string; value: string; change: number }[];
+    }> = {
+      mealsSaved: {
+        total: '3,450',
+        breakdown: [
+          { label: t.thisWeek, value: '892', percentage: 26 },
+          { label: t.thisMonth, value: '2,340', percentage: 68 },
+          { label: t.thisYear, value: '3,450', percentage: 100 },
+        ],
+        timeline: [
+          { date: 'Mon', value: 120 },
+          { date: 'Tue', value: 135 },
+          { date: 'Wed', value: 128 },
+          { date: 'Thu', value: 165 },
+          { date: 'Fri', value: 155 },
+          { date: 'Sat', value: 180 },
+          { date: 'Sun', value: 195 },
+        ],
+        insights: [
+          'Average 492 meals saved per week',
+          'Peak day: Sunday with 195 meals',
+          'Consistent growth trend observed',
+          'Top contributor: Restaurant partnerships',
+        ],
+        comparison: [
+          { period: t.lastWeek, value: '875', change: 1.9 },
+          { period: t.lastMonth, value: '2,100', change: 11.4 },
+          { period: t.lastYear, value: '2,800', change: 23.2 },
+        ],
+      },
+      foodDiverted: {
+        total: '8,625 kg',
+        breakdown: [
+          { label: 'Vegetables', value: '3,200 kg', percentage: 37 },
+          { label: 'Cooked Meals', value: '2,850 kg', percentage: 33 },
+          { label: 'Fruits', value: '1,575 kg', percentage: 18 },
+          { label: 'Other', value: '1,000 kg', percentage: 12 },
+        ],
+        timeline: [
+          { date: 'Mon', value: 1200 },
+          { date: 'Tue', value: 1350 },
+          { date: 'Wed', value: 1280 },
+          { date: 'Thu', value: 1650 },
+          { date: 'Fri', value: 1550 },
+          { date: 'Sat', value: 1800 },
+          { date: 'Sun', value: 1950 },
+        ],
+        insights: [
+          'Average 1,232 kg diverted per week',
+          'Vegetables account for largest share',
+          'Consistent upward trend',
+          'Prevents landfill waste effectively',
+        ],
+        comparison: [
+          { period: 'Last Week', value: '1,200 kg', change: 2.7 },
+          { period: 'Last Month', value: '7,800 kg', change: 10.6 },
+          { period: 'Last Year', value: '6,500 kg', change: 32.7 },
+        ],
+      },
+      co2Prevented: {
+        total: '21.5 tons',
+        breakdown: [
+          { label: 'This Week', value: '5.2 tons', percentage: 24 },
+          { label: 'This Month', value: '14.8 tons', percentage: 69 },
+          { label: 'This Year', value: '21.5 tons', percentage: 100 },
+        ],
+        timeline: [
+          { date: 'Mon', value: 0.3 },
+          { date: 'Tue', value: 0.34 },
+          { date: 'Wed', value: 0.32 },
+          { date: 'Thu', value: 0.41 },
+          { date: 'Fri', value: 0.39 },
+          { date: 'Sat', value: 0.45 },
+          { date: 'Sun', value: 0.49 },
+        ],
+        insights: [
+          'Equivalent to 45 car trips avoided',
+          'Saves 2.5 kg CO₂ per kg food rescued',
+          'Significant climate impact',
+          'Growing environmental contribution',
+        ],
+        comparison: [
+          { period: 'Last Week', value: '5.0 tons', change: 4.0 },
+          { period: 'Last Month', value: '13.2 tons', change: 12.1 },
+          { period: 'Last Year', value: '18.5 tons', change: 16.2 },
+        ],
+      },
+      waterSaved: {
+        total: '8.6M L',
+        breakdown: [
+          { label: 'This Week', value: '2.1M L', percentage: 24 },
+          { label: 'This Month', value: '5.9M L', percentage: 69 },
+          { label: 'This Year', value: '8.6M L', percentage: 100 },
+        ],
+        timeline: [
+          { date: 'Mon', value: 300 },
+          { date: 'Tue', value: 338 },
+          { date: 'Wed', value: 320 },
+          { date: 'Thu', value: 412 },
+          { date: 'Fri', value: 387 },
+          { date: 'Sat', value: 450 },
+          { date: 'Sun', value: 487 },
+        ],
+        insights: [
+          'Average 1.23M L saved per week',
+          'Equivalent to 3,440 swimming pools',
+          'Critical water conservation impact',
+          'Sustainable resource management',
+        ],
+        comparison: [
+          { period: 'Last Week', value: '2.0M L', change: 5.0 },
+          { period: 'Last Month', value: '5.5M L', change: 7.3 },
+          { period: 'Last Year', value: '7.2M L', change: 19.4 },
+        ],
+      },
+    };
+    return data[stat.id] || data.mealsSaved;
+  };
+
+  const statData = getStatData();
+
+  return (
+    <div className={`max-w-6xl mx-auto px-4 py-8 animate-fadeIn space-y-6`}>
+      <button
+        onClick={onBack}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
+          darkMode
+            ? 'hover:bg-yellow-900/40 text-yellow-300'
+            : 'hover:bg-slate-200 text-slate-700'
+        }`}
+      >
+        {t.backToDashboard}
+      </button>
+
+      {/* Header */}
+      <div className={`rounded-2xl p-8 transition-all duration-300 border ${
+        darkMode
+          ? 'bg-gradient-to-br from-emerald-900/50 to-blue-900/50 border-emerald-600/30 shadow-xl'
+          : 'bg-white border-slate-200 shadow-lg'
+      }`}>
+        <div className="flex items-center gap-4 mb-4">
+          <span className="text-5xl">{stat.icon}</span>
+          <div>
+            <h2 className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+              {stat.label}
+            </h2>
+            <p className={`text-4xl font-bold mt-2 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+              {stat.value}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Breakdown Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {statData.breakdown.map((item, idx) => (
+          <div
+            key={idx}
+            className={`rounded-xl p-6 transition-all duration-300 border ${
+              darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            }`}
+          >
+            <p className={`text-sm font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              {item.label}
+            </p>
+            <p className={`text-2xl font-bold mt-2 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+              {item.value}
+            </p>
+            <div className={`mt-3 h-2 rounded-full overflow-hidden ${darkMode ? 'bg-emerald-900/60' : 'bg-slate-200'}`}>
+              <ProgressFill
+                percentage={item.percentage}
+                className={`h-full transition-all ${
+                  stat.id === 'mealsSaved' ? 'bg-emerald-500' :
+                  stat.id === 'foodDiverted' ? 'bg-blue-500' :
+                  stat.id === 'co2Prevented' ? 'bg-yellow-500' :
+                  'bg-cyan-500'
+                }`}
+              />
+            </div>
+            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              {item.percentage}% {t.ofTotal}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline Chart */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+          {t.weeklyTrend}
+        </h3>
+        <div className="w-full h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={statData.timeline}>
+              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#475569' : '#cbd5e1'} />
+              <XAxis dataKey="date" stroke={darkMode ? '#cbd5e1' : '#64748b'} />
+              <YAxis stroke={darkMode ? '#cbd5e1' : '#64748b'} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                  border: darkMode ? '2px solid #fbbf24' : '2px solid #64748b',
+                  borderRadius: '8px',
+                  color: darkMode ? '#fbbf24' : '#1e293b',
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={
+                  stat.id === 'mealsSaved' ? '#10b981' :
+                  stat.id === 'foodDiverted' ? '#3b82f6' :
+                  stat.id === 'co2Prevented' ? '#f59e0b' :
+                  '#06b6d4'
+                }
+                strokeWidth={3}
+                dot={{ fill: stat.id === 'mealsSaved' ? '#10b981' : stat.id === 'foodDiverted' ? '#3b82f6' : stat.id === 'co2Prevented' ? '#f59e0b' : '#06b6d4', r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Insights & Comparison */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Insights */}
+        <div className={`rounded-xl p-6 transition-all duration-300 border ${
+          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+        }`}>
+          <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+            <TrendingUp className="w-5 h-5" /> {t.keyInsights}
+          </h3>
+          <ul className="space-y-2">
+            {statData.insights.map((insight, idx) => (
+              <li key={idx} className={`flex items-start gap-2 text-sm ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                <span className={`mt-1 ${darkMode ? 'text-yellow-300' : 'text-emerald-600'}`}>•</span>
+                <span>{insight}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Comparison */}
+        <div className={`rounded-xl p-6 transition-all duration-300 border ${
+          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+        }`}>
+          <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+            {t.periodComparison}
+          </h3>
+          <div className="space-y-4">
+            {statData.comparison.map((comp, idx) => (
+              <div key={idx} className={`p-3 rounded-lg ${darkMode ? 'bg-emerald-900/30' : 'bg-slate-50'}`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {comp.period}
+                  </span>
+                  <span className={`text-sm font-bold ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+                    {comp.value}
+                  </span>
+                </div>
+                <div className={`text-xs mt-1 flex items-center gap-1 ${
+                  comp.change > 0 ? (darkMode ? 'text-emerald-400' : 'text-emerald-600') : (darkMode ? 'text-red-400' : 'text-red-600')
+                }`}>
+                  {comp.change > 0 ? '↑' : '↓'} {Math.abs(comp.change)}% {t.change}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

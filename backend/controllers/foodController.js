@@ -50,6 +50,9 @@ class FoodController {
       preparation_timestamp: row.preparation_timestamp,
       safety_window_minutes: row.safety_window_minutes,
       expiry_time: row.expiry_time,
+      min_storage_temp_celsius: row.min_storage_temp_celsius ? parseFloat(row.min_storage_temp_celsius) : null,
+      max_storage_temp_celsius: row.max_storage_temp_celsius ? parseFloat(row.max_storage_temp_celsius) : null,
+      availability_time_hours: row.availability_time_hours || null,
       freshness_score: parseFloat(row.freshness_score),
       quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
       urgency_score: row.urgency_score, // 0-100: critical if > 70
@@ -84,6 +87,9 @@ class FoodController {
         longitude,
         address,
         safety_window_minutes = 30,
+        min_storage_temp_celsius = null,
+        max_storage_temp_celsius = null,
+        availability_time_hours = null,
         photo_url = null,
       } = req.body;
 
@@ -101,8 +107,9 @@ class FoodController {
           `INSERT INTO food_posts (
             restaurant_id, food_name, food_type, quantity_servings, description,
             latitude, longitude, address, safety_window_minutes, expiry_time,
+            min_storage_temp_celsius, max_storage_temp_celsius, availability_time_hours,
             photo_url, preparation_timestamp, urgency_score, status, posted_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'POSTED', NOW())`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'POSTED', NOW())`,
           [
             restaurantId,
             food_name,
@@ -114,6 +121,9 @@ class FoodController {
             address,
             safety_window_minutes,
             expiryTime,
+            min_storage_temp_celsius || null,
+            max_storage_temp_celsius || null,
+            availability_time_hours || null,
             photo_url,
             new Date(),
             urgencyScore,

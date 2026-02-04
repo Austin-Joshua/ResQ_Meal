@@ -29,7 +29,7 @@ export const ResQMealApp = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-emerald-50 via-white to-blue-50'
+      darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-gradient-to-br from-emerald-50 via-white to-blue-50'
     }`}>
       {currentPage === 'dashboard' && (
         <Dashboard 
