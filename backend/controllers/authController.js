@@ -90,6 +90,30 @@ exports.register = async (req, res) => {
   }
 };
 
+// Development fallback: all seed users when DB is unavailable (password: password123)
+const DEV_SEED_PASSWORD_HASH = '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm';
+const DEV_SEED_USERS = [
+  { id: 1, name: 'Chef Kumar', email: 'chef@kitchen.com', role: 'restaurant' },
+  { id: 2, name: 'Priya Sharma', email: 'ngo@savechildren.com', role: 'ngo' },
+  { id: 3, name: 'Arjun Rao', email: 'volunteer@community.com', role: 'volunteer' },
+  { id: 4, name: 'Maria Silva', email: 'baker@artisan.com', role: 'restaurant' },
+];
+
+function isDbConnectionError(err) {
+  const code = err && (err.code || err.errno);
+  return !code || code === 'ECONNREFUSED' || code === 'ER_ACCESS_DENIED_ERROR' ||
+    code === 'ER_BAD_DB_ERROR' || code === 'ENOTFOUND' || code === 'ETIMEDOUT' ||
+    (typeof err.message === 'string' && (err.message.includes('connect') || err.message.includes('Connection')));
+}
+
+async function tryDevSeedLogin(email, password) {
+  if (!email || !password) return null;
+  const valid = await bcrypt.compare(password, DEV_SEED_PASSWORD_HASH);
+  if (!valid) return null;
+  const user = DEV_SEED_USERS.find((u) => u.email.toLowerCase() === String(email).toLowerCase());
+  return user || null;
+}
+
 /**
  * POST /api/auth/login
  * Authenticate user and return JWT token
@@ -106,7 +130,28 @@ exports.login = async (req, res) => {
       });
     }
 
-    const connection = await pool.getConnection();
+    let connection;
+    try {
+      connection = await pool.getConnection();
+    } catch (dbErr) {
+      // In development, allow any seed user when DB is unavailable (password: password123)
+      if (process.env.NODE_ENV !== 'production' && isDbConnectionError(dbErr)) {
+        const devUser = await tryDevSeedLogin(email, password);
+        if (devUser) {
+          const token = generateToken(devUser.id, devUser.role);
+          return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: { ...devUser, token },
+          });
+        }
+        return res.status(503).json({
+          success: false,
+          message: 'Database unavailable. Use chef@kitchen.com, volunteer@community.com (or any seed account) with password: password123',
+        });
+      }
+      throw dbErr;
+    }
 
     // Find user by email
     const [users] = await connection.query('SELECT id, name, email, password, role FROM users WHERE email = ?', [
@@ -152,6 +197,20 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    // Development fallback: allow any seed user on any error (e.g. pool undefined)
+    if (process.env.NODE_ENV !== 'production' && req.body?.email && req.body?.password) {
+      try {
+        const devUser = await tryDevSeedLogin(req.body.email, req.body.password);
+        if (devUser) {
+          const token = generateToken(devUser.id, devUser.role);
+          return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: { ...devUser, token },
+          });
+        }
+      } catch (_) { /* ignore */ }
+    }
     return res.status(500).json({
       success: false,
       message: 'Login failed',

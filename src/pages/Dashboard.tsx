@@ -7,6 +7,7 @@ import logoFull from '@/assets/logo-full.png';
 interface DashboardProps {
   onSettingsClick: () => void;
   auth?: { name: string; email: string; role: string } | null;
+  loginKey?: number;
   onOpenSignIn?: () => void;
   onLogout?: () => void;
   darkMode: boolean;
@@ -14,6 +15,16 @@ interface DashboardProps {
   language: 'en' | 'ta' | 'hi';
   setLanguage: (lang: 'en' | 'ta' | 'hi') => void;
 }
+
+/** "Did you know?" facts – one is picked at random each time the user logs in */
+const DID_YOU_KNOW_TIPS = [
+  'Every 1 kg of food rescued saves ~2.5 kg CO₂ and helps feed someone in need.',
+  'Roughly one third of food produced for human consumption is lost or wasted globally each year.',
+  'Food waste in landfills produces methane, a greenhouse gas many times more potent than CO₂.',
+  'Donating surplus food can reduce your organisation’s carbon footprint and support local communities.',
+  'Rescuing just 10% of avoidable food waste could feed millions of people in need.',
+  'Keeping surplus food in the “human consumption” loop saves water, energy, and land used to grow it.',
+];
 
 // Sample chart data
 const impactData = [
@@ -342,18 +353,27 @@ const translations = {
   },
 };
 
-export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = null, onOpenSignIn, onLogout, darkMode, setDarkMode, language, setLanguage }) => {
+function pickRandomTip() {
+  return DID_YOU_KNOW_TIPS[Math.floor(Math.random() * DID_YOU_KNOW_TIPS.length)];
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = null, loginKey = 0, onOpenSignIn, onLogout, darkMode, setDarkMode, language, setLanguage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [didYouKnowTip, setDidYouKnowTip] = useState(() => pickRandomTip());
   const languageMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
 
   const user = auth ?? { name: 'Guest', email: '', role: 'guest', profilePhoto: null };
+
+  useEffect(() => {
+    setDidYouKnowTip(pickRandomTip());
+  }, [loginKey]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -413,24 +433,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
         : 'bg-white'
     }`}>
       
-      {/* Header */}
-      <header className={`sticky top-0 z-40 backdrop-blur-lg transition-all duration-300 border-b ${
+      {/* Header – fixed height so hamburger and logo align with sidebar */}
+      <header className={`sticky top-0 z-40 h-[72px] flex items-center backdrop-blur-lg transition-all duration-300 border-b ${
         darkMode 
           ? 'bg-gradient-to-r from-emerald-950/98 via-blue-950/98 to-slate-950/98 border-emerald-700/40' 
           : 'bg-white border-slate-200'
       }`}>
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-2 rounded-lg transition-all duration-200 ${
+              className={`shrink-0 p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center ${
                 darkMode
                   ? 'hover:bg-emerald-800/40 text-slate-200'
                   : 'hover:bg-slate-200 text-slate-700'
               }`}
               aria-label="Toggle menu"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6" strokeWidth={2} />
             </button>
             <button
               onClick={() => {
@@ -438,10 +458,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 setSelectedFeature(null);
                 setSidebarOpen(false);
               }}
-              className="flex items-center focus:outline-none rounded transition-opacity hover:opacity-90"
+              className="flex items-center justify-center focus:outline-none rounded transition-opacity hover:opacity-90 min-h-[44px]"
               aria-label="ResQ Meal - Back to dashboard"
             >
-              <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-16 sm:h-[4.25rem] w-auto max-w-[280px] sm:max-w-[320px] object-contain" />
+              <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px] object-contain object-left" />
             </button>
           </div>
 
@@ -589,21 +609,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
         </div>
       </header>
 
-      {/* Sidebar / Hamburger Menu: Dashboard, Donor, NGO, Report, About Us */}
-      <aside className={`fixed left-0 top-[73px] h-[calc(100vh-73px)] w-64 transition-all duration-300 transform overflow-y-auto ${
+      {/* Sidebar / Hamburger Menu – aligned with header; nav items left-aligned */}
+      <aside className={`fixed left-0 top-[72px] h-[calc(100vh-72px)] w-64 transition-all duration-300 transform overflow-y-auto ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } ${
         darkMode 
           ? 'bg-gradient-to-b from-emerald-950 to-blue-950 border-r border-emerald-700/30' 
           : 'bg-gradient-to-b from-slate-50 to-emerald-50/80 border-r border-slate-200/50'
       } backdrop-blur-lg z-30`}>
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1" aria-label="Main navigation">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => {
                   if (item.id === 'settings') {
                     setSidebarOpen(false);
@@ -614,7 +635,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                     setSelectedFeature(null);
                   }
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left ${
                   isActive
                     ? darkMode
                       ? 'bg-gradient-to-r from-emerald-600/30 to-blue-600/25 shadow-lg border border-emerald-500/40'
@@ -624,8 +645,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                     : 'hover:bg-slate-200/30 text-slate-800'
                 }`}
               >
-                <Icon className="w-5 h-5 shrink-0" />
-                <span className={`font-semibold transition-all duration-200 ${
+                <Icon className="w-5 h-5 shrink-0 flex items-center justify-center" aria-hidden />
+                <span className={`font-semibold transition-all duration-200 truncate ${
                   isActive ? (darkMode ? 'text-emerald-200' : 'text-emerald-700') : (darkMode ? 'text-slate-200' : 'text-slate-700')
                 }`}>
                   {item.label}
@@ -638,11 +659,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
 
       {/* Main Content */}
       <main className={`w-full max-w-full min-w-0 ${sidebarOpen ? 'md:ml-64' : ''} transition-all duration-300`}>
-        {/* Dashboard Page */}
+        {/* Dashboard Page – consistent max-width and text alignment */}
         {activePage === 'dashboard' && (
-          <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+          <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
             {/* Welcome Card */}
-            <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border ${
+            <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border text-left ${
               darkMode
                 ? 'bg-gradient-to-br from-emerald-900/50 to-blue-900/50 border-emerald-600/30 shadow-xl'
                 : 'bg-white border-slate-200 shadow-sm'
@@ -655,14 +676,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               </p>
             </div>
 
-            {/* Quick Actions - Minimized */}
-            <div className={`rounded-xl p-3 transition-all duration-300 border ${
+            {/* Quick Actions – left-aligned */}
+            <div className={`rounded-xl p-4 transition-all duration-300 border text-left ${
               darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
             }`}>
-              <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
+              <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                 {t.quickActions}
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 justify-start">
                 <button
                   onClick={() => setActivePage('post')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
@@ -690,61 +711,70 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               </div>
             </div>
 
-            {/* Today's Activity + Pending / Active */}
+            {/* Today's Activity + Pending / Active – text left-aligned */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+              <div className={`rounded-2xl p-6 transition-all duration-300 border text-left ${
                 darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
               }`}>
                 <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
-                  <Clock className="w-4 h-4" /> {t.recentActivity}
+                  <Clock className="w-4 h-4 shrink-0" /> {t.recentActivity}
                 </h3>
-                <ul className={`space-y-2 text-sm ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                  <li className="flex items-center gap-2">✓ 2 {t.postsMatchedToday}</li>
-                  <li className="flex items-center gap-2">✓ 1 {t.deliveryCompleted}</li>
-                  <li className="flex items-center gap-2">○ 1 {t.matchAwaiting}</li>
+                <ul className={`space-y-3 text-sm text-left ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  <li className="flex items-center gap-2 text-left">
+                    <span className="shrink-0" aria-hidden>✓</span>
+                    <span>2 {t.postsMatchedToday}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-left">
+                    <span className="shrink-0" aria-hidden>✓</span>
+                    <span>1 {t.deliveryCompleted}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-left">
+                    <span className="shrink-0" aria-hidden>○</span>
+                    <span>1 {t.matchAwaiting}</span>
+                  </li>
                 </ul>
               </div>
-              <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+              <div className={`rounded-2xl p-6 transition-all duration-300 border text-left ${
                 darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
               }`}>
                 <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                   {t.howYouCanHelp}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-amber-600/20' : 'bg-amber-50'}`}>
+                  <div className={`p-4 rounded-xl text-left ${darkMode ? 'bg-amber-600/20' : 'bg-amber-50'}`}>
                     <p className={`text-2xl font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>3</p>
-                    <p className={`text-xs font-medium ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.pendingMatches}</p>
+                    <p className={`text-xs font-medium mt-1 ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.pendingMatches}</p>
                   </div>
-                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-emerald-600/20' : 'bg-emerald-50'}`}>
+                  <div className={`p-4 rounded-xl text-left ${darkMode ? 'bg-emerald-600/20' : 'bg-emerald-50'}`}>
                     <p className={`text-2xl font-bold ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>1</p>
-                    <p className={`text-xs font-medium ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.activeDeliveries}</p>
+                    <p className={`text-xs font-medium mt-1 ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.activeDeliveries}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Did you know tip - Minimized */}
-            <div className={`rounded-xl p-3 transition-all duration-300 border ${
+            {/* Did you know tip – left-aligned */}
+            <div className={`rounded-xl p-4 transition-all duration-300 border text-left ${
               darkMode ? 'bg-emerald-900/25 border-emerald-600/30' : 'bg-amber-50 border-amber-200'
             }`}>
-              <p className={`text-xs font-semibold flex items-center gap-1.5 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
-                <Leaf className="w-3 h-3" /> {t.didYouKnow}
+              <p className={`text-sm font-semibold flex items-center gap-2 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
+                <Leaf className="w-4 h-4 shrink-0" /> {t.didYouKnow}
               </p>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-200' : 'text-amber-900/90'}`}>
-                {t.tipText}
+              <p className={`text-sm mt-2 pl-6 ${darkMode ? 'text-slate-200' : 'text-amber-900/90'}`}>
+                {didYouKnowTip}
               </p>
             </div>
 
-            {/* Needed food areas – map */}
-            <div className={`rounded-2xl overflow-hidden transition-all duration-300 border ${
+            {/* Needed food areas – map – text left-aligned */}
+            <div className={`rounded-2xl overflow-hidden transition-all duration-300 border text-left ${
               darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <h3 className={`text-sm font-bold uppercase tracking-wider px-4 py-3 flex items-center gap-2 border-b ${
                 darkMode ? 'text-amber-400 border-emerald-700/30' : 'text-slate-600 border-slate-100'
               }`}>
-                <MapPin className="w-4 h-4" /> {t.neededFoodMap}
+                <MapPin className="w-4 h-4 shrink-0" /> {t.neededFoodMap}
               </h3>
-              <div className="relative w-full aspect-[16/10] min-h-[280px] bg-slate-100">
+              <div className="relative w-full aspect-[16/9] min-h-[320px] max-h-[50vh] bg-slate-100">
                 <iframe
                   title="Needed food areas map"
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d497512.457502766!2d79.5!3d13.0827!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5265ea4f7d3361%3A0x50e27e77c60c6d4a!2sChennai%2C%20Tamil%20Nadu%2C%20India!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
@@ -754,18 +784,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
-              <p className={`text-xs px-4 py-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-sm px-4 py-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                 View areas where surplus food is needed. Zoom and pan to explore.
               </p>
             </div>
 
-            {/* Feature Cards Grid */}
+            {/* Feature Cards Grid – text left-aligned */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {features.map((feature) => (
                 <button
                   key={feature.id}
+                  type="button"
                   onClick={() => setActivePage(feature.id as any)}
-                  className={`group relative rounded-2xl p-8 transition-all duration-300 transform hover:scale-105 cursor-pointer overflow-hidden border ${
+                  className={`group relative rounded-2xl p-8 transition-all duration-300 transform hover:scale-105 cursor-pointer overflow-hidden border text-left ${
                     darkMode
                       ? 'shadow-xl border-emerald-600/25 bg-gradient-to-br from-emerald-900/50 to-blue-900/60'
                       : 'shadow-lg border-blue-200/60 bg-gradient-to-br from-white to-blue-100'
@@ -774,7 +805,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                   <div
                     className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
                   />
-                  <div className="relative">
+                  <div className="relative text-left">
                     <div className="text-5xl mb-3">{feature.icon}</div>
                     <h3
                       className={`text-xl font-bold mb-2 ${
@@ -795,7 +826,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               ))}
             </div>
 
-            {/* Stats Grid */}
+            {/* Stats Grid – text left-aligned */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
                 { id: 'mealsSaved', icon: '🍽️', label: t.mealsSaved, value: '3,450', color: 'from-emerald-500/30 to-emerald-600/30', border: 'emerald' },
@@ -805,18 +836,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               ].map((stat) => (
                 <button
                   key={stat.id}
+                  type="button"
                   onClick={() => {
                     setSelectedStat(stat.id);
                     setActivePage(stat.id as any);
                   }}
-                  className={`rounded-2xl p-6 transition-all duration-300 border cursor-pointer transform hover:scale-105 ${
+                  className={`rounded-2xl p-6 transition-all duration-300 border cursor-pointer transform hover:scale-105 text-left ${
                     darkMode
                       ? `bg-gradient-to-br ${stat.color} border-emerald-600/30 shadow-lg hover:shadow-xl`
                       : `bg-gradient-to-br ${stat.color} border-slate-300/50 shadow-md hover:shadow-lg`
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
                       <p className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                         {stat.label}
                       </p>
@@ -824,14 +856,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                         {stat.value}
                       </p>
                     </div>
-                    <span className="text-4xl opacity-50">{stat.icon}</span>
+                    <span className="text-4xl opacity-50 shrink-0" aria-hidden>{stat.icon}</span>
                   </div>
                 </button>
               ))}
             </div>
 
-            {/* Chart Card */}
-            <div className={`rounded-2xl p-8 transition-all duration-300 border ${
+{/* Chart Card – text left-aligned */}
+            <div className={`rounded-2xl p-8 transition-all duration-300 border text-left ${
               darkMode
                 ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-emerald-600/30 shadow-xl'
                 : 'bg-gradient-to-br from-slate-50 to-emerald-50/15 border-slate-300/50 shadow-lg'
@@ -840,7 +872,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 <h3 className={`text-2xl font-bold flex items-center gap-2 ${
                   darkMode ? 'text-yellow-300' : 'text-slate-900'
                 }`}>
-                  <TrendingUp className="w-6 h-6" />
+                  <TrendingUp className="w-6 h-6 shrink-0" />
                   {t.weeklyTrend}
                 </h3>
               </div>

@@ -227,7 +227,7 @@ const DeliveryTrackingPage: React.FC<DeliveryTrackingPageProps> = ({ darkMode, o
               darkMode ? 'bg-gray-800' : 'bg-white'
             } shadow-lg`}>
               {/* Map placeholder - Google Maps will be integrated here */}
-              <div className={`w-full h-96 flex items-center justify-center ${
+              <div className={`w-full min-h-[420px] h-[50vh] max-h-[600px] flex items-center justify-center ${
                 darkMode ? 'bg-gray-700' : 'bg-gray-200'
               }`}>
                 <div className="text-center">

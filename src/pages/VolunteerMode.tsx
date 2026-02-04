@@ -1,22 +1,46 @@
-import React from 'react';
-import { Truck, LogOut, Package } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Truck, LogOut, Package, Sun, Moon, Globe, ChevronDown } from 'lucide-react';
 import { deliveryApi } from '@/services/api';
+
+const languageLabels = { en: 'English', ta: 'Tamil', hi: 'Hindi' };
 
 interface VolunteerModeProps {
   darkMode: boolean;
+  setDarkMode?: (v: boolean) => void;
+  language?: 'en' | 'ta' | 'hi';
+  setLanguage?: (v: 'en' | 'ta' | 'hi') => void;
   user: { name: string; email: string; role: string };
   onLogout: () => void;
 }
 
-const VolunteerMode: React.FC<VolunteerModeProps> = ({ darkMode, user, onLogout }) => {
+const VolunteerMode: React.FC<VolunteerModeProps> = ({
+  darkMode,
+  setDarkMode,
+  language = 'en',
+  setLanguage,
+  user,
+  onLogout,
+}) => {
   const [deliveries, setDeliveries] = React.useState<Array<{ id: string; food_name: string; status: string; address?: string }>>([]);
   const [loading, setLoading] = React.useState(true);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const languageMenuRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     deliveryApi.getVolunteerDeliveries()
       .then((res) => setDeliveries(Array.isArray(res.data?.data) ? res.data.data : res.data ? [res.data] : []))
       .catch(() => setDeliveries([]))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(e.target as Node)) {
+        setLanguageMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -34,10 +58,51 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({ darkMode, user, onLogout 
               Volunteer Mode
             </h1>
           </div>
-          <div className="flex items-center gap-3">
-            <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-              {user.name}
-            </span>
+          <div className="flex items-center gap-2">
+            {setLanguage && (
+              <div className="relative" ref={languageMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    darkMode ? 'bg-emerald-800/30 text-slate-200 hover:bg-emerald-700/40' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                  <span>{languageLabels[language]}</span>
+                  <ChevronDown className={`w-4 h-4 ${languageMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {languageMenuOpen && (
+                  <div className={`absolute right-0 top-full mt-1 min-w-[140px] rounded-lg border shadow-lg py-1 z-50 ${
+                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-slate-200'
+                  }`}>
+                    {(['en', 'ta', 'hi'] as const).map((lang) => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => { setLanguage(lang); setLanguageMenuOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-sm ${
+                          language === lang ? (darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-50 text-emerald-800') : (darkMode ? 'text-slate-200 hover:bg-emerald-900/40' : 'text-slate-700 hover:bg-slate-100')
+                        }`}
+                      >
+                        {languageLabels[lang]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {setDarkMode && (
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2.5 rounded-lg transition ${darkMode ? 'hover:bg-emerald-800/40 text-slate-200' : 'hover:bg-slate-200 text-slate-700'}`}
+                title={darkMode ? 'Light mode' : 'Dark mode'}
+              >
+                {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+              </button>
+            )}
+            <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{user.name}</span>
             <button
               type="button"
               onClick={onLogout}

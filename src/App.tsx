@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useMemo } from "react";
+import { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,7 +39,9 @@ const App = () => {
   const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(false);
-  const [darkMode] = useState(() => {
+  /** Changes on each login so Dashboard can refresh "Did you know?" tip */
+  const [loginKey, setLoginKey] = useState(() => Date.now());
+  const [darkMode, setDarkMode] = useState(() => {
     try {
       const saved = localStorage.getItem("darkMode");
       return saved ? JSON.parse(saved) : false;
@@ -47,12 +49,33 @@ const App = () => {
       return false;
     }
   });
+  const [language, setLanguage] = useState<"en" | "ta" | "hi">(() => {
+    try {
+      const saved = localStorage.getItem("resqmeal_lang") as "en" | "ta" | "hi" | null;
+      return saved && ["en", "ta", "hi"].includes(saved) ? saved : "en";
+    } catch {
+      return "en";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("darkMode", JSON.stringify(darkMode));
+      document.documentElement.classList.toggle("dark", darkMode);
+    } catch {}
+  }, [darkMode]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("resqmeal_lang", language);
+    } catch {}
+  }, [language]);
 
   const handleLoginSuccess = (user: LoginSuccessUser, token: string) => {
     localStorage.setItem(STORAGE_TOKEN, token);
     localStorage.setItem(STORAGE_USER, JSON.stringify(user));
     setAuth({ token, user });
     setShowLoginModal(false);
+    setLoginKey(Date.now());
   };
 
   const handleLogout = () => {
@@ -70,7 +93,10 @@ const App = () => {
         <LoginPage
           darkMode={darkMode}
           onSuccess={handleLoginSuccess}
-          onBrowseWithoutSignIn={() => setShowBaseWithoutAuth(true)}
+          onBrowseWithoutSignIn={() => {
+          setShowBaseWithoutAuth(true);
+          setLoginKey(Date.now());
+        }}
         />
       );
     }
@@ -78,6 +104,9 @@ const App = () => {
       return (
         <OrganisationReport
           darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
           user={auth.user}
           onLogout={handleLogout}
         />
@@ -87,12 +116,13 @@ const App = () => {
       <Suspense fallback={<BaseAppFallback />}>
         <ResQMealApp
           auth={auth?.user ?? null}
+          loginKey={loginKey}
           onOpenSignIn={() => setShowLoginModal(true)}
           onLogout={auth?.user ? handleLogout : undefined}
         />
       </Suspense>
     );
-  }, [auth, darkMode, isOrgAdmin, showSignInPageFirst]);
+  }, [auth, darkMode, language, isOrgAdmin, showSignInPageFirst]);
 
   return (
     <QueryClientProvider client={queryClient}>

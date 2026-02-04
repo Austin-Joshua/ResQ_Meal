@@ -11,11 +11,12 @@ export interface BaseAuthUser {
 
 interface ResQMealAppProps {
   auth?: BaseAuthUser | null;
+  loginKey?: number;
   onOpenSignIn?: () => void;
   onLogout?: () => void;
 }
 
-export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, onOpenSignIn, onLogout }) => {
+export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey = 0, onOpenSignIn, onLogout }) => {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
   const [darkMode, setDarkMode] = useState(() => {
     try {
@@ -48,6 +49,7 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, onOpenSig
         <Dashboard 
           onSettingsClick={() => setCurrentPage('settings')}
           auth={auth}
+          loginKey={loginKey}
           onOpenSignIn={onOpenSignIn}
           onLogout={onLogout}
           darkMode={darkMode}

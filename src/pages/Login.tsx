@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, LogIn, AlertCircle } from 'lucide-react';
+import { Lock, Mail, LogIn, AlertCircle, Loader2 } from 'lucide-react';
 import { authApi } from '@/services/api';
 import logoMark from '@/assets/logo-mark.png';
 
@@ -21,6 +21,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const clearError = () => setError(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,11 +69,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
-                darkMode ? 'bg-red-900/30 text-red-300 border border-red-700/50' : 'bg-red-50 text-red-700 border border-red-200'
-              }`}>
+              <div
+                role="alert"
+                className={`flex items-center gap-2 p-3 rounded-lg text-sm animate-in fade-in duration-200 ${
+                  darkMode ? 'bg-red-900/30 text-red-300 border border-red-700/50' : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+              >
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                {error}
+                <span>{error}</span>
               </div>
             )}
 
@@ -85,10 +90,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
                   id="login-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); clearError(); }}
                   placeholder="you@example.com"
                   required
                   autoComplete="email"
+                  disabled={loading}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-lg border transition ${
                     darkMode
                       ? 'bg-emerald-900/50 border-emerald-600/40 text-white placeholder-slate-400 focus:border-emerald-500'
@@ -108,10 +114,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
                   id="login-password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); clearError(); }}
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
+                  disabled={loading}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-lg border transition ${
                     darkMode
                       ? 'bg-emerald-900/50 border-emerald-600/40 text-white placeholder-slate-400 focus:border-emerald-500'
@@ -124,13 +131,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
             <button
               type="submit"
               disabled={loading}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition disabled:opacity-50 ${
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed ${
                 darkMode
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 active:scale-[0.99]'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-500 active:scale-[0.99]'
               }`}
             >
-              <LogIn className="w-5 h-5" />
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
+              ) : (
+                <LogIn className="w-5 h-5" />
+              )}
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>

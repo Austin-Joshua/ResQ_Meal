@@ -268,7 +268,7 @@ const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
       {/* Map Container */}
       <div
         ref={mapContainer}
-        className={`w-full h-96 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} min-h-[400px]`}
+        className={`w-full min-h-[420px] h-[50vh] max-h-[600px] ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
       />
 
       {/* Details Section */}
