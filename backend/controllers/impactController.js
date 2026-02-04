@@ -184,3 +184,99 @@ class ImpactController {
 }
 
 module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;
+        res.json({ timeline });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching impact timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch impact timeline' });
+    }
+  }
+}
+
+module.exports = ImpactController;

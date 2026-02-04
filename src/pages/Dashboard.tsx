@@ -126,7 +126,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
     <div className={`min-h-screen transition-all duration-300 ${
       darkMode 
         ? 'bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950' 
-        : 'bg-gradient-to-br from-blue-50 via-emerald-50 to-yellow-50'
+        : 'bg-gradient-to-br from-blue-100 via-blue-200 to-emerald-50'
     }`}>
       
       {/* Header */}
@@ -147,13 +147,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             >
               {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <div className="flex items-center gap-2">
-              <div className="text-3xl">🌱</div>
-              <div>
-                <h1 className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>ResQ Meal</h1>
-                <p className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>Food Rescue Platform</p>
+              <div className="flex items-center gap-2">
+                <div className="text-3xl">🌱</div>
+                <div>
+                  <h1 className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>ResQ Meal</h1>
+                  <p className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Food Rescue Platform</p>
+                </div>
               </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -308,7 +308,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             <div className={`rounded-2xl p-8 transition-all duration-300 border ${
               darkMode
                 ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
-                : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+                : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200/70 shadow-lg'
             }`}>
               <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
                 {t.welcome}
@@ -324,15 +324,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                 <button
                   key={feature.id}
                   onClick={() => setActivePage(feature.id as any)}
-                  className={`group rounded-2xl p-8 transition-all duration-300 transform hover:scale-105 cursor-pointer overflow-hidden border ${
-                    darkMode ? 'shadow-xl border-yellow-600/20' : 'shadow-lg border-blue-300/30'
+                  className={`group relative rounded-2xl p-8 transition-all duration-300 transform hover:scale-105 cursor-pointer overflow-hidden border ${
+                    darkMode
+                      ? 'shadow-xl border-yellow-600/20 bg-gradient-to-br from-blue-900/60 to-slate-900/60'
+                      : 'shadow-lg border-blue-200/60 bg-gradient-to-br from-white to-blue-100'
                   }`}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                  />
                   <div className="relative">
                     <div className="text-5xl mb-3">{feature.icon}</div>
-                    <h3 className="text-xl font-bold text-white mb-2">{feature.label}</h3>
-                    <p className="text-white/80 text-sm">Get started now</p>
+                    <h3
+                      className={`text-xl font-bold mb-2 ${
+                        darkMode ? 'text-white' : 'text-slate-900'
+                      }`}
+                    >
+                      {feature.label}
+                    </h3>
+                    <p
+                      className={`text-sm ${
+                        darkMode ? 'text-blue-100/80' : 'text-slate-700'
+                      }`}
+                    >
+                      Get started now
+                    </p>
                   </div>
                 </button>
               ))}
@@ -356,10 +372,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className={`text-sm font-semibold ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+                      <p className={`text-sm font-semibold ${darkMode ? 'text-blue-200' : 'text-slate-700'}`}>
                         {stat.label}
                       </p>
-                      <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+                      <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
                         {stat.value}
                       </p>
                     </div>
