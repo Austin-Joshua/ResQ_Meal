@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Globe, Building2, Heart, TrendingUp } from 'lucide-react';
+import { Moon, Sun, Globe, Building2, Heart, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SettingsPageProps {
   darkMode: boolean;
@@ -10,6 +10,11 @@ interface SettingsPageProps {
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMode, language: propLanguage, setLanguage: propSetLanguage }) => {
   const [language, setLanguageLocal] = useState<'en' | 'ta' | 'hi'>(propLanguage || 'en');
+  const [expandedSections, setExpandedSections] = useState({
+    userDetails: false,
+    orgInfo: false,
+    donationStats: false,
+  });
   
   const currentLanguage = propLanguage || language;
   const handleLanguageChange = (lang: 'en' | 'ta' | 'hi') => {
@@ -18,6 +23,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
     } else {
       setLanguageLocal(lang);
     }
+  };
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
   };
 
   const t = (key: string): string => {
@@ -158,321 +170,366 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         </h1>
 
         {/* User Details Section */}
-        <div className={`rounded-2xl p-8 mb-8 transition border ${
+        <div className={`rounded-2xl transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
         }`}>
-          <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${
-            darkMode ? 'text-yellow-300' : 'text-blue-700'
-          }`}>
-            👤 {t('userDetails')}
-          </h2>
+          <button
+            onClick={() => toggleSection('userDetails')}
+            className={`w-full px-8 py-6 flex items-center justify-between transition-all duration-200 hover:opacity-80`}
+          >
+            <h2 className={`text-2xl font-bold flex items-center gap-2 ${
+              darkMode ? 'text-yellow-300' : 'text-blue-700'
+            }`}>
+              👤 {t('userDetails')}
+            </h2>
+            {expandedSections.userDetails ? (
+              <ChevronUp className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`} />
+            ) : (
+              <ChevronDown className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`} />
+            )}
+          </button>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('name')}
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+          {expandedSections.userDetails && (
+            <div className="px-8 pb-8 space-y-4 border-t" style={{
+              borderColor: darkMode ? 'rgba(217, 119, 6, 0.2)' : 'rgba(59, 130, 246, 0.2)'
+            }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('name')}
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('email')}
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('email')}
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('phone')}
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('phone')}
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('address')}
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('address')}
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('role')}
-                </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 focus:border-blue-500'
-                  }`}
-                >
-                  <option value="restaurant">{t('restaurant')}</option>
-                  <option value="ngo">{t('ngo')}</option>
-                  <option value="volunteer">{t('volunteer')}</option>
-                </select>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('role')}
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 focus:border-blue-500'
+                    }`}
+                  >
+                    <option value="restaurant">{t('restaurant')}</option>
+                    <option value="ngo">{t('ngo')}</option>
+                    <option value="volunteer">{t('volunteer')}</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Organization Information Section */}
-        <div className={`rounded-2xl p-8 mb-8 transition border ${
+        <div className={`rounded-2xl mb-8 transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
         }`}>
-          <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${
-            darkMode ? 'text-yellow-300' : 'text-blue-700'
-          }`}>
-            <Building2 className="w-6 h-6" /> {t('organizationInfo')}
-          </h2>
+          <button
+            onClick={() => toggleSection('orgInfo')}
+            className={`w-full px-8 py-6 flex items-center justify-between transition-all duration-200 hover:opacity-80`}
+          >
+            <h2 className={`text-2xl font-bold flex items-center gap-2 ${
+              darkMode ? 'text-yellow-300' : 'text-blue-700'
+            }`}>
+              <Building2 className="w-6 h-6" /> {t('organizationInfo')}
+            </h2>
+            {expandedSections.orgInfo ? (
+              <ChevronUp className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`} />
+            ) : (
+              <ChevronDown className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`} />
+            )}
+          </button>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('orgName')}
-                </label>
-                <input
-                  type="text"
-                  name="orgName"
-                  value={formData.orgName}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+          {expandedSections.orgInfo && (
+            <div className="px-8 pb-8 space-y-4 border-t" style={{
+              borderColor: darkMode ? 'rgba(217, 119, 6, 0.2)' : 'rgba(59, 130, 246, 0.2)'
+            }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('orgName')}
+                  </label>
+                  <input
+                    type="text"
+                    name="orgName"
+                    value={formData.orgName}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('orgType')}
-                </label>
-                <input
-                  type="text"
-                  name="orgType"
-                  value={formData.orgType}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('orgType')}
+                  </label>
+                  <input
+                    type="text"
+                    name="orgType"
+                    value={formData.orgType}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('license')}
-                </label>
-                <input
-                  type="text"
-                  name="license"
-                  value={formData.license}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('license')}
+                  </label>
+                  <input
+                    type="text"
+                    name="license"
+                    value={formData.license}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('website')}
-                </label>
-                <input
-                  type="text"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
-              </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('website')}
+                  </label>
+                  <input
+                    type="text"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${
-                  darkMode ? 'text-blue-200' : 'text-slate-700'
-                }`}>
-                  {t('registrationDate')}
-                </label>
-                <input
-                  type="date"
-                  name="registrationDate"
-                  value={formData.registrationDate}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
-                    darkMode
-                      ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
-                      : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
-                  }`}
-                />
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    darkMode ? 'text-blue-200' : 'text-slate-700'
+                  }`}>
+                    {t('registrationDate')}
+                  </label>
+                  <input
+                    type="date"
+                    name="registrationDate"
+                    value={formData.registrationDate}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
+                      darkMode
+                        ? 'bg-blue-900/50 border-yellow-600/50 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                        : 'bg-white border-blue-300 text-slate-900 placeholder-slate-400 focus:border-blue-500'
+                    }`}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Donation Statistics Section */}
-        <div className={`rounded-2xl p-8 mb-8 transition border ${
+        <div className={`rounded-2xl mb-8 transition border ${
           darkMode 
             ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl' 
             : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
         }`}>
-          <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${
-            darkMode ? 'text-yellow-300' : 'text-blue-700'
-          }`}>
-            <Heart className="w-6 h-6" /> {t('donationStats')}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className={`rounded-xl p-4 ${
-              darkMode
-                ? 'bg-blue-900/30 border border-yellow-600/20'
-                : 'bg-blue-200/20 border border-blue-300/30'
-            }`}>
-              <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{t('totalDonations')}</p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-                {donationData.totalDonations}
-              </p>
-            </div>
-
-            <div className={`rounded-xl p-4 ${
-              darkMode
-                ? 'bg-blue-900/30 border border-yellow-600/20'
-                : 'bg-blue-200/20 border border-blue-300/30'
-            }`}>
-              <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{t('mealsContributed')}</p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-                {donationData.mealsContributed.toLocaleString()}
-              </p>
-            </div>
-
-            <div className={`rounded-xl p-4 ${
-              darkMode
-                ? 'bg-blue-900/30 border border-yellow-600/20'
-                : 'bg-blue-200/20 border border-blue-300/30'
-            }`}>
-              <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{t('moneyValue')}</p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-                {donationData.estimatedValue}
-              </p>
-            </div>
-          </div>
-
-          {/* Impact Metrics */}
-          <div>
-            <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${
+          <button
+            onClick={() => toggleSection('donationStats')}
+            className={`w-full px-8 py-6 flex items-center justify-between transition-all duration-200 hover:opacity-80`}
+          >
+            <h2 className={`text-2xl font-bold flex items-center gap-2 ${
               darkMode ? 'text-yellow-300' : 'text-blue-700'
             }`}>
-              <TrendingUp className="w-5 h-5" /> {t('impactContribution')}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className={`rounded-xl p-4 ${
-                darkMode
-                  ? 'bg-emerald-900/30 border border-emerald-600/20'
-                  : 'bg-emerald-200/20 border border-emerald-300/30'
-              }`}>
-                <p className={`text-sm ${darkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>🌱 CO₂ Saved</p>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-emerald-700'}`}>
-                  {donationData.co2Saved}
-                </p>
+              <Heart className="w-6 h-6" /> {t('donationStats')}
+            </h2>
+            {expandedSections.donationStats ? (
+              <ChevronUp className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`} />
+            ) : (
+              <ChevronDown className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`} />
+            )}
+          </button>
+
+          {expandedSections.donationStats && (
+            <div className="px-8 pb-8 pt-6 border-t space-y-6" style={{
+              borderColor: darkMode ? 'rgba(217, 119, 6, 0.2)' : 'rgba(59, 130, 246, 0.2)'
+            }}>
+              {/* Donation Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`rounded-xl p-4 ${
+                  darkMode
+                    ? 'bg-blue-900/30 border border-yellow-600/20'
+                    : 'bg-blue-200/20 border border-blue-300/30'
+                }`}>
+                  <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{t('totalDonations')}</p>
+                  <p className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+                    {donationData.totalDonations}
+                  </p>
+                </div>
+
+                <div className={`rounded-xl p-4 ${
+                  darkMode
+                    ? 'bg-blue-900/30 border border-yellow-600/20'
+                    : 'bg-blue-200/20 border border-blue-300/30'
+                }`}>
+                  <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{t('mealsContributed')}</p>
+                  <p className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+                    {donationData.mealsContributed.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className={`rounded-xl p-4 ${
+                  darkMode
+                    ? 'bg-blue-900/30 border border-yellow-600/20'
+                    : 'bg-blue-200/20 border border-blue-300/30'
+                }`}>
+                  <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{t('moneyValue')}</p>
+                  <p className={`text-3xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+                    {donationData.estimatedValue}
+                  </p>
+                </div>
               </div>
 
-              <div className={`rounded-xl p-4 ${
-                darkMode
-                  ? 'bg-blue-900/30 border border-blue-600/20'
-                  : 'bg-blue-200/20 border border-blue-300/30'
-              }`}>
-                <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>💧 Water Saved</p>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
-                  {donationData.waterSaved}
-                </p>
-              </div>
+              {/* Impact Metrics */}
+              <div>
+                <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${
+                  darkMode ? 'text-yellow-300' : 'text-blue-700'
+                }`}>
+                  <TrendingUp className="w-5 h-5" /> {t('impactContribution')}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className={`rounded-xl p-4 ${
+                    darkMode
+                      ? 'bg-emerald-900/30 border border-emerald-600/20'
+                      : 'bg-emerald-200/20 border border-emerald-300/30'
+                  }`}>
+                    <p className={`text-sm ${darkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>🌱 CO₂ Saved</p>
+                    <p className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-emerald-700'}`}>
+                      {donationData.co2Saved}
+                    </p>
+                  </div>
 
-              <div className={`rounded-xl p-4 ${
-                darkMode
-                  ? 'bg-pink-900/30 border border-pink-600/20'
-                  : 'bg-pink-200/20 border border-pink-300/30'
-              }`}>
-                <p className={`text-sm ${darkMode ? 'text-pink-200' : 'text-pink-700'}`}>👨‍👩‍👧‍👦 Families Helped</p>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-pink-700'}`}>
-                  {donationData.familiesHelped.toLocaleString()}
-                </p>
+                  <div className={`rounded-xl p-4 ${
+                    darkMode
+                      ? 'bg-blue-900/30 border border-blue-600/20'
+                      : 'bg-blue-200/20 border border-blue-300/30'
+                  }`}>
+                    <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>💧 Water Saved</p>
+                    <p className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+                      {donationData.waterSaved}
+                    </p>
+                  </div>
+
+                  <div className={`rounded-xl p-4 ${
+                    darkMode
+                      ? 'bg-pink-900/30 border border-pink-600/20'
+                      : 'bg-pink-200/20 border border-pink-300/30'
+                  }`}>
+                    <p className={`text-sm ${darkMode ? 'text-pink-200' : 'text-pink-700'}`}>👨‍👩‍👧‍👦 Families Helped</p>
+                    <p className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-pink-700'}`}>
+                      {donationData.familiesHelped.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Preferences Section */}

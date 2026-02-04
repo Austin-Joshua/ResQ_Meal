@@ -165,7 +165,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang)}
-                  className={`px-2 py-1 rounded text-xs font-semibold transition-all duration-200 ${
+                  className={`px-3 py-1 rounded text-xs font-bold transition-all duration-200 ${
                     language === lang
                       ? darkMode
                         ? 'bg-yellow-500 text-slate-900'
@@ -174,6 +174,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                       ? 'text-yellow-200 hover:text-yellow-300'
                       : 'text-blue-600 hover:text-blue-700'
                   }`}
+                  title={lang === 'en' ? 'English' : lang === 'ta' ? 'Tamil' : 'Hindi'}
                 >
                   {lang.toUpperCase()}
                 </button>
