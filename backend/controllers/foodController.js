@@ -1,0 +1,326 @@
+const { pool } = require('../server');
+
+class FoodController {
+  
+  /**
+   * Calculate urgency score based on:
+   * - Time remaining (0-40 = far, 41-70 = medium, 71-100 = urgent)
+   * - Quantity (excess = higher urgency)
+   */
+  static calculateUrgencyScore(safetyWindowMinutes, quantityServings) {
+    let score = 50; // default baseline
+    
+    // Reduce score if lots of time left
+    if (safetyWindowMinutes > 120) {
+      score -= 15;
+    } else if (safetyWindowMinutes > 60) {
+      score -= 5;
+    } else if (safetyWindowMinutes <= 30) {
+      score += 25; // urgent if little time
+    }
+    
+    // Increase score for large quantities
+    if (quantityServings > 50) {
+      score += 20;
+    } else if (quantityServings > 30) {
+      score += 10;
+    }
+    
+    return Math.min(100, Math.max(0, score)); // clamp 0-100
+  }
+
+  static formatFoodResponse(row) {
+    return {
+      id: row.id,
+      restaurant_id: row.restaurant_id,
+      food_name: row.food_name,
+      food_type: row.food_type,
+      quantity_servings: row.quantity_servings,
+      description: row.description,
+      location: {
+        latitude: row.latitude,
+        longitude: row.longitude,
+        address: row.address,
+      },
+      photo_url: row.photo_url,
+      preparation_timestamp: row.preparation_timestamp,
+      safety_window_minutes: row.safety_window_minutes,
+      expiry_time: row.expiry_time,
+      freshness_score: parseFloat(row.freshness_score),
+      quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
+      urgency_score: row.urgency_score, // 0-100: critical if > 70
+      status: row.status, // POSTED | MATCHED | ACCEPTED | PICKED_UP | DELIVERED | EXPIRED
+      // Timeline support for UI
+      timestamps: {
+        posted_at: row.posted_at,
+        matched_at: row.matched_at,
+        accepted_at: row.accepted_at,
+        picked_up_at: row.picked_up_at,
+        delivered_at: row.delivered_at,
+        expired_at: row.expired_at,
+      },
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    };
+  }
+
+  /**
+   * POST /api/food
+   * Restaurant posts excess food
+   */
+  static async postFood(req, res) {
+    try {
+      const restaurantId = req.user.id;
+      const {
+        food_name,
+        food_type,
+        quantity_servings,
+        description,
+        latitude,
+        longitude,
+        address,
+        safety_window_minutes = 30,
+        photo_url = null,
+      } = req.body;
+
+      // Validate
+      if (!food_name || !food_type || !quantity_servings || !address) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const expiryTime = new Date(Date.now() + safety_window_minutes * 60000);
+      const urgencyScore = FoodController.calculateUrgencyScore(safety_window_minutes, quantity_servings);
+
+      const connection = await pool.getConnection();
+      try {
+        const [result] = await connection.query(
+          `INSERT INTO food_posts (
+            restaurant_id, food_name, food_type, quantity_servings, description,
+            latitude, longitude, address, safety_window_minutes, expiry_time,
+            photo_url, preparation_timestamp, urgency_score, status, posted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'POSTED', NOW())`,
+          [
+            restaurantId,
+            food_name,
+            food_type,
+            quantity_servings,
+            description || null,
+            latitude || null,
+            longitude || null,
+            address,
+            safety_window_minutes,
+            expiryTime,
+            photo_url,
+            new Date(),
+            urgencyScore,
+          ]
+        );
+
+        const [newPost] = await connection.query(
+          'SELECT * FROM food_posts WHERE id = ?',
+          [result.insertId]
+        );
+
+        res.status(201).json(FoodController.formatFoodResponse(newPost[0]));
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error posting food:', error);
+      res.status(500).json({ error: 'Failed to post food' });
+    }
+  }
+
+  /**
+   * GET /api/food/my-posts
+   * Get restaurant's posted food
+   */
+  static async getMyPosts(req, res) {
+    try {
+      const restaurantId = req.user.id;
+      const { status, limit = 20, offset = 0 } = req.query;
+
+      let query = 'SELECT * FROM food_posts WHERE restaurant_id = ?';
+      const params = [restaurantId];
+
+      if (status) {
+        query += ' AND status = ?';
+        params.push(status);
+      }
+
+      query += ` ORDER BY posted_at DESC LIMIT ${limit} OFFSET ${offset}`;
+
+      const connection = await pool.getConnection();
+      try {
+        const [posts] = await connection.query(query, params);
+        const formatted = posts.map(p => FoodController.formatFoodResponse(p));
+        res.json({ data: formatted, count: posts.length });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching my posts:', error);
+      res.status(500).json({ error: 'Failed to fetch posts' });
+    }
+  }
+
+  /**
+   * GET /api/food/:id
+   * Get single food post with all details
+   */
+  static async getFoodPost(req, res) {
+    try {
+      const { id } = req.params;
+
+      const connection = await pool.getConnection();
+      try {
+        const [posts] = await connection.query(
+          'SELECT * FROM food_posts WHERE id = ?',
+          [id]
+        );
+
+        if (posts.length === 0) {
+          return res.status(404).json({ error: 'Food post not found' });
+        }
+
+        res.json(FoodController.formatFoodResponse(posts[0]));
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching food post:', error);
+      res.status(500).json({ error: 'Failed to fetch food post' });
+    }
+  }
+
+  /**
+   * GET /api/food/available/all
+   * Get available food for NGOs (not expired, not delivered)
+   */
+  static async getAvailableFood(req, res) {
+    try {
+      const { latitude, longitude, radius_km = 5, food_type, min_urgency, max_urgency, limit = 50 } = req.query;
+
+      let query = `
+        SELECT * FROM food_posts 
+        WHERE status IN ('POSTED', 'MATCHED', 'ACCEPTED', 'PICKED_UP')
+        AND expiry_time > NOW()
+      `;
+      const params = [];
+
+      if (food_type) {
+        query += ' AND food_type = ?';
+        params.push(food_type);
+      }
+
+      if (min_urgency !== undefined) {
+        query += ' AND urgency_score >= ?';
+        params.push(parseInt(min_urgency));
+      }
+
+      if (max_urgency !== undefined) {
+        query += ' AND urgency_score <= ?';
+        params.push(parseInt(max_urgency));
+      }
+
+      query += ` ORDER BY urgency_score DESC, posted_at ASC LIMIT ${limit}`;
+
+      const connection = await pool.getConnection();
+      try {
+        const [posts] = await connection.query(query, params);
+        const formatted = posts.map(p => FoodController.formatFoodResponse(p));
+        res.json({ data: formatted, count: formatted.length });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error fetching available food:', error);
+      res.status(500).json({ error: 'Failed to fetch available food' });
+    }
+  }
+
+  /**
+   * PUT /api/food/:id
+   * Update food post (only before MATCHED status)
+   */
+  static async updateFoodPost(req, res) {
+    try {
+      const { id } = req.params;
+      const restaurantId = req.user.id;
+      const { food_name, quantity_servings, description, photo_url } = req.body;
+
+      const connection = await pool.getConnection();
+      try {
+        // Check if post belongs to restaurant and is not matched
+        const [post] = await connection.query(
+          'SELECT * FROM food_posts WHERE id = ? AND restaurant_id = ?',
+          [id, restaurantId]
+        );
+
+        if (post.length === 0) {
+          return res.status(404).json({ error: 'Food post not found' });
+        }
+
+        if (post[0].status !== 'POSTED') {
+          return res.status(400).json({ error: 'Cannot update post after POSTED status' });
+        }
+
+        await connection.query(
+          `UPDATE food_posts SET 
+            food_name = COALESCE(?, food_name),
+            quantity_servings = COALESCE(?, quantity_servings),
+            description = COALESCE(?, description),
+            photo_url = COALESCE(?, photo_url),
+            updated_at = NOW()
+          WHERE id = ?`,
+          [food_name || null, quantity_servings || null, description || null, photo_url || null, id]
+        );
+
+        const [updated] = await connection.query('SELECT * FROM food_posts WHERE id = ?', [id]);
+        res.json(FoodController.formatFoodResponse(updated[0]));
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error updating food post:', error);
+      res.status(500).json({ error: 'Failed to update food post' });
+    }
+  }
+
+  /**
+   * DELETE /api/food/:id
+   * Delete food post (only in POSTED status)
+   */
+  static async deleteFoodPost(req, res) {
+    try {
+      const { id } = req.params;
+      const restaurantId = req.user.id;
+
+      const connection = await pool.getConnection();
+      try {
+        const [post] = await connection.query(
+          'SELECT * FROM food_posts WHERE id = ? AND restaurant_id = ?',
+          [id, restaurantId]
+        );
+
+        if (post.length === 0) {
+          return res.status(404).json({ error: 'Food post not found' });
+        }
+
+        if (post[0].status !== 'POSTED') {
+          return res.status(400).json({ error: 'Cannot delete post after POSTED status' });
+        }
+
+        await connection.query('DELETE FROM food_posts WHERE id = ?', [id]);
+        res.json({ message: 'Food post deleted successfully' });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error deleting food post:', error);
+      res.status(500).json({ error: 'Failed to delete food post' });
+    }
+  }
+}
+
+module.exports = FoodController;

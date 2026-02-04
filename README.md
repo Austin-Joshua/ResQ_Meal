@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# ResQ Meal
 
-## Project info
+A web platform connecting restaurants and food establishments with NGOs and volunteers to efficiently redistribute surplus food and combat hunger.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech Stack
 
-## How can I edit this code?
+- **Frontend**: React + TypeScript + Tailwind CSS + Vite
+- **Backend**: Node.js + Express
+- **Database**: MySQL
 
-There are several ways of editing your application.
+## Quick Start
 
-**Use Lovable**
+### Frontend
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Backend
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+cd backend
+npm install
+# Configure .env with database credentials
+npm start
+```
 
-**Use GitHub Codespaces**
+## Project Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+resqmeal-nourishing-communities/
+├── src/                    # Frontend source code
+│   ├── pages/             # Page components (App, Dashboard)
+│   ├── components/        # Reusable UI components
+│   ├── context/           # React context (LanguageContext)
+│   ├── services/          # API integration
+│   ├── lib/               # Utility functions
+│   └── assets/            # Images, logos
+├── backend/               # Backend API
+│   ├── routes/           # API routes
+│   ├── controllers/       # Business logic
+│   ├── config/           # Database schema & seed data
+│   └── middlewares/       # Auth middleware
+├── public/               # Static assets
+└── package.json          # Dependencies
+```
 
-## What technologies are used for this project?
+## Features
 
-This project is built with:
+- **One-Click Surplus Posting**: Restaurants post excess food instantly
+- **Smart Matching Engine**: Automatic NGO matching based on location, capacity, and demand
+- **Food Safety Validation**: Countdown timers and quality verification
+- **Live Impact Tracking**: Real-time metrics on meals saved and CO₂ impact
+- **Dark Mode & Multilingual**: Support for English, Tamil, and Hindi with dark mode
+- **Responsive Design**: Works seamlessly on mobile and desktop
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Development
 
-## How can I deploy this project?
+### Running Frontend
+```bash
+npm run dev
+```
+Server runs on `http://localhost:5173`
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Running Backend
+```bash
+cd backend
+npm start
+```
+API runs on `http://localhost:5000`
 
-## Can I connect a custom domain to my Lovable project?
+## Environment Setup
 
-Yes, you can!
+Create `.env` in the backend directory:
+```
+NODE_ENV=development
+PORT=5000
+FRONTEND_URL=http://localhost:5173
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=resqmeal_db
+DB_USER=root
+DB_PASSWORD=your_password
+JWT_SECRET=your_secret_key
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## UI Design System
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **Primary**: Deep Teal (#0F766E)
+- **Secondary**: Slate Blue (#334155)
+- **Accent**: Soft Amber (#F59E0B)
+- **Success**: Sage Green (#16A34A)
+- **Background**: White (#FFFFFF)
+
+## License
+
+MIT

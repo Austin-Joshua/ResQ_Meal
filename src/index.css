@@ -107,16 +107,19 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-[hsl(var(--border))];
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight text-foreground;
+    @apply font-bold tracking-tight;
+    color: hsl(var(--foreground));
   }
 }
 

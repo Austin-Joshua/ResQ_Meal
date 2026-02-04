@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime
+.node_repl_history
+
+# Build/output
+dist/
+build/
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+.temp/
