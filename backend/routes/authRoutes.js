@@ -1,54 +1,28 @@
 const express = require('express');
 const router = express.Router();
+const authController = require('../controllers/authController');
 
 /**
  * POST /api/auth/register
- * 
- * Request:
- * {
- *   email: string,
- *   password: string,
- *   name: string,
- *   phone_number: string,
- *   role: 'restaurant' | 'ngo' | 'volunteer',
- *   latitude: number (optional),
- *   longitude: number (optional),
- *   business_name: string (required if restaurant),
- *   organization_name: string (required if ngo),
- *   daily_capacity: number (required if ngo, default 100)
- * }
+ * Request: { name, email, password, role: 'restaurant'|'ngo'|'volunteer', phone_number?, address?, latitude?, longitude? }
+ * Passwords are hashed with bcrypt before storage.
  */
-router.post('/register', (req, res) => {
-  // TODO: Implement user registration with hashing
-  res.json({ message: 'Register endpoint' });
-});
+router.post('/register', authController.register);
 
 /**
  * POST /api/auth/login
- * 
- * Request:
- * {
- *   email: string,
- *   password: string
- * }
- * 
- * Response:
- * {
- *   token: JWT,
- *   user: { id, email, name, role, ... }
- * }
+ * Request: { email, password }
+ * Response: { success, data: { id, name, email, role, token } }
+ * Passwords verified with bcrypt; JWT returned on success.
  */
-router.post('/login', (req, res) => {
-  // TODO: Implement user login with JWT generation
-  res.json({ message: 'Login endpoint' });
-});
+router.post('/login', authController.login);
 
 /**
  * POST /api/auth/logout
  * Client-side token removal (no backend state needed for JWT)
  */
 router.post('/logout', (req, res) => {
-  res.json({ message: 'Logout successful' });
+  res.json({ success: true, message: 'Logout successful' });
 });
 
 module.exports = router;

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -18,18 +18,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling
+// Response interceptor for error handling (don't redirect on login/register 401)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthRequest = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('resqmeal_token');
       localStorage.removeItem('resqmeal_user');
-      window.location.href = '/login';
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
 );
+
+// Auth APIs (passwords hashed on backend with bcrypt; JWT returned)
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post<{ success: boolean; data: { id: number; name: string; email: string; role: string; token: string } }>('/auth/login', { email, password }),
+  register: (data: { name: string; email: string; password: string; role: 'restaurant' | 'ngo' | 'volunteer'; phone_number?: string; address?: string }) =>
+    api.post('/auth/register', data),
+  logout: () => api.post('/auth/logout'),
+};
 
 // Food APIs (Restaurant)
 export const foodApi = {

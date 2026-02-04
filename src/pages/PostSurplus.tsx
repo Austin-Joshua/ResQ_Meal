@@ -146,13 +146,13 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gradient-to-br from-emerald-950 to-blue-950 text-white' : 'bg-gray-50 text-gray-900'
+      darkMode ? 'bg-gradient-to-br from-emerald-950 to-blue-950 text-white' : 'bg-white text-gray-900'
     }`}>
       {/* Header */}
       <header className={`sticky top-0 z-40 backdrop-blur-lg transition-all duration-300 ${
         darkMode
           ? 'bg-gradient-to-r from-emerald-950/95 to-blue-950/95 border-b border-emerald-700/40'
-          : 'bg-gradient-to-r from-white/95 to-gray-50/95 border-b border-gray-200/50'
+          : 'bg-white border-b border-gray-200'
       }`}>
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">

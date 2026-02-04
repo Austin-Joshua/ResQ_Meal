@@ -1,41 +1,138 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "@/context/LanguageContext";
-import logoMark from "@/assets/logo-mark.png";
+import LoginPage from "@/pages/Login";
+import OrganisationReport from "@/pages/OrganisationReport";
+import type { LoginSuccessUser } from "@/pages/Login";
 
-const ResQMealApp = lazy(() => import("./pages/App"));
+const ResQMealApp = lazy(() => import("@/pages/App"));
 
 const queryClient = new QueryClient();
 
-/** App icon only (no text) shown while the main app bundle lazy-loads */
-const LazyLoadFallback = () => (
-  <div
-    className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900"
-    aria-hidden="true"
-  >
-    <img
-      src={logoMark}
-      alt=""
-      className="h-20 w-20 animate-pulse object-contain opacity-90"
-    />
-  </div>
-);
+function BaseAppFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <p className="text-slate-600 text-sm">Loading…</p>
+    </div>
+  );
+}
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <LanguageProvider>
-        <Suspense fallback={<LazyLoadFallback />}>
-          <ResQMealApp />
-        </Suspense>
-      </LanguageProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const STORAGE_TOKEN = "resqmeal_token";
+const STORAGE_USER = "resqmeal_user";
+
+function readAuth(): { token: string; user: LoginSuccessUser } | null {
+  try {
+    const token = localStorage.getItem(STORAGE_TOKEN);
+    const userStr = localStorage.getItem(STORAGE_USER);
+    if (!token || !userStr) return null;
+    const user = JSON.parse(userStr) as LoginSuccessUser;
+    return { token, user };
+  } catch {
+    return null;
+  }
+}
+
+const App = () => {
+  const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(false);
+  const [darkMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem("darkMode");
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
+
+  const handleLoginSuccess = (user: LoginSuccessUser, token: string) => {
+    localStorage.setItem(STORAGE_TOKEN, token);
+    localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+    setAuth({ token, user });
+    setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_USER);
+    setAuth(null);
+  };
+
+  const isOrgAdmin = auth?.user?.role === "restaurant" || auth?.user?.role === "ngo";
+  const showSignInPageFirst = !auth && !showBaseWithoutAuth;
+
+  const content = useMemo(() => {
+    if (showSignInPageFirst) {
+      return (
+        <LoginPage
+          darkMode={darkMode}
+          onSuccess={handleLoginSuccess}
+          onBrowseWithoutSignIn={() => setShowBaseWithoutAuth(true)}
+        />
+      );
+    }
+    if (isOrgAdmin && auth?.user) {
+      return (
+        <OrganisationReport
+          darkMode={darkMode}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+    return (
+      <Suspense fallback={<BaseAppFallback />}>
+        <ResQMealApp
+          auth={auth?.user ?? null}
+          onOpenSignIn={() => setShowLoginModal(true)}
+          onLogout={auth?.user ? handleLogout : undefined}
+        />
+      </Suspense>
+    );
+  }, [auth, darkMode, isOrgAdmin, showSignInPageFirst]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <LanguageProvider>
+          {content}
+          {showLoginModal && !showSignInPageFirst && (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+              role="dialog"
+              aria-modal="true"
+              onClick={() => setShowLoginModal(false)}
+            >
+              <div
+                className="relative w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <LoginPage
+                  darkMode={darkMode}
+                  onSuccess={handleLoginSuccess}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginModal(false)}
+                  className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition ${
+                    darkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-white text-slate-700 hover:bg-slate-100 shadow"
+                  }`}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+        </LanguageProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

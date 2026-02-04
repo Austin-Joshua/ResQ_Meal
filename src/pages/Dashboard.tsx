@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info, Thermometer, User, Crown } from 'lucide-react';
+import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info, Thermometer, User, Crown, LogOut } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import PostSurplusPage from './PostSurplus';
 import logoFull from '@/assets/logo-full.png';
 
 interface DashboardProps {
   onSettingsClick: () => void;
+  auth?: { name: string; email: string; role: string } | null;
+  onOpenSignIn?: () => void;
+  onLogout?: () => void;
   darkMode: boolean;
   setDarkMode: (mode: boolean) => void;
   language: 'en' | 'ta' | 'hi';
@@ -60,12 +63,14 @@ const translations = {
     activeDeliveries: 'Active Deliveries',
     didYouKnow: 'Did you know?',
     tipText: 'Every 1 kg of food rescued saves ~2.5 kg CO₂ and helps feed someone in need.',
+    neededFoodMap: 'Needed food areas',
     howYouCanHelp: 'How you can help',
     postFoodNow: 'Post food now',
     viewMatches: 'View matches',
     seeImpact: 'See impact',
     settings: 'Settings',
     profile: 'Profile',
+    signIn: 'Sign in',
     goToSettings: 'Go to Settings',
     backToDashboard: '← Back to Dashboard',
     postsMatchedToday: 'posts matched with NGOs today',
@@ -162,12 +167,14 @@ const translations = {
     activeDeliveries: 'செயலில் உள்ள டெலிவரிகள்',
     didYouKnow: 'உங்களுக்கு தெரியுமா?',
     tipText: 'ஒவ்வொரு 1 கிலோ உணவு மீட்பும் ~2.5 கிலோ CO₂ சேமிக்கிறது.',
+    neededFoodMap: 'தேவையான உணவு பகுதிகள்',
     howYouCanHelp: 'நீங்கள் எவ்வாறு உதவ முடியும்',
     postFoodNow: 'இப்போது உணவு பதிவு',
     viewMatches: 'பொருத்தங்களைக் காண்க',
     seeImpact: 'தாக்கத்தைக் காண்க',
     settings: 'அமைப்புகள்',
     profile: 'சுயவிவரம்',
+    signIn: 'உள்நுழை',
     goToSettings: 'அமைப்புகளுக்குச் செல்ல',
     backToDashboard: '← டாஷ்போர்டுக்குத் திரும்பு',
     postsMatchedToday: 'இன்று NGO-களுடன் பொருந்திய பதிவுகள்',
@@ -264,12 +271,14 @@ const translations = {
     activeDeliveries: 'सक्रिय डिलीवरी',
     didYouKnow: 'क्या आप जानते हैं?',
     tipText: 'हर 1 किलो बचाया भोजन ~2.5 किलो CO₂ बचाता है।',
+    neededFoodMap: 'जरूरत वाले खाद्य क्षेत्र',
     howYouCanHelp: 'आप कैसे मदद कर सकते हैं',
     postFoodNow: 'अभी भोजन पोस्ट करें',
     viewMatches: 'मैच देखें',
     seeImpact: 'प्रभाव देखें',
     settings: 'सेटिंग्स',
     profile: 'प्रोफ़ाइल',
+    signIn: 'साइन इन करें',
     goToSettings: 'सेटिंग्स पर जाएं',
     backToDashboard: '← डैशबोर्ड पर वापस जाएं',
     postsMatchedToday: 'आज NGO के साथ मेल खाने वाले पोस्ट',
@@ -333,7 +342,7 @@ const translations = {
   },
 };
 
-export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode, setDarkMode, language, setLanguage }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = null, onOpenSignIn, onLogout, darkMode, setDarkMode, language, setLanguage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
@@ -344,13 +353,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
 
-  // Mock user data - in a real app, this would come from AuthContext or API
-  const [user] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    role: 'restaurant',
-    profilePhoto: null,
-  });
+  const user = auth ?? { name: 'Guest', email: '', role: 'guest', profilePhoto: null };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -404,19 +407,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
   ];
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${
+    <div className={`min-h-screen w-full max-w-full transition-all duration-300 ${
       darkMode 
         ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-950' 
-        : 'bg-gradient-to-br from-white via-slate-50 to-slate-100'
+        : 'bg-white'
     }`}>
       
       {/* Header */}
       <header className={`sticky top-0 z-40 backdrop-blur-lg transition-all duration-300 border-b ${
         darkMode 
           ? 'bg-gradient-to-r from-emerald-950/98 via-blue-950/98 to-slate-950/98 border-emerald-700/40' 
-          : 'bg-gradient-to-r from-white/98 to-blue-50/98 border-yellow-300/50'
+          : 'bg-white border-slate-200'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -435,10 +438,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                 setSelectedFeature(null);
                 setSidebarOpen(false);
               }}
-              className="flex items-center focus:outline-none"
+              className="flex items-center focus:outline-none rounded transition-opacity hover:opacity-90"
               aria-label="ResQ Meal - Back to dashboard"
             >
-              <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-12 w-auto max-w-[200px]" />
+              <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-16 sm:h-[4.25rem] w-auto max-w-[280px] sm:max-w-[320px] object-contain" />
             </button>
           </div>
 
@@ -497,60 +500,89 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
             </button>
 
-            {/* Profile Button (replaces Settings) */}
+            {/* Sign in (when not logged in) or Profile dropdown (when volunteer logged in) */}
             <div className="relative" ref={profileMenuRef}>
-              <button
-                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className={`p-2.5 rounded-lg transition-all duration-200 ${
-                  darkMode
-                    ? 'hover:bg-yellow-900/40 text-yellow-300'
-                    : 'hover:bg-slate-200 text-slate-700'
-                }`}
-                title={t.profile}
-              >
-                <User className="w-6 h-6" />
-              </button>
-              {profileMenuOpen && (
-                <div
-                  className={`absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-lg py-2 z-50 ${
-                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-gray-200'
+              {!auth ? (
+                <button
+                  type="button"
+                  onClick={onOpenSignIn}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
+                    darkMode ? 'bg-emerald-600/30 text-emerald-200 hover:bg-emerald-600/50' : 'bg-emerald-600 text-white hover:bg-emerald-500'
                   }`}
                 >
-                  <div className={`px-4 py-3 border-b ${darkMode ? 'border-emerald-700/50' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
-                        darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
-                      }`}>
-                        {getInitials(user.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-semibold text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {user.name}
-                        </p>
-                        <p className={`text-xs truncate ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
-                          {user.email}
-                        </p>
-                        <p className={`text-xs mt-1 capitalize ${darkMode ? 'text-amber-400' : 'text-emerald-600'}`}>
-                          {user.role}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <User className="w-4 h-4" />
+                  {t.signIn}
+                </button>
+              ) : (
+                <>
                   <button
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      onSettingsClick();
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className={`p-2.5 rounded-lg transition-all duration-200 ${
                       darkMode
-                        ? 'text-slate-200 hover:bg-slate-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'hover:bg-emerald-800/40 text-slate-200'
+                        : 'hover:bg-slate-200 text-slate-700'
                     }`}
+                    title={t.profile}
                   >
-                    <SettingsIcon className="w-4 h-4" />
-                    {t.goToSettings}
+                    <User className="w-6 h-6" />
                   </button>
-                </div>
+                  {profileMenuOpen && (
+                    <div
+                      className={`absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-lg py-2 z-50 ${
+                        darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      <div className={`px-4 py-3 border-b ${darkMode ? 'border-emerald-700/50' : 'border-gray-200'}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
+                            darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {getInitials(user.name)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-semibold text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {user.name}
+                            </p>
+                            <p className={`text-xs truncate ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                              {user.email}
+                            </p>
+                            <p className={`text-xs mt-1 capitalize ${darkMode ? 'text-amber-400' : 'text-emerald-600'}`}>
+                              {user.role}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          onSettingsClick();
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
+                          darkMode
+                            ? 'text-slate-200 hover:bg-emerald-900/40'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <SettingsIcon className="w-4 h-4" />
+                        {t.goToSettings}
+                      </button>
+                      {onLogout && (
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            onLogout();
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
+                            darkMode ? 'text-red-300 hover:bg-red-900/30' : 'text-red-700 hover:bg-red-50'
+                          }`}
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Log out
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -605,10 +637,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
       </aside>
 
       {/* Main Content */}
-      <main className={`${sidebarOpen ? 'md:ml-64' : ''} transition-all duration-300`}>
+      <main className={`w-full max-w-full min-w-0 ${sidebarOpen ? 'md:ml-64' : ''} transition-all duration-300`}>
         {/* Dashboard Page */}
         {activePage === 'dashboard' && (
-          <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-fadeIn">
+          <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
             {/* Welcome Card */}
             <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border ${
               darkMode
@@ -700,6 +732,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               </p>
               <p className={`text-xs mt-1 ${darkMode ? 'text-slate-200' : 'text-amber-900/90'}`}>
                 {t.tipText}
+              </p>
+            </div>
+
+            {/* Needed food areas – map */}
+            <div className={`rounded-2xl overflow-hidden transition-all duration-300 border ${
+              darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            }`}>
+              <h3 className={`text-sm font-bold uppercase tracking-wider px-4 py-3 flex items-center gap-2 border-b ${
+                darkMode ? 'text-amber-400 border-emerald-700/30' : 'text-slate-600 border-slate-100'
+              }`}>
+                <MapPin className="w-4 h-4" /> {t.neededFoodMap}
+              </h3>
+              <div className="relative w-full aspect-[16/10] min-h-[280px] bg-slate-100">
+                <iframe
+                  title="Needed food areas map"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d497512.457502766!2d79.5!3d13.0827!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5265ea4f7d3361%3A0x50e27e77c60c6d4a!2sChennai%2C%20Tamil%20Nadu%2C%20India!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                  className="absolute inset-0 w-full h-full border-0"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              <p className={`text-xs px-4 py-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                View areas where surplus food is needed. Zoom and pan to explore.
               </p>
             </div>
 
@@ -1074,7 +1130,7 @@ const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack:
   const details = featureDetails[feature] || featureDetails.oneClick;
 
   return (
-    <div className={`max-w-5xl mx-auto px-4 py-8 animate-fadeIn`}>
+    <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn`}>
       <button
         onClick={onBack}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg mb-8 transition-all duration-200 font-semibold ${
@@ -1174,7 +1230,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
   ];
 
   return (
-    <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn`}>
+    <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn`}>
       <button
         onClick={onBack}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg mb-8 transition-all duration-200 font-semibold ${
@@ -1297,7 +1353,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
 // Impact Page Component
 const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
   return (
-    <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn`}>
+    <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn`}>
       <button
         onClick={onBack}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg mb-8 transition-all duration-200 font-semibold ${
@@ -1358,7 +1414,7 @@ const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = 
 // Elite Mode Page – for elders in care homes who eat marriage/event food and food ordered by kids, not donated surplus
 const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
   return (
-    <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn space-y-8`}>
+    <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-8`}>
       <button
         onClick={onBack}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
@@ -1469,7 +1525,7 @@ const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = (
   ];
 
   return (
-    <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn space-y-8`}>
+    <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-8`}>
       <button
         onClick={onBack}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
@@ -1739,7 +1795,7 @@ const StatDetailPage: React.FC<{ darkMode: boolean; onBack: () => void; stat: { 
   const statData = getStatData();
 
   return (
-    <div className={`max-w-6xl mx-auto px-4 py-8 animate-fadeIn space-y-6`}>
+    <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-6`}>
       <button
         onClick={onBack}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${

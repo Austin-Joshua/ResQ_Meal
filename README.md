@@ -10,20 +10,32 @@ A web platform connecting restaurants and food establishments with NGOs and volu
 
 ## Quick Start
 
-### Frontend
+### Run frontend and backend together (for login to work)
+
+From the project root, after configuring `backend/.env` and seeding the database:
+
+```bash
+npm install
+cd backend && npm install && cd ..
+npm run dev:all
+```
+
+This starts the API on `http://localhost:5000` and the app on `http://localhost:5173`. Open the app URL and sign in (see Test login credentials below).
+
+### Frontend only
 
 ```bash
 npm install
 npm run dev
 ```
 
-### Backend
+### Backend only
 
 ```bash
 cd backend
 npm install
 # Configure .env with database credentials
-npm start
+npm run dev
 ```
 
 ## Project Structure
@@ -84,6 +96,23 @@ DB_USER=root
 DB_PASSWORD=your_password
 JWT_SECRET=your_secret_key
 ```
+
+## Test login credentials
+
+After running the database seed (`backend/config/seed.sql`), you can sign in with any of these accounts. **Password for all: `password123`**
+
+| Role       | Email                     | Use case                          |
+|-----------|---------------------------|-----------------------------------|
+| Volunteer | `volunteer@community.com` | Base website (Dashboard, etc.)   |
+| Restaurant| `chef@kitchen.com`        | Organisation report view          |
+| Restaurant| `baker@artisan.com`       | Organisation report view          |
+| NGO       | `ngo@savechildren.com`    | Organisation report view          |
+
+If login fails with "Invalid email or password":
+1. Use the password exactly: **`password123`** (all lowercase, no spaces).
+2. Ensure the backend is running and the database has been seeded. If you already ran the old seed, update test user passwords in MySQL:  
+   `UPDATE users SET password = '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm' WHERE email IN ('chef@kitchen.com','ngo@savechildren.com','volunteer@community.com','baker@artisan.com');`  
+   Or re-run the full seed (after dropping/recreating the DB or clearing the `users` table) with `backend/config/seed.sql`.
 
 ## UI Design System
 

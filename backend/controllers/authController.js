@@ -23,11 +23,11 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Validate role
-    if (!['restaurant', 'ngo_admin', 'volunteer'].includes(role)) {
+    // Validate role (restaurant & ngo = organisation/admin; volunteer = volunteer mode)
+    if (!['restaurant', 'ngo', 'volunteer'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be: restaurant, ngo_admin, or volunteer',
+        message: 'Invalid role. Must be: restaurant, ngo, or volunteer',
       });
     }
 

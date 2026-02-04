@@ -20,30 +20,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      .app-loading-splash {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(to bottom right, #022c22, #0c4a6e, #0f172a);
-      }
-      .app-loading-splash img {
-        height: 5rem;
-        width: 5rem;
-        object-fit: contain;
-        opacity: 0.9;
-      }
-    </style>
   </head>
 
   <body>
-    <div id="root">
-      <!-- Shown until React mounts; app icon only (no text) while lazy load -->
-      <div class="app-loading-splash" aria-hidden="true">
-        <img src="/logo-mark.png" alt="" />
-      </div>
+    <div id="root" style="min-height:100vh;width:100%;background:#fff;">
+      <p style="font-family:system-ui,sans-serif;font-size:1rem;padding:1rem;">Loading ResQ Meal…</p>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

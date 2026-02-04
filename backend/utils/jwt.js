@@ -1,19 +1,17 @@
-// JWT utility functions
-const jwtSimple = require('jwt-simple');
+// JWT utility functions (uses jsonwebtoken for compatibility with auth middleware)
+const jwt = require('jsonwebtoken');
 
-const secret = process.env.JWT_SECRET || 'default-secret-key';
+const secret = process.env.JWT_SECRET || 'default-secret-key-change-in-production';
 
 /**
  * Generate JWT token for authenticated user
  */
 exports.generateToken = (userId, role) => {
-  const payload = {
-    id: userId,
-    role: role,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
-  };
-  return jwtSimple.encode(payload, secret);
+  return jwt.sign(
+    { id: userId, role },
+    secret,
+    { expiresIn: '7d' }
+  );
 };
 
 /**
@@ -21,7 +19,7 @@ exports.generateToken = (userId, role) => {
  */
 exports.decodeToken = (token) => {
   try {
-    return jwtSimple.decode(token, secret);
+    return jwt.verify(token, secret);
   } catch (err) {
     return null;
   }

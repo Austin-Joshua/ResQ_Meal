@@ -2,7 +2,20 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from './Dashboard';
 import SettingsPage from './SettingsPage';
 
-export const ResQMealApp = () => {
+export interface BaseAuthUser {
+  id?: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface ResQMealAppProps {
+  auth?: BaseAuthUser | null;
+  onOpenSignIn?: () => void;
+  onLogout?: () => void;
+}
+
+export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, onOpenSignIn, onLogout }) => {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
   const [darkMode, setDarkMode] = useState(() => {
     try {
@@ -28,12 +41,15 @@ export const ResQMealApp = () => {
   }, [darkMode]);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-gradient-to-br from-emerald-50 via-white to-blue-50'
+    <div className={`min-h-screen w-full max-w-full transition-colors duration-300 ${
+      darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
     }`}>
       {currentPage === 'dashboard' && (
         <Dashboard 
           onSettingsClick={() => setCurrentPage('settings')}
+          auth={auth}
+          onOpenSignIn={onOpenSignIn}
+          onLogout={onLogout}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           language={language}
