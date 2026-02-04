@@ -29,12 +29,15 @@ export const ResQMealApp = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+      darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-emerald-50 via-white to-blue-50'
     }`}>
       {currentPage === 'dashboard' && (
         <Dashboard 
           onSettingsClick={() => setCurrentPage('settings')}
           darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
         />
       )}
       {currentPage === 'settings' && (
@@ -43,13 +46,13 @@ export const ResQMealApp = () => {
             onClick={() => setCurrentPage('dashboard')}
             className={`fixed top-4 left-4 z-50 px-4 py-2 rounded-lg font-semibold transition ${
               darkMode
-                ? 'bg-green-700 hover:bg-green-600 text-white'
-                : 'bg-primary-avocado text-white hover:bg-primary-avocado-dark'
+                ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900'
+                : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white'
             }`}
           >
             ← Back to Dashboard
           </button>
-          <SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} />
+          <SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} language={language} setLanguage={setLanguage} />
         </div>
       )}
     </div>

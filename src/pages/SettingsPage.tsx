@@ -4,10 +4,22 @@ import { Moon, Sun, Globe } from 'lucide-react';
 interface SettingsPageProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
+  language?: 'en' | 'ta' | 'hi';
+  setLanguage?: (lang: 'en' | 'ta' | 'hi') => void;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMode }) => {
-  const [language, setLanguage] = useState<'en' | 'ta' | 'hi'>('en');
+export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMode, language: propLanguage, setLanguage: propSetLanguage }) => {
+  const [language, setLanguageLocal] = useState<'en' | 'ta' | 'hi'>(propLanguage || 'en');
+  
+  // Use prop language if provided, otherwise use local state
+  const currentLanguage = propLanguage || language;
+  const handleLanguageChange = (lang: 'en' | 'ta' | 'hi') => {
+    if (propSetLanguage) {
+      propSetLanguage(lang);
+    } else {
+      setLanguageLocal(lang);
+    }
+  };
 
   const t = (key: string): string => {
     const translations: Record<string, Record<string, string>> = {
@@ -29,6 +41,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         volunteer: 'Volunteer',
         save: 'Save Changes',
         saved: 'Settings saved successfully!',
+        preferences: 'Preferences',
       },
       ta: {
         settings: 'அமைப்புகள்',
@@ -48,6 +61,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         volunteer: 'தன்னார்வலர்',
         save: 'மாற்றங்களை சேமிக்கவும்',
         saved: 'அமைப்புகள் வெற்றிகரமாக சேமிக்கப்பட்டது!',
+        preferences: 'விருப்பங்கள்',
       },
       hi: {
         settings: 'सेटिंग्स',
@@ -67,9 +81,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         volunteer: 'स्वयंसेवक',
         save: 'परिवर्तन सहेजें',
         saved: 'सेटिंग्स सफलतापूर्वक सहेजी गईं!',
+        preferences: 'वरीयताएँ',
       },
     };
-    return translations[language]?.[key] || key;
+    return translations[currentLanguage]?.[key] || key;
   };
 
   const [formData, setFormData] = useState({
@@ -85,99 +100,121 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleLanguageChange = (lang: 'en' | 'ta' | 'hi') => {
-    setLanguage(lang);
-  };
-
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
+      darkMode 
+        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
+        : 'bg-gradient-to-br from-emerald-50 via-white to-blue-50'
     }`}>
-      <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8">{t('settings')}</h1>
+      <div className="max-w-2xl mx-auto p-6 pt-20">
+        <h1 className={`text-4xl font-bold mb-8 ${darkMode ? 'text-yellow-300' : 'text-emerald-700'}`}>
+          ⚙️ {t('settings')}
+        </h1>
 
         {/* User Details Section */}
-        <div className={`rounded-lg p-6 mb-8 transition ${
-          darkMode ? 'bg-gray-800' : 'bg-white shadow-md'
+        <div className={`rounded-2xl p-8 mb-8 transition border ${
+          darkMode 
+            ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/40 border-blue-700/50 shadow-xl' 
+            : 'bg-gradient-to-br from-emerald-400/10 to-blue-400/10 border-emerald-300/50 shadow-lg'
         }`}>
-          <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${
-            darkMode ? 'text-teal-400' : 'text-teal-600'
+          <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${
+            darkMode ? 'text-yellow-300' : 'text-emerald-700'
           }`}>
-            {t('userDetails')}
+            👤 {t('userDetails')}
           </h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">{t('name')}</label>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-blue-200' : 'text-slate-700'
+              }`}>
+                {t('name')}
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 rounded-lg border transition ${
+                className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500'
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
-                } focus:outline-none`}
+                    ? 'bg-blue-900/50 border-blue-700 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                    : 'bg-white border-emerald-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">{t('email')}</label>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-blue-200' : 'text-slate-700'
+              }`}>
+                {t('email')}
+              </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 rounded-lg border transition ${
+                className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500'
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
-                } focus:outline-none`}
+                    ? 'bg-blue-900/50 border-blue-700 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                    : 'bg-white border-emerald-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">{t('phone')}</label>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-blue-200' : 'text-slate-700'
+              }`}>
+                {t('phone')}
+              </label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 rounded-lg border transition ${
+                className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500'
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
-                } focus:outline-none`}
+                    ? 'bg-blue-900/50 border-blue-700 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                    : 'bg-white border-emerald-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">{t('address')}</label>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-blue-200' : 'text-slate-700'
+              }`}>
+                {t('address')}
+              </label>
               <input
                 type="text"
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 rounded-lg border transition ${
+                className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500'
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
-                } focus:outline-none`}
+                    ? 'bg-blue-900/50 border-blue-700 text-yellow-300 placeholder-blue-300 focus:border-yellow-400'
+                    : 'bg-white border-emerald-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">{t('role')}</label>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-blue-200' : 'text-slate-700'
+              }`}>
+                {t('role')}
+              </label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 rounded-lg border transition ${
+                className={`w-full px-4 py-3 rounded-lg border-2 transition focus:outline-none ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500'
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
-                } focus:outline-none`}
+                    ? 'bg-blue-900/50 border-blue-700 text-yellow-300 focus:border-yellow-400'
+                    : 'bg-white border-emerald-300 text-slate-900 focus:border-emerald-500'
+                }`}
               >
                 <option value="restaurant">{t('restaurant')}</option>
                 <option value="ngo">{t('ngo')}</option>
@@ -188,77 +225,89 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
         </div>
 
         {/* Preferences Section */}
-        <div className={`rounded-lg p-6 mb-8 transition ${
-          darkMode ? 'bg-gray-800' : 'bg-white shadow-md'
+        <div className={`rounded-2xl p-8 mb-8 transition border ${
+          darkMode 
+            ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/40 border-blue-700/50 shadow-xl' 
+            : 'bg-gradient-to-br from-emerald-400/10 to-blue-400/10 border-emerald-300/50 shadow-lg'
         }`}>
-          <h2 className={`text-xl font-semibold mb-6 ${
-            darkMode ? 'text-teal-400' : 'text-teal-600'
+          <h2 className={`text-2xl font-bold mb-8 ${
+            darkMode ? 'text-yellow-300' : 'text-emerald-700'
           }`}>
-            Preferences
+            🎨 {t('preferences')}
           </h2>
 
           {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-8 p-4 rounded-xl" style={{
+            backgroundColor: darkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)'
+          }}>
             <div className="flex items-center gap-3">
               {darkMode ? (
-                <Moon className="w-5 h-5 text-amber-400" />
+                <Moon className="w-6 h-6 text-yellow-300" />
               ) : (
-                <Sun className="w-5 h-5 text-amber-500" />
+                <Sun className="w-6 h-6 text-emerald-600" />
               )}
-              <span className="font-medium">{t('darkMode')}</span>
+              <span className={`font-bold text-lg ${darkMode ? 'text-yellow-300' : 'text-emerald-700'}`}>
+                {t('darkMode')}
+              </span>
             </div>
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`relative w-14 h-7 rounded-full transition ${
-                darkMode ? 'bg-teal-600' : 'bg-gray-300'
+              className={`relative w-16 h-8 rounded-full transition-all duration-300 ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' 
+                  : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
               }`}
             >
               <div
-                className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
-                  darkMode ? 'translate-x-7' : 'translate-x-1'
+                className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-transform duration-300 shadow-lg ${
+                  darkMode ? 'translate-x-8' : 'translate-x-1'
                 }`}
               />
             </button>
           </div>
 
           {/* Language Selection */}
-          <div className="flex items-center gap-3 mb-4">
-            <Globe className={`w-5 h-5 ${darkMode ? 'text-amber-400' : 'text-amber-500'}`} />
-            <span className="font-medium">{t('language')}</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {(['en', 'ta', 'hi'] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => handleLanguageChange(lang)}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  language === lang
-                    ? darkMode
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-teal-600 text-white'
-                    : darkMode
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {lang === 'en' && t('english')}
-                {lang === 'ta' && t('tamil')}
-                {lang === 'hi' && t('hindi')}
-              </button>
-            ))}
+          <div className="mb-4">
+            <div className="flex items-center gap-3 mb-4">
+              <Globe className={`w-6 h-6 ${darkMode ? 'text-yellow-300' : 'text-emerald-600'}`} />
+              <span className={`font-bold text-lg ${darkMode ? 'text-yellow-300' : 'text-emerald-700'}`}>
+                {t('language')}
+              </span>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              {(['en', 'ta', 'hi'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => handleLanguageChange(lang)}
+                  className={`px-6 py-2 rounded-lg font-bold transition-all duration-200 ${
+                    currentLanguage === lang
+                      ? darkMode
+                        ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900'
+                        : 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
+                      : darkMode
+                        ? 'bg-blue-700/50 text-blue-200 hover:bg-blue-600/50'
+                        : 'bg-emerald-200/50 text-emerald-700 hover:bg-emerald-300/50'
+                  }`}
+                >
+                  {lang === 'en' && '🇬🇧 ' + t('english')}
+                  {lang === 'ta' && '🇮🇳 ' + t('tamil')}
+                  {lang === 'hi' && '🇮🇳 ' + t('hindi')}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Save Button */}
         <button
           onClick={() => alert(t('saved'))}
-          className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+          className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 ${
             darkMode
-              ? 'bg-teal-600 hover:bg-teal-700'
-              : 'bg-teal-600 hover:bg-teal-700'
+              ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900 shadow-lg'
+              : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg'
           }`}
         >
-          {t('save')}
+          💾 {t('save')}
         </button>
       </div>
     </div>
