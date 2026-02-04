@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import PostSurplusPage from './PostSurplus';
+import logoFull from '@/assets/logo-full.png';
 
 interface DashboardProps {
   onSettingsClick: () => void;
@@ -45,6 +46,24 @@ const translations = {
     carbonSaved: 'Carbon Saved',
     verification: 'Verification',
     features: 'Features',
+    donor: 'Donor',
+    ngo: 'NGO',
+    report: 'Report',
+    aboutUs: 'About Us',
+    language: 'Language',
+    english: 'English',
+    tamil: 'Tamil',
+    hindi: 'Hindi',
+    quickActions: 'Quick Actions',
+    recentActivity: "Today's Activity",
+    pendingMatches: 'Pending Matches',
+    activeDeliveries: 'Active Deliveries',
+    didYouKnow: 'Did you know?',
+    tipText: 'Every 1 kg of food rescued saves ~2.5 kg CO₂ and helps feed someone in need.',
+    howYouCanHelp: 'How you can help',
+    postFoodNow: 'Post food now',
+    viewMatches: 'View matches',
+    seeImpact: 'See impact',
   },
   ta: {
     welcome: 'திரும்பி வந்ததற்கு நன்றி! 👋',
@@ -67,6 +86,24 @@ const translations = {
     carbonSaved: 'கார்பன் சேமிக்கப்பட்டது',
     verification: 'சரிபார்ப்பு',
     features: 'அம்சங்கள்',
+    donor: 'நன்கொடையாளர்',
+    ngo: 'NGO',
+    report: 'அறிக்கை',
+    aboutUs: 'எங்களைப் பற்றி',
+    language: 'மொழி',
+    english: 'ஆங்கிலம்',
+    tamil: 'தமிழ்',
+    hindi: 'இந்தி',
+    quickActions: 'விரைவு செயல்கள்',
+    recentActivity: 'இன்றைய செயல்பாடு',
+    pendingMatches: 'நிலுவை பொருத்தங்கள்',
+    activeDeliveries: 'செயலில் உள்ள டெலிவரிகள்',
+    didYouKnow: 'உங்களுக்கு தெரியுமா?',
+    tipText: 'ஒவ்வொரு 1 கிலோ உணவு மீட்பும் ~2.5 கிலோ CO₂ சேமிக்கிறது.',
+    howYouCanHelp: 'நீங்கள் எவ்வாறு உதவ முடியும்',
+    postFoodNow: 'இப்போது உணவு பதிவு',
+    viewMatches: 'பொருத்தங்களைக் காண்க',
+    seeImpact: 'தாக்கத்தைக் காண்க',
   },
   hi: {
     welcome: 'वापसी पर स्वागत है! 👋',
@@ -89,14 +126,44 @@ const translations = {
     carbonSaved: 'कार्बन बचाया गया',
     verification: 'सत्यापन',
     features: 'विशेषताएं',
+    donor: 'दानदाता',
+    ngo: 'NGO',
+    report: 'रिपोर्ट',
+    aboutUs: 'हमारे बारे में',
+    language: 'भाषा',
+    english: 'अंग्रेज़ी',
+    tamil: 'तमिल',
+    hindi: 'हिंदी',
+    quickActions: 'त्वरित कार्य',
+    recentActivity: 'आज की गतिविधि',
+    pendingMatches: 'लंबित मैच',
+    activeDeliveries: 'सक्रिय डिलीवरी',
+    didYouKnow: 'क्या आप जानते हैं?',
+    tipText: 'हर 1 किलो बचाया भोजन ~2.5 किलो CO₂ बचाता है।',
+    howYouCanHelp: 'आप कैसे मदद कर सकते हैं',
+    postFoodNow: 'अभी भोजन पोस्ट करें',
+    viewMatches: 'मैच देखें',
+    seeImpact: 'प्रभाव देखें',
   },
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode, setDarkMode, language, setLanguage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature'>('dashboard');
+  const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const languageMenuRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(e.target as Node)) {
+        setLanguageMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const features = [
     { id: 'post', icon: '📤', label: 'Post Food', color: 'from-emerald-500 to-emerald-600' },
@@ -104,11 +171,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
     { id: 'impact', icon: '🌍', label: 'Impact', color: 'from-blue-600 to-blue-700' },
   ];
 
+  const languageLabels = { en: t.english, ta: t.tamil, hi: t.hindi };
+
   const navigationItems = [
-    { id: 'dashboard', icon: '🏠', label: t.dashboard, color: '#10B981' },
-    { id: 'post', icon: '📤', label: t.postSurplus, color: '#F59E0B' },
-    { id: 'matches', icon: '🎯', label: t.myMatches, color: '#1D72F5' },
-    { id: 'impact', icon: '📊', label: t.impact, color: '#10B981' },
+    { id: 'dashboard', icon: Home, label: t.dashboard },
+    { id: 'post', icon: HeartHandshake, label: t.donor },
+    { id: 'matches', icon: Users, label: t.ngo },
+    { id: 'impact', icon: FileText, label: t.report },
+    { id: 'about', icon: Info, label: t.aboutUs },
   ];
 
   const menuFeatures = [
@@ -142,7 +212,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               className={`p-2 rounded-lg transition-all duration-200 ${
                 darkMode
                   ? 'hover:bg-yellow-900/40 text-yellow-300'
-                  : 'hover:bg-blue-200 text-blue-700'
+                  : 'hover:bg-slate-200 text-slate-700'
               }`}
             >
               {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -153,41 +223,53 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                 setSelectedFeature(null);
                 setSidebarOpen(false);
               }}
-              className="flex items-center gap-2 focus:outline-none"
+              className="flex items-center focus:outline-none"
+              aria-label="ResQ Meal - Back to dashboard"
             >
-              <div className="text-3xl">🌱</div>
-              <div className="text-left">
-                <h1 className={`text-2xl font-bold ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>ResQ Meal</h1>
-                <p className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Food Rescue Platform</p>
-              </div>
+              <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-12 w-auto max-w-[200px]" />
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Language Switch */}
-            <div
-              className={`flex items-center gap-1 rounded-lg p-1 ${
-                darkMode ? 'bg-amber-600/15' : 'bg-blue-500/15'
-              }`}
-            >
-              {(['en', 'ta', 'hi'] as const).map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
-                  className={`px-3 py-1 rounded text-xs font-bold transition-all duration-200 ${
-                    language === lang
-                      ? darkMode
-                        ? 'bg-yellow-500 text-slate-900'
-                        : 'bg-blue-600 text-white'
-                      : darkMode
-                      ? 'text-yellow-200 hover:text-yellow-300'
-                      : 'text-blue-600 hover:text-blue-700'
+            {/* Language Button (dropdown) */}
+            <div className="relative" ref={languageMenuRef}>
+              <button
+                type="button"
+                onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  darkMode ? 'bg-amber-600/15 text-yellow-200 hover:bg-amber-600/25' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+                title={t.language}
+              >
+                <Globe className="w-4 h-4" />
+                <span>{languageLabels[language]}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {languageMenuOpen && (
+                <div
+                  className={`absolute right-0 top-full mt-1 min-w-[140px] rounded-lg border shadow-lg py-1 z-50 ${
+                    darkMode ? 'bg-slate-800 border-amber-600/30' : 'bg-white border-gray-200'
                   }`}
-                  title={lang === 'en' ? 'English' : lang === 'ta' ? 'Tamil' : 'Hindi'}
                 >
-                  {lang.toUpperCase()}
-                </button>
-              ))}
+                  {(['en', 'ta', 'hi'] as const).map((lang) => (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => {
+                        setLanguage(lang);
+                        setLanguageMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm font-medium transition ${
+                        language === lang
+                          ? darkMode ? 'bg-amber-600/30 text-yellow-300' : 'bg-slate-100 text-slate-900'
+                          : darkMode ? 'text-slate-200 hover:bg-slate-700' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {languageLabels[lang]}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Dark Mode Toggle */}
@@ -196,7 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               className={`p-2.5 rounded-lg transition-all duration-200 ${
                 darkMode
                   ? 'hover:bg-yellow-900/40 text-yellow-300'
-                  : 'hover:bg-blue-200 text-blue-700'
+                  : 'hover:bg-slate-200 text-slate-700'
               }`}
               title={darkMode ? 'Light mode' : 'Dark mode'}
             >
@@ -209,7 +291,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               className={`p-2.5 rounded-lg transition-all duration-200 ${
                 darkMode
                   ? 'hover:bg-yellow-900/40 text-yellow-300'
-                  : 'hover:bg-blue-200 text-blue-700'
+                  : 'hover:bg-slate-200 text-slate-700'
               }`}
               title="Settings"
             >
@@ -219,18 +301,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
         </div>
       </header>
 
-      {/* Sidebar Navigation */}
+      {/* Sidebar / Hamburger Menu: Dashboard, Donor, NGO, Report, About Us */}
       <aside className={`fixed left-0 top-[73px] h-[calc(100vh-73px)] w-64 transition-all duration-300 transform overflow-y-auto ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } ${
         darkMode 
-          ? 'bg-gradient-to-b from-slate-900 to-blue-950/80 border-r border-yellow-600/20' 
-          : 'bg-gradient-to-b from-blue-50 to-emerald-50/80 border-r border-blue-200/50'
+          ? 'bg-gradient-to-b from-slate-900 to-slate-950 border-r border-yellow-600/20' 
+          : 'bg-gradient-to-b from-slate-50 to-emerald-50/80 border-r border-slate-200/50'
       } backdrop-blur-lg z-30`}>
-        <nav className="p-6 space-y-4">
-          {/* Main Navigation */}
-          <div className="space-y-2">
-            {navigationItems.map((item) => (
+        <nav className="p-4 space-y-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activePage === item.id;
+            return (
               <button
                 key={item.id}
                 onClick={() => {
@@ -239,73 +322,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                   setSelectedFeature(null);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                  activePage === item.id && !selectedFeature
+                  isActive
                     ? darkMode
                       ? 'bg-gradient-to-r from-yellow-500/30 to-yellow-600/20 shadow-lg border border-yellow-500/40'
-                      : 'bg-gradient-to-r from-blue-400/30 to-emerald-400/20 shadow-md border border-blue-400/40'
+                      : 'bg-gradient-to-r from-emerald-400/30 to-emerald-500/20 shadow-md border border-emerald-400/40'
                     : darkMode
-                    ? 'hover:bg-yellow-900/20 text-blue-100'
-                    : 'hover:bg-blue-200/30 text-blue-800'
+                    ? 'hover:bg-yellow-900/20 text-slate-200'
+                    : 'hover:bg-slate-200/30 text-slate-800'
                 }`}
               >
-                <span className="text-2xl">{item.icon}</span>
+                <Icon className="w-5 h-5 shrink-0" />
                 <span className={`font-semibold transition-all duration-200 ${
-                  activePage === item.id && !selectedFeature
-                    ? darkMode ? 'text-yellow-300' : 'text-blue-700'
-                    : darkMode ? 'text-blue-200' : 'text-slate-700'
+                  isActive ? (darkMode ? 'text-yellow-300' : 'text-emerald-700') : (darkMode ? 'text-slate-200' : 'text-slate-700')
                 }`}>
                   {item.label}
                 </span>
-                {activePage === item.id && !selectedFeature && (
-                  <ArrowRight className={`w-4 h-4 ml-auto ${darkMode ? 'text-yellow-300' : 'text-blue-600'}`} />
+                {isActive && (
+                  <ArrowRight className={`w-4 h-4 ml-auto ${darkMode ? 'text-yellow-300' : 'text-emerald-600'}`} />
                 )}
               </button>
-            ))}
-          </div>
-
-          {/* Features Section */}
-          <div
-            className={`pt-6 border-t ${
-              darkMode ? 'border-amber-600/30' : 'border-blue-500/30'
-            }`}
-          >
-            <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 px-2 ${
-              darkMode ? 'text-yellow-400' : 'text-blue-700'
-            }`}>
-              {t.features}
-            </h3>
-            <div className="space-y-2">
-              {menuFeatures.map((feature, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setSelectedFeature(feature.id);
-                    setActivePage('feature');
-                    setSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-left ${
-                    selectedFeature === feature.id
-                      ? darkMode
-                        ? 'bg-yellow-500/30 border border-yellow-500/50'
-                        : 'bg-blue-400/20 border border-blue-400/50'
-                      : darkMode
-                      ? 'hover:bg-yellow-900/20 text-blue-100'
-                      : 'hover:bg-blue-200/20 text-slate-700'
-                  }`}
-                >
-                  {feature.icon}
-                  <div>
-                    <p className={`text-sm font-medium ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
-                      {feature.label}
-                    </p>
-                    <p className={`text-xs ${darkMode ? 'text-blue-300/60' : 'text-slate-600'}`}>
-                      {feature.desc}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+            );
+          })}
         </nav>
       </aside>
 
@@ -317,14 +354,94 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             {/* Welcome Card */}
             <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border ${
               darkMode
-                ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+                ? 'bg-gradient-to-br from-slate-800 to-slate-900 border-yellow-600/30 shadow-xl'
                 : 'bg-white border-slate-200 shadow-sm'
             }`}>
-              <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+              <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
                 {t.welcome}
               </h2>
-              <p className={`text-lg font-medium ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+              <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                 {t.missionToday}
+              </p>
+            </div>
+
+            {/* Quick Actions - Minimized */}
+            <div className={`rounded-xl p-3 transition-all duration-300 border ${
+              darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+            }`}>
+              <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
+                {t.quickActions}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActivePage('post')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
+                    darkMode ? 'bg-emerald-600/30 text-emerald-300 hover:bg-emerald-600/50' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                  }`}
+                >
+                  <Send className="w-3 h-3" /> {t.postFoodNow}
+                </button>
+                <button
+                  onClick={() => setActivePage('matches')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
+                    darkMode ? 'bg-amber-600/30 text-amber-300 hover:bg-amber-600/50' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                  }`}
+                >
+                  <Target className="w-3 h-3" /> {t.viewMatches}
+                </button>
+                <button
+                  onClick={() => setActivePage('impact')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
+                    darkMode ? 'bg-teal-600/30 text-teal-300 hover:bg-teal-600/50' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'
+                  }`}
+                >
+                  <BarChart3 className="w-3 h-3" /> {t.seeImpact}
+                </button>
+              </div>
+            </div>
+
+            {/* Today's Activity + Pending / Active */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+                darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+              }`}>
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
+                  <Clock className="w-4 h-4" /> {t.recentActivity}
+                </h3>
+                <ul className={`space-y-2 text-sm ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  <li className="flex items-center gap-2">✓ 2 posts matched with NGOs today</li>
+                  <li className="flex items-center gap-2">✓ 1 delivery completed</li>
+                  <li className="flex items-center gap-2">○ 1 match awaiting your response</li>
+                </ul>
+              </div>
+              <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+                darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+              }`}>
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
+                  {t.howYouCanHelp}
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-amber-600/20' : 'bg-amber-50'}`}>
+                    <p className={`text-2xl font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>3</p>
+                    <p className={`text-xs font-medium ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.pendingMatches}</p>
+                  </div>
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-emerald-600/20' : 'bg-emerald-50'}`}>
+                    <p className={`text-2xl font-bold ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>1</p>
+                    <p className={`text-xs font-medium ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.activeDeliveries}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Did you know tip - Minimized */}
+            <div className={`rounded-xl p-3 transition-all duration-300 border ${
+              darkMode ? 'bg-amber-900/20 border-amber-600/30' : 'bg-amber-50 border-amber-200'
+            }`}>
+              <p className={`text-xs font-semibold flex items-center gap-1.5 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
+                <Leaf className="w-3 h-3" /> {t.didYouKnow}
+              </p>
+              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-200' : 'text-amber-900/90'}`}>
+                {t.tipText}
               </p>
             </div>
 
@@ -377,12 +494,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
                   className={`rounded-2xl p-6 transition-all duration-300 border ${
                     darkMode
                       ? `bg-gradient-to-br ${stat.color} border-yellow-600/30 shadow-lg`
-                      : `bg-gradient-to-br ${stat.color} border-blue-300/50 shadow-md`
+                      : `bg-gradient-to-br ${stat.color} border-slate-300/50 shadow-md`
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className={`text-sm font-semibold ${darkMode ? 'text-blue-200' : 'text-slate-700'}`}>
+                      <p className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                         {stat.label}
                       </p>
                       <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
@@ -398,12 +515,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
             {/* Chart Card */}
             <div className={`rounded-2xl p-8 transition-all duration-300 border ${
               darkMode
-                ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
-                : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+                ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+                : 'bg-gradient-to-br from-slate-50 to-emerald-50/15 border-slate-300/50 shadow-lg'
             }`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className={`text-2xl font-bold flex items-center gap-2 ${
-                  darkMode ? 'text-yellow-300' : 'text-blue-700'
+                  darkMode ? 'text-yellow-300' : 'text-slate-900'
                 }`}>
                   <TrendingUp className="w-6 h-6" />
                   {t.weeklyTrend}
@@ -412,15 +529,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
               <div className="w-full h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={impactData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#1e3a8a' : '#bfdbfe'} />
-                    <XAxis dataKey="date" stroke={darkMode ? '#93c5fd' : '#1e40af'} />
-                    <YAxis stroke={darkMode ? '#93c5fd' : '#1e40af'} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#475569' : '#cbd5e1'} />
+                    <XAxis dataKey="date" stroke={darkMode ? '#cbd5e1' : '#64748b'} />
+                    <YAxis stroke={darkMode ? '#cbd5e1' : '#64748b'} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: darkMode ? '#0f172a' : '#eff6ff',
-                        border: darkMode ? '2px solid #fbbf24' : '2px solid #1e40af',
+                        backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                        border: darkMode ? '2px solid #fbbf24' : '2px solid #64748b',
                         borderRadius: '8px',
-                        color: darkMode ? '#fbbf24' : '#1e40af',
+                        color: darkMode ? '#fbbf24' : '#1e293b',
                       }}
                     />
                     <Line
@@ -469,6 +586,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, darkMode,
         {/* Impact Page */}
         {activePage === 'impact' && (
           <ImpactPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} />
+        )}
+
+        {/* About Us Page */}
+        {activePage === 'about' && (
+          <AboutPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} />
         )}
       </main>
 
@@ -867,6 +989,152 @@ const ImpactPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkM
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+// About Us Page Component – full website details and features
+const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void }> = ({ darkMode, onBack }) => {
+  const aboutFeatures = [
+    { icon: Zap, title: 'Fresh Food Checker (AI)', desc: 'Upload a photo or enter storage conditions. Our ML models assess freshness and quality so only safe food gets redistributed.' },
+    { icon: Send, title: 'One-Click Surplus Posting', desc: 'Donors and restaurants post surplus food in seconds. Add quantity, expiry, location, and optional freshness check.' },
+    { icon: Target, title: 'Smart NGO Matching', desc: 'AI-powered matching connects your surplus with NGOs by need, distance, and capacity. Accept or decline matches easily.' },
+    { icon: Truck, title: 'Live Delivery Tracking', desc: 'Volunteers pick up and deliver. Track status and route in real time with proof-of-delivery and impact updates.' },
+    { icon: BarChart3, title: 'Impact & Reports', desc: 'See meals saved, food diverted, CO₂ and water saved. Weekly trends and exportable reports for your records.' },
+    { icon: Shield, title: 'Food Quality Verification', desc: 'Optional AI verification (image or environment) helps ensure food safety before it reaches beneficiaries.' },
+    { icon: Globe, title: 'Multi-Language Support', desc: 'Use the platform in English, Tamil, and Hindi. Language switcher available in the header.' },
+    { icon: Users, title: 'Roles: Donor, NGO, Volunteer', desc: 'Separate flows for donors posting food, NGOs requesting matches, and volunteers completing deliveries.' },
+  ];
+
+  const steps = [
+    { step: 1, title: 'Post surplus', body: 'Donors add surplus food with quantity, expiry, and optional AI freshness check.' },
+    { step: 2, title: 'Get matched', body: 'NGOs see relevant listings; our system suggests the best matches by need and distance.' },
+    { step: 3, title: 'Confirm & deliver', body: 'Volunteers pick up and deliver. Track status and complete with proof of delivery.' },
+    { step: 4, title: 'See impact', body: 'Meals saved, CO₂ prevented, and water saved are tracked and shown in your dashboard.' },
+  ];
+
+  return (
+    <div className={`max-w-4xl mx-auto px-4 py-8 animate-fadeIn space-y-8`}>
+      <button
+        onClick={onBack}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
+          darkMode
+            ? 'hover:bg-yellow-900/40 text-yellow-300'
+            : 'hover:bg-blue-200 text-blue-700'
+        }`}
+      >
+        ← Back to Dashboard
+      </button>
+
+      {/* Hero */}
+      <div className={`rounded-2xl p-8 transition-all duration-300 border ${
+        darkMode
+          ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-yellow-600/30 shadow-xl'
+          : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
+      }`}>
+        <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          About ResQ Meal
+        </h2>
+        <p className={`text-lg font-medium ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+          Turning surplus into sustenance.
+        </p>
+        <p className={`mt-2 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+          ResQ Meal is a full-stack platform that connects donors, NGOs, and volunteers to redistribute surplus food—reducing waste and fighting hunger. Post food, get matched, track delivery, and see your impact.
+        </p>
+      </div>
+
+      {/* Mission & Vision */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          Our mission
+        </h3>
+        <p className={`mb-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+          To ensure good food reaches people, not landfills. We help restaurants and donors post surplus, match it with NGOs in need, and track delivery so every meal counts.
+        </p>
+        <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          Our vision
+        </h3>
+        <p className={darkMode ? 'text-blue-100' : 'text-slate-700'}>
+          A world where surplus food is routinely rescued, shared, and measured—reducing hunger and environmental impact in every community we serve.
+        </p>
+      </div>
+
+      {/* How it works */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          How it works
+        </h3>
+        <ul className="space-y-4">
+          {steps.map(({ step, title, body }) => (
+            <li key={step} className={`flex gap-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+              <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                darkMode ? 'bg-amber-600/40 text-amber-300' : 'bg-blue-100 text-blue-700'
+              }`}>
+                {step}
+              </span>
+              <div>
+                <span className="font-semibold">{title}</span> — {body}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Website features */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          Website features & details
+        </h3>
+        <p className={`mb-6 text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>
+          ResQ Meal includes the following features to support donors, NGOs, and volunteers:
+        </p>
+        <ul className="space-y-4">
+          {aboutFeatures.map(({ icon: Icon, title, desc }) => (
+            <li
+              key={title}
+              className={`flex gap-4 p-4 rounded-xl ${
+                darkMode ? 'bg-slate-700/30' : 'bg-slate-50'
+              }`}
+            >
+              <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${darkMode ? 'text-amber-400' : 'text-blue-600'}`} />
+              <div>
+                <h4 className={`font-semibold mb-1 ${darkMode ? 'text-yellow-200' : 'text-slate-900'}`}>{title}</h4>
+                <p className={`text-sm ${darkMode ? 'text-blue-200' : 'text-slate-600'}`}>{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Technology */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-slate-800/50 border-amber-600/20' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-blue-700'}`}>
+          Technology & AI
+        </h3>
+        <p className={`mb-4 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+          The Fresh Food Checker uses optional ML models for quality and freshness: image-based (e.g. Bedrock/Claude Vision, TFLite, Roboflow YOLO, FreshVision, Food-101 classification) and environment-based (temperature, humidity, storage time). Food-Image-Recognition can classify dishes and return nutrition. All of this helps donors and NGOs trust that surplus food is safe to redistribute.
+        </p>
+      </div>
+
+      {/* Get involved */}
+      <div className={`rounded-2xl p-6 transition-all duration-300 border ${
+        darkMode ? 'bg-amber-900/20 border-amber-600/30' : 'bg-amber-50 border-amber-200'
+      }`}>
+        <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
+          Get involved
+        </h3>
+        <p className={darkMode ? 'text-blue-100' : 'text-amber-900/90'}>
+          Post surplus as a donor, request matches as an NGO, or sign up as a volunteer to deliver. Use the Dashboard, Donor, NGO, and Report sections to get started. For support or partnerships, reach out through your account or settings.
+        </p>
       </div>
     </div>
   );

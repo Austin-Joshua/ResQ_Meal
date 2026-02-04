@@ -18,16 +18,21 @@ import {
   LogOut,
   Menu,
   X,
+  HeartHandshake,
+  Users,
+  FileText,
+  Info,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import logoMark from '@/assets/logo-mark.png';
+import logoFull from '@/assets/logo-full.png';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Impact', href: '/impact', icon: BarChart3 },
-  { label: 'Account', href: '/account', icon: User },
-  { label: 'Settings', href: '/settings', icon: Settings },
+  { label: 'Donor', href: '/dashboard', icon: HeartHandshake },
+  { label: 'NGO', href: '/dashboard', icon: Users },
+  { label: 'Report', href: '/impact', icon: FileText },
+  { label: 'About Us', href: '/about', icon: Info },
 ];
 
 export function Navbar() {
@@ -54,9 +59,8 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2.5">
-          <img src={logoMark} alt="Resqmeal" className="h-9 w-9" />
-          <span className="text-xl font-bold text-foreground">Resqmeal</span>
+        <Link to="/dashboard" className="flex items-center shrink-0">
+          <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 w-auto max-w-[180px]" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -132,16 +136,16 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation (Hamburger): Dashboard, Donor, NGO, Report, About Us */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-card">
           <div className="container py-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || (item.href === '/dashboard' && location.pathname === '/dashboard');
               return (
                 <Link
-                  key={item.href}
+                  key={`${item.href}-${item.label}`}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
@@ -151,11 +155,12 @@ export function Navbar() {
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5 shrink-0" />
                   {item.label}
                 </Link>
               );
             })}
+            <div className="my-2 border-t border-border" />
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full"

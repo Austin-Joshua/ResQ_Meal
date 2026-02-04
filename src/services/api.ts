@@ -37,6 +37,29 @@ export const foodApi = {
   getMyPosts: () => api.get('/food/my-posts'),
   updateFood: (id: string, data: any) => api.put(`/food/${id}`, data),
   deleteFood: (id: string) => api.delete(`/food/${id}`),
+  /** Upload image for freshness check (uses fruit-veg-freshness-ai when backend is configured). */
+  assessFreshness: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/food/assess-freshness', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  /** Check freshness by storage conditions (temperature, humidity, time) - Food-Freshness-Analyzer. */
+  assessFreshnessByEnvironment: (data: {
+    temperature: number;
+    humidity: number;
+    time_stored_hours: number;
+    gas?: number;
+  }) => api.post('/food/assess-freshness-by-environment', data),
+  /** Classify food from image and get nutrition (Food-Image-Recognition, Food-101). */
+  classifyImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/food/classify-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Match APIs (NGO)

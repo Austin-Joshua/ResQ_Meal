@@ -79,6 +79,13 @@ backend/
 - `GET /api/impact/ngo` - Get NGO impact metrics
 - `GET /api/impact/global` - Get global impact
 
+### Freshness / Food Quality
+- `POST /api/food/assess-freshness` - Upload image; returns freshness assessment (tries Bedrock → TFLite → Roboflow → FreshVision → fruit-veg-freshness-ai → mock).
+- `POST /api/food/assess-freshness-by-environment` - JSON `{ temperature, humidity, time_stored_hours, gas? }`; uses Food-Freshness-Analyzer when `FRESHNESS_ENV_AI_URL` is set.
+- `POST /api/food/classify-image` - Upload image; returns food_class, food_name, confidence, nutrition (Food-Image-Recognition when `FOOD_IMAGE_RECOGNITION_URL` is set).
+
+**Optional AI backends** (see `.env.example`): Amazon Bedrock (Claude 3 vision), TFLite, Roboflow YOLO, FreshVision (EfficientNet), fruit-veg-freshness-ai. Reference: [AWS serverless-genai-food-analyzer-app](https://github.com/aws-samples/serverless-genai-food-analyzer-app) (Bedrock + Claude for food/ingredient detection).
+
 ## Database Schema
 
 8 tables: users, restaurants, ngos, volunteers, food_posts, matches, impact_logs, delivery_proofs

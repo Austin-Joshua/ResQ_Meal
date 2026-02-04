@@ -2,8 +2,28 @@ const express = require('express');
 const router = express.Router();
 const FoodController = require('../controllers/FoodController');
 const { authenticateToken } = require('../middlewares/auth');
+const { uploadAssessImage, handleUploadError } = require('../middlewares/upload');
 
 // ==================== FOOD POSTING ====================
+
+/**
+ * POST /api/food/assess-freshness
+ * Upload image for freshness check (fruit-veg-freshness-ai when FRESHNESS_AI_URL is set).
+ * Body: multipart/form-data with field "image"
+ */
+router.post('/assess-freshness', authenticateToken, uploadAssessImage, handleUploadError, FoodController.assessFreshness);
+
+/**
+ * POST /api/food/assess-freshness-by-environment
+ * Body: JSON { temperature, humidity, time_stored_hours, gas? } (Food-Freshness-Analyzer when FRESHNESS_ENV_AI_URL is set).
+ */
+router.post('/assess-freshness-by-environment', authenticateToken, FoodController.assessFreshnessByEnvironment);
+
+/**
+ * POST /api/food/classify-image
+ * Upload image; returns food_class, food_name, confidence, nutrition (Food-Image-Recognition when FOOD_IMAGE_RECOGNITION_URL is set).
+ */
+router.post('/classify-image', authenticateToken, uploadAssessImage, handleUploadError, FoodController.classifyImage);
 
 /**
  * POST /api/food

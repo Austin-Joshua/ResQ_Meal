@@ -68,3 +68,4 @@ exports.handleUploadError = (err, req, res, next) => {
 // Export multer instance and middleware
 exports.uploadProfilePhoto = upload.single('profile_photo');
 exports.uploadDeliveryProof = upload.single('delivery_proof_photo');
+exports.uploadAssessImage = upload.single('image');

@@ -1,4 +1,8 @@
 const { pool } = require('../server');
+const FoodQualityVerification = require('../services/FoodQualityVerification');
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
 
 class FoodController {
   
@@ -319,6 +323,85 @@ class FoodController {
     } catch (error) {
       console.error('Error deleting food post:', error);
       res.status(500).json({ error: 'Failed to delete food post' });
+    }
+  }
+
+  /**
+   * POST /api/food/assess-freshness
+   * Upload image; returns freshness assessment (uses fruit-veg-freshness-ai when FRESHNESS_AI_URL is set).
+   */
+  static async assessFreshness(req, res) {
+    try {
+      if (!req.file || !req.file.path) {
+        return res.status(400).json({ error: 'No image file uploaded' });
+      }
+      const assessment = await FoodQualityVerification.assessFreshnessForFrontend(req.file.path);
+      res.json(assessment);
+    } catch (error) {
+      console.error('Error assessing freshness:', error);
+      res.status(500).json({ error: 'Failed to assess food freshness' });
+    }
+  }
+
+  /**
+   * POST /api/food/assess-freshness-by-environment
+   * Body: { temperature, humidity, time_stored_hours, gas? }.
+   * Uses Food-Freshness-Analyzer when FRESHNESS_ENV_AI_URL is set.
+   */
+  static async assessFreshnessByEnvironment(req, res) {
+    try {
+      const { temperature, humidity, time_stored_hours, gas } = req.body || {};
+      if (temperature == null || humidity == null || time_stored_hours == null) {
+        return res.status(400).json({
+          error: 'Missing required fields: temperature, humidity, time_stored_hours',
+        });
+      }
+      const assessment = await FoodQualityVerification.assessFreshnessByEnvironmentForFrontend({
+        temperature: Number(temperature),
+        humidity: Number(humidity),
+        time_stored_hours: Number(time_stored_hours),
+        gas: gas != null ? Number(gas) : undefined,
+      });
+      res.json(assessment);
+    } catch (error) {
+      console.error('Error assessing freshness by environment:', error);
+      res.status(500).json({ error: 'Failed to assess food freshness' });
+    }
+  }
+
+  /**
+   * POST /api/food/classify-image
+   * Upload image; returns food class, food name, confidence, and optional nutrition (Food-Image-Recognition when FOOD_IMAGE_RECOGNITION_URL is set).
+   */
+  static async classifyImage(req, res) {
+    try {
+      if (!req.file || !req.file.path) {
+        return res.status(400).json({ error: 'No image file uploaded' });
+      }
+      const baseUrl = (process.env.FOOD_IMAGE_RECOGNITION_URL || '').replace(/\/$/, '');
+      if (!baseUrl) {
+        return res.status(503).json({
+          error: 'Food classification service not configured',
+          hint: 'Set FOOD_IMAGE_RECOGNITION_URL to the Food-Image-Recognition API URL (e.g. http://localhost:8005)',
+        });
+      }
+      const form = new FormData();
+      form.append('file', fs.createReadStream(req.file.path), {
+        filename: req.file.path.split(/[/\\]/).pop() || 'image.png',
+        contentType: 'image/png',
+      });
+      const { data } = await axios.post(`${baseUrl}/evaluate`, form, {
+        headers: form.getHeaders(),
+        maxBodyLength: Infinity,
+        timeout: 30000,
+      });
+      res.json(data);
+    } catch (error) {
+      console.error('Error classifying food image:', error);
+      res.status(500).json({
+        error: 'Failed to classify food image',
+        message: error.response?.data?.detail || error.message,
+      });
     }
   }
 }
