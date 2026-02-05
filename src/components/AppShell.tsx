@@ -268,8 +268,8 @@ export function AppShell({
                 alt="ResQ Meal"
                 className="h-14 w-20 object-contain"
               />
-              <span className="text-sm font-semibold text-foreground">ResQ Meal</span>
-              <span className="text-xs text-muted-foreground">Nourishing The Needy</span>
+              <span className="text-sm font-semibold text-foreground">Resqmeal</span>
+              <span className="text-xs text-muted-foreground">Nourishment for tomorrow.</span>
             </div>
             <nav className="flex flex-col gap-0.5 p-3" aria-label="Main navigation">
               {sidebarItems.map((item) => {

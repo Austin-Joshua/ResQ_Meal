@@ -98,6 +98,26 @@ CREATE TABLE food_posts (
   FULLTEXT INDEX idx_food_name_text (food_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ==================== ORGANISATION FOOD (NGO-posted food for volunteers) ====================
+CREATE TABLE organisation_food (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  ngo_id INT NOT NULL,
+  food_name VARCHAR(255) NOT NULL,
+  food_type ENUM('meals', 'vegetables', 'baked', 'dairy', 'fruits', 'others') NOT NULL DEFAULT 'others',
+  quantity_servings INT NOT NULL DEFAULT 1,
+  description TEXT,
+  address VARCHAR(255),
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
+  status ENUM('PENDING', 'ASSIGNED', 'DELIVERED') DEFAULT 'PENDING',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (ngo_id) REFERENCES ngos(id) ON DELETE CASCADE,
+  INDEX idx_ngo_id (ngo_id),
+  INDEX idx_status (status),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ==================== MATCHES TABLE ====================
 CREATE TABLE matches (
   id INT PRIMARY KEY AUTO_INCREMENT,

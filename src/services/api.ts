@@ -83,6 +83,14 @@ export const matchApi = {
   rejectMatch: (matchId: string) => api.post(`/match/reject`, { matchId }),
 };
 
+// Organisation food (NGO adds food → reflected on volunteer page)
+export const organisationApi = {
+  postFood: (data: { food_name: string; food_type?: string; quantity_servings?: number; description?: string; address: string; latitude?: number; longitude?: number }) =>
+    api.post('/organisation/food', data),
+  getMyFood: () => api.get('/organisation/food'),
+  getAvailableFood: () => api.get('/organisation/food/available'),
+};
+
 // Delivery APIs (Volunteer)
 export const deliveryApi = {
   getVolunteerDeliveries: () => api.get('/delivery/volunteer'),

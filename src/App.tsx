@@ -14,13 +14,22 @@ const queryClient = new QueryClient();
 const STORAGE_TOKEN = "resqmeal_token";
 const STORAGE_USER = "resqmeal_user";
 
+function getStorage(rememberMe: boolean): Storage {
+  return rememberMe ? localStorage : sessionStorage;
+}
+
 function readAuth(): { token: string; user: LoginSuccessUser } | null {
   try {
-    const token = localStorage.getItem(STORAGE_TOKEN);
-    const userStr = localStorage.getItem(STORAGE_USER);
-    if (!token || !userStr) return null;
-    const user = JSON.parse(userStr) as LoginSuccessUser;
-    return { token, user };
+    // Prefer localStorage (remember me), then sessionStorage (session only)
+    for (const storage of [localStorage, sessionStorage]) {
+      const token = storage.getItem(STORAGE_TOKEN);
+      const userStr = storage.getItem(STORAGE_USER);
+      if (token && userStr) {
+        const user = JSON.parse(userStr) as LoginSuccessUser;
+        return { token, user };
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -61,9 +70,14 @@ const App = () => {
     } catch {}
   }, [language]);
 
-  const handleLoginSuccess = (user: LoginSuccessUser, token: string) => {
-    localStorage.setItem(STORAGE_TOKEN, token);
-    localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+  const handleLoginSuccess = (user: LoginSuccessUser, token: string, rememberMe = true) => {
+    const storage = getStorage(rememberMe);
+    storage.setItem(STORAGE_TOKEN, token);
+    storage.setItem(STORAGE_USER, JSON.stringify(user));
+    // Clear the other storage so only one session is active
+    const other = rememberMe ? sessionStorage : localStorage;
+    other.removeItem(STORAGE_TOKEN);
+    other.removeItem(STORAGE_USER);
     setAuth({ token, user });
     setShowLoginModal(false);
     setLoginKey(Date.now());
@@ -72,6 +86,8 @@ const App = () => {
   const handleLogout = () => {
     localStorage.removeItem(STORAGE_TOKEN);
     localStorage.removeItem(STORAGE_USER);
+    sessionStorage.removeItem(STORAGE_TOKEN);
+    sessionStorage.removeItem(STORAGE_USER);
     setAuth(null);
   };
 

@@ -41,6 +41,7 @@ const ngoRoutes = require('./routes/ngoRoutes');
 const impactRoutes = require('./routes/impactRoutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const organisationRoutes = require('./routes/organisationRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
@@ -49,6 +50,7 @@ app.use('/api/matches', matchingRoutes);
 app.use('/api/ngos', ngoRoutes);
 app.use('/api/impact', impactRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/organisation', organisationRoutes);
 
 // ==================== HEALTH CHECK ====================
 app.get('/api/health', (req, res) => {

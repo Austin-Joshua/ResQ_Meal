@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Thermometer, Clock, MapPin, UtensilsCrossed } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Thermometer, Clock, MapPin, UtensilsCrossed, ShoppingBag, Navigation } from 'lucide-react';
 import { foodApi } from '@/services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export interface AvailableFoodItem {
   id: number;
@@ -90,7 +91,15 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
   const [sortBy, setSortBy] = useState<'urgency' | 'newest' | 'servings' | 'timeLeft'>('urgency');
   const [centerIndex, setCenterIndex] = useState(0);
   const [search, setSearch] = useState('');
+  const [selectedFood, setSelectedFood] = useState<AvailableFoodItem | null>(null);
+  const [claimSuccess, setClaimSuccess] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const openMapsWithDirections = (address: string) => {
+    const encoded = encodeURIComponent(address);
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const dayFilter = DAY_LABELS[activeDayIndex];
   const foodTypeFilter = FOOD_TYPE_FILTERS[dayFilter] ?? '';
@@ -417,8 +426,13 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
                 </div>
               )}
 
-              {/* Center – large plate + info card */}
-              <div className="flex flex-col items-center max-w-sm w-full mx-2">
+              {/* Center – large plate + info card (touch opens full card) */}
+              <button
+                type="button"
+                onClick={() => current && setSelectedFood(current)}
+                className="flex flex-col items-center max-w-sm w-full mx-2 cursor-pointer touch-manipulation text-left focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded-2xl"
+                aria-label="View full details"
+              >
                 <div
                   className={`w-40 h-40 sm:w-52 sm:h-52 rounded-full overflow-hidden border-4 flex-shrink-0 ${
                     darkMode ? 'border-slate-500 bg-slate-700 shadow-xl' : 'border-slate-300 bg-slate-100 shadow-lg'
@@ -488,7 +502,7 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* Right (next) – smaller, faded */}
               {centerIndex < filteredItems.length - 1 && (
@@ -532,6 +546,84 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
           </>
         )}
       </div>
+
+      {/* Full card dialog – tap food to open */}
+      <Dialog open={!!selectedFood} onOpenChange={(open) => !open && setSelectedFood(null)}>
+        <DialogContent className={`max-w-md max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+          <DialogHeader>
+            <DialogTitle className="sr-only">Food details</DialogTitle>
+          </DialogHeader>
+          {selectedFood && (
+            <div className="space-y-4">
+              <div className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-600">
+                <img
+                  src={getStockImageUrl(selectedFood)}
+                  alt={selectedFood.food_name ?? 'Food'}
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+              <p className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden />
+                {(selectedFood.food_type ?? 'food').replace(/^./, (c) => c.toUpperCase())}
+              </p>
+              <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                {selectedFood.food_name ?? '—'}
+              </h3>
+              <div className={`grid grid-cols-2 gap-3 text-sm border-t pt-4 ${darkMode ? 'border-slate-600' : 'border-slate-200'}`}>
+                <div>
+                  <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Servings</p>
+                  <p className={`font-semibold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedFood.quantity_servings ?? 0}</p>
+                </div>
+                <div>
+                  <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Safety window</p>
+                  <p className={`font-semibold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedFood.safety_window_minutes ?? '—'} min</p>
+                </div>
+                <div>
+                  <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Temperature</p>
+                  <p className={`font-semibold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                    {selectedFood.min_storage_temp_celsius != null && selectedFood.max_storage_temp_celsius != null
+                      ? `${selectedFood.min_storage_temp_celsius}°–${selectedFood.max_storage_temp_celsius}°C`
+                      : '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Available</p>
+                  <p className={`font-semibold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{selectedFood.availability_time_hours ?? '—'}h</p>
+                </div>
+              </div>
+              {selectedFood.location?.address && (
+                <div>
+                  <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Pickup location</p>
+                  <p className={`font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedFood.location.address}</p>
+                </div>
+              )}
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setClaimSuccess(true);
+                    setTimeout(() => setClaimSuccess(false), 3000);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  {claimSuccess ? 'Request sent' : 'Claim food from organisation'}
+                </button>
+                {selectedFood.location?.address && (
+                  <button
+                    type="button"
+                    onClick={() => openMapsWithDirections(selectedFood!.location!.address!)}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold border-2 border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  >
+                    <Navigation className="w-5 h-5" />
+                    Get directions & start journey
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }

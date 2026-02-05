@@ -3,6 +3,9 @@ import { Lock, Mail, LogIn, AlertCircle, Loader2 } from 'lucide-react';
 import { authApi } from '@/services/api';
 import logoMark from '@/assets/logo-mark.png';
 
+const REMEMBER_EMAIL_KEY = 'resqmeal_remember_email';
+const REMEMBER_ME_KEY = 'resqmeal_remember_me';
+
 export interface LoginSuccessUser {
   id: number;
   name: string;
@@ -12,13 +15,31 @@ export interface LoginSuccessUser {
 
 interface LoginPageProps {
   darkMode: boolean;
-  onSuccess: (user: LoginSuccessUser, token: string) => void;
+  onSuccess: (user: LoginSuccessUser, token: string, rememberMe?: boolean) => void;
   onBrowseWithoutSignIn?: () => void;
 }
 
+function getStoredRememberMe(): boolean {
+  try {
+    const v = localStorage.getItem(REMEMBER_ME_KEY);
+    return v !== null ? v === 'true' : true;
+  } catch {
+    return true;
+  }
+}
+
+function getStoredEmail(): string {
+  try {
+    return localStorage.getItem(REMEMBER_EMAIL_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
 const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWithoutSignIn }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => (getStoredRememberMe() ? getStoredEmail() : ''));
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(getStoredRememberMe);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,10 +50,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
     setError(null);
     setLoading(true);
     try {
-      const { data } = await authApi.login(email, password);
+      const { data } = await authApi.login(email.trim(), password);
       if (data.success && data.data) {
         const { token, id, name, email: userEmail, role } = data.data;
-        onSuccess({ id, name, email: userEmail, role }, token);
+        try {
+          localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+          if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, userEmail);
+          else localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        } catch (_) {}
+        onSuccess({ id, name, email: userEmail, role }, token, rememberMe);
       } else {
         setError('Invalid response from server.');
       }
@@ -61,7 +87,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
             ResQ Meal
           </h1>
           <p className={`text-center text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            Sign in with your account (passwords are encrypted)
+            Sign in with your email and password
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,10 +111,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
                 <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                 <input
                   id="login-email"
+                  name="email"
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); clearError(); }}
-                  placeholder="you@example.com"
+                  placeholder="Enter your email"
                   required
                   autoComplete="email"
                   disabled={loading}
@@ -109,10 +136,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
                 <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                 <input
                   id="login-password"
+                  name="password"
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); clearError(); }}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   required
                   autoComplete="current-password"
                   disabled={loading}
@@ -124,6 +152,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
                 />
               </div>
             </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                id="login-remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                aria-label="Remember me"
+              />
+              <label
+                htmlFor="login-remember"
+                className={`text-sm cursor-pointer select-none ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}
+              >
+                Remember me
+              </label>
+            </div>
+            <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+              {rememberMe ? 'Stay signed in and remember your email on this device.' : 'Sign out when you close the browser.'}
+            </p>
 
             <button
               type="submit"

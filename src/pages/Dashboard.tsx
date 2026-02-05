@@ -3,8 +3,11 @@ import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, Trendi
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AppShell } from '@/components/AppShell';
 import { AvailableFoodCarousel } from '@/components/AvailableFoodCarousel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import PostSurplusPage from './PostSurplus';
 import logoFull from '@/assets/logo-full.png';
+
+type CardPucId = 'activity' | 'help' | 'weeklyTrend';
 
 interface DashboardProps {
   onSettingsClick: () => void;
@@ -402,6 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
   const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
+  const [cardPucOpen, setCardPucOpen] = useState<CardPucId | null>(null);
   const [didYouKnowTip, setDidYouKnowTip] = useState(() => pickRandomTip());
   const t = translations[language];
 
@@ -519,11 +523,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               searchPlaceholder={t.searchFood}
             />
 
-            {/* Today's Activity + Pending / Active – text left-aligned */}
+            {/* Today's Activity + Pending / Active – touch/click opens dedicated PUC */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className={`rounded-2xl p-6 transition-all duration-300 border text-left ${
-                darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
-              }`}>
+              <button
+                type="button"
+                onClick={() => setCardPucOpen('activity')}
+                className={`rounded-2xl p-6 transition-all duration-300 border text-left cursor-pointer touch-manipulation hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-[0.99] ${
+                  darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+                }`}
+                aria-label={`${t.recentActivity}. Tap for details`}
+              >
                 <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                   <Clock className="w-4 h-4 shrink-0" /> {t.recentActivity}
                 </h3>
@@ -541,10 +550,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                     <span>1 {t.matchAwaiting}</span>
                   </li>
                 </ul>
-              </div>
-              <div className={`rounded-2xl p-6 transition-all duration-300 border text-left ${
-                darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
-              }`}>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCardPucOpen('help')}
+                className={`rounded-2xl p-6 transition-all duration-300 border text-left cursor-pointer touch-manipulation hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-[0.99] ${
+                  darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+                }`}
+                aria-label={`${t.howYouCanHelp}. Tap for details`}
+              >
                 <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
                   {t.howYouCanHelp}
                 </h3>
@@ -558,7 +572,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                     <p className={`text-xs font-medium mt-1 ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t.activeDeliveries}</p>
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Did you know tip – left-aligned */}
@@ -670,12 +684,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               ))}
             </div>
 
-{/* Chart Card – text left-aligned */}
-            <div className={`rounded-2xl p-8 transition-all duration-300 border text-left ${
-              darkMode
-                ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-emerald-600/30 shadow-xl'
-                : 'bg-gradient-to-br from-slate-50 to-emerald-50/15 border-slate-300/50 shadow-lg'
-            }`}>
+{/* Chart Card – touch/click opens dedicated PUC */}
+            <button
+              type="button"
+              onClick={() => setCardPucOpen('weeklyTrend')}
+              className={`rounded-2xl p-8 transition-all duration-300 border text-left w-full cursor-pointer touch-manipulation hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-[0.99] ${
+                darkMode
+                  ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-emerald-600/30 shadow-xl'
+                  : 'bg-gradient-to-br from-slate-50 to-emerald-50/15 border-slate-300/50 shadow-lg'
+              }`}
+              aria-label={`${t.weeklyTrend}. Tap for details`}
+            >
               <div className="flex items-center justify-between mb-6">
                 <h3 className={`text-2xl font-bold flex items-center gap-2 ${
                   darkMode ? 'text-yellow-300' : 'text-slate-900'
@@ -684,7 +703,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                   {t.weeklyTrend}
                 </h3>
               </div>
-              <div className="w-full h-80">
+              <div className="w-full h-80 pointer-events-none">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={impactData}>
                     <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#475569' : '#cbd5e1'} />
@@ -717,7 +736,95 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </button>
+
+            {/* Dedicated PUC (pop-up) when touching a card */}
+            <Dialog open={cardPucOpen !== null} onOpenChange={(open) => !open && setCardPucOpen(null)}>
+              <DialogContent className={darkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200'}>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {cardPucOpen === 'activity' && <><Clock className="w-5 h-5" /> {t.recentActivity}</>}
+                    {cardPucOpen === 'help' && <><Target className="w-5 h-5" /> {t.howYouCanHelp}</>}
+                    {cardPucOpen === 'weeklyTrend' && <><TrendingUp className="w-5 h-5" /> {t.weeklyTrend}</>}
+                  </DialogTitle>
+                </DialogHeader>
+                {cardPucOpen === 'activity' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Summary of today&apos;s activity. Respond to matches and track deliveries.
+                    </p>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">✓ 2 {t.postsMatchedToday}</li>
+                      <li className="flex items-center gap-2">✓ 1 {t.deliveryCompleted}</li>
+                      <li className="flex items-center gap-2">○ 1 {t.matchAwaiting}</li>
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => { setCardPucOpen(null); setActivePage('matches'); }}
+                      className="mt-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"
+                    >
+                      {t.viewMatches}
+                    </button>
+                  </div>
+                )}
+                {cardPucOpen === 'help' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Quick overview of pending matches and active deliveries. Take action from here.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className={`p-4 rounded-xl ${darkMode ? 'bg-amber-600/20' : 'bg-amber-50'}`}>
+                        <p className="text-2xl font-bold text-amber-600 dark:text-amber-300">3</p>
+                        <p className="text-xs font-medium">{t.pendingMatches}</p>
+                      </div>
+                      <div className={`p-4 rounded-xl ${darkMode ? 'bg-emerald-600/20' : 'bg-emerald-50'}`}>
+                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-300">1</p>
+                        <p className="text-xs font-medium">{t.activeDeliveries}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setCardPucOpen(null); setActivePage('matches'); }}
+                      className="mt-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"
+                    >
+                      {t.viewMatches}
+                    </button>
+                  </div>
+                )}
+                {cardPucOpen === 'weeklyTrend' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Weekly trend of meals saved and CO₂ prevented. Green line: meals; orange line: CO₂ (kg).
+                    </p>
+                    <div className="h-48 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={impactData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#475569' : '#cbd5e1'} />
+                          <XAxis dataKey="date" stroke={darkMode ? '#cbd5e1' : '#64748b'} fontSize={12} />
+                          <YAxis stroke={darkMode ? '#cbd5e1' : '#64748b'} fontSize={12} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                              border: darkMode ? '2px solid #fbbf24' : '2px solid #64748b',
+                              borderRadius: '8px',
+                            }}
+                          />
+                          <Line type="monotone" dataKey="meals" stroke="#10b981" strokeWidth={2} name="Meals" dot={{ fill: '#10b981', r: 4 }} />
+                          <Line type="monotone" dataKey="co2" stroke="#f59e0b" strokeWidth={2} name="CO₂" dot={{ fill: '#f59e0b', r: 4 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setCardPucOpen(null); setActivePage('impact'); }}
+                      className="mt-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"
+                    >
+                      {t.seeImpact}
+                    </button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 

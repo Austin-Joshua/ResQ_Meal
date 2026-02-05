@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { organisationApi } from '@/services/api';
 
 type CardId = 'peopleServed' | 'mealsDelivered' | 'deliveriesCompleted' | 'activeVolunteers' | 'co2Prevented' | 'foodRescued';
 
@@ -160,6 +161,8 @@ const defaultReport = {
   foodRescuedKg: 9320,
 };
 
+const FOOD_TYPES = ['meals', 'vegetables', 'baked', 'dairy', 'fruits', 'others'] as const;
+
 const OrganisationReport: React.FC<OrganisationReportProps> = ({
   darkMode,
   setDarkMode,
@@ -169,7 +172,45 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   onLogout,
 }) => {
   const [selectedCardId, setSelectedCardId] = useState<CardId | null>(null);
+  const [organisationFood, setOrganisationFood] = useState<Array<{ id: number; food_name: string; food_type: string; quantity_servings: number; address?: string; status: string; organization_name?: string; created_at?: string }>>([]);
+  const [addFoodLoading, setAddFoodLoading] = useState(false);
+  const [addFoodMessage, setAddFoodMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [addFoodForm, setAddFoodForm] = useState({ food_name: '', food_type: 'meals' as const, quantity_servings: 10, description: '', address: '' });
   const report = defaultReport;
+
+  const loadOrganisationFood = () => {
+    organisationApi.getMyFood()
+      .then((res) => setOrganisationFood(Array.isArray(res.data?.data) ? res.data.data : []))
+      .catch(() => setOrganisationFood([]));
+  };
+
+  useEffect(() => { loadOrganisationFood(); }, []);
+
+  const handleAddFood = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addFoodForm.food_name.trim() || !addFoodForm.address.trim()) {
+      setAddFoodMessage({ type: 'error', text: 'Food name and address are required.' });
+      return;
+    }
+    setAddFoodLoading(true);
+    setAddFoodMessage(null);
+    organisationApi.postFood({
+      food_name: addFoodForm.food_name.trim(),
+      food_type: addFoodForm.food_type,
+      quantity_servings: Number(addFoodForm.quantity_servings) || 1,
+      description: addFoodForm.description.trim() || undefined,
+      address: addFoodForm.address.trim(),
+    })
+      .then(() => {
+        setAddFoodMessage({ type: 'success', text: 'Food added. It will appear on the volunteer page.' });
+        setAddFoodForm({ food_name: '', food_type: 'meals', quantity_servings: 10, description: '', address: '' });
+        loadOrganisationFood();
+      })
+      .catch((err: any) => {
+        setAddFoodMessage({ type: 'error', text: err.response?.data?.message || 'Failed to add food.' });
+      })
+      .finally(() => setAddFoodLoading(false));
+  };
 
   if (selectedCardId) {
     return (
@@ -292,6 +333,130 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               </p>
             </button>
           </div>
+        </section>
+
+        {/* Add food – reflected on volunteer page */}
+        <section className={`rounded-2xl border p-6 ${
+          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+        }`}>
+          <h2 className={`text-lg font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            <Plus className="w-5 h-5" />
+            Add food
+          </h2>
+          <p className={`text-sm mb-4 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+            Add food that needs pickup or delivery. It will appear on the volunteer page for volunteers to see and respond.
+          </p>
+          <form onSubmit={handleAddFood} className="space-y-4 max-w-xl">
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Food name *</label>
+              <input
+                type="text"
+                value={addFoodForm.food_name}
+                onChange={(e) => setAddFoodForm((f) => ({ ...f, food_name: e.target.value }))}
+                placeholder="e.g. Rice and curry, Bread rolls"
+                className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                  darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Type</label>
+                <select
+                  aria-label="Food type"
+                  value={addFoodForm.food_type}
+                  onChange={(e) => setAddFoodForm((f) => ({ ...f, food_type: e.target.value as typeof addFoodForm.food_type }))}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                    darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
+                >
+                  {FOOD_TYPES.map((t) => (
+                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Servings</label>
+                <input
+                  type="number"
+                  min={1}
+                  aria-label="Number of servings"
+                  placeholder="e.g. 10"
+                  value={addFoodForm.quantity_servings}
+                  onChange={(e) => setAddFoodForm((f) => ({ ...f, quantity_servings: Number(e.target.value) || 1 }))}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                    darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
+                />
+              </div>
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Address / pickup location *</label>
+              <input
+                type="text"
+                value={addFoodForm.address}
+                onChange={(e) => setAddFoodForm((f) => ({ ...f, address: e.target.value }))}
+                placeholder="e.g. 123 Main St, Chennai"
+                className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                  darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Description (optional)</label>
+              <textarea
+                value={addFoodForm.description}
+                onChange={(e) => setAddFoodForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder="Any notes for volunteers"
+                rows={2}
+                className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                  darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              />
+            </div>
+            {addFoodMessage && (
+              <p className={`text-sm ${addFoodMessage.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {addFoodMessage.text}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={addFoodLoading}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+                darkMode
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50'
+              }`}
+            >
+              {addFoodLoading ? 'Adding…' : 'Add food'}
+            </button>
+          </form>
+          {organisationFood.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+              <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Food you added (visible to volunteers)</h3>
+              <ul className="space-y-2">
+                {organisationFood.map((item) => (
+                  <li
+                    key={item.id}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
+                      darkMode ? 'bg-slate-800/50' : 'bg-slate-50'
+                    }`}
+                  >
+                    <Utensils className={`w-4 h-4 shrink-0 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.food_name}</p>
+                      <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <MapPin className="w-3 h-3" /> {item.address}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
+                      {item.quantity_servings} servings · {item.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         {/* This month vs last month */}
