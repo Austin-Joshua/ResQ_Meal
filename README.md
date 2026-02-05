@@ -67,6 +67,10 @@ resqmeal-nourishing-communities/
 - **Dark Mode & Multilingual**: Support for English, Tamil, and Hindi with dark mode
 - **Responsive Design**: Works seamlessly on mobile and desktop
 
+## AI in ResQ Meal
+
+ResQ Meal uses AI as a decision-support layer: **smart matching** (ranked donor–NGO pairs by distance, freshness, capacity, food type), **perishability-aware priority** (time-to-expiry and optional ML freshness from image/env), and optional **demand prediction** and **learning from feedback** (designed, not yet trained). See **[docs/AI_IMPLEMENTATION.md](docs/AI_IMPLEMENTATION.md)** for how AI is implemented and how it differs from a regular donation platform.
+
 ## Development
 
 ### Running Frontend
@@ -157,13 +161,24 @@ In `backend/.env` set the URL(s) for the service(s) you run:
 
 The backend tries image-based services in order (Bedrock → TFLite → Roboflow → FreshVision → fruit-veg-freshness); the first that is configured and responding is used. Environment-based checks use `FRESHNESS_ENV_AI_URL` only.
 
+### AI API (demand prediction, feedback, recommended matches)
+
+- **GET /api/ai/demand-prediction** (auth) — Predicted demand per NGO from historical matches/deliveries (last 30 days).
+- **POST /api/ai/feedback** (auth) — Record match outcome for learning: `{ match_id, outcome: "accepted"|"rejected"|"delivered", delay_minutes?, notes? }`.
+- **GET /api/ai/health** — Which AI features are enabled (freshness URLs, etc.).
+- **GET /api/matches/recommended/:food_post_id** (auth) — Ranked NGO recommendations for a food post (distance, capacity, food type, demand boost from past behaviour). Query: `?top=5` (default 5, max 20).
+
+See `docs/AI_IMPLEMENTATION.md` for how these fit the four AI layers (demand prediction, smart matching, perishability, learning from feedback).
+
 ## UI Design System
 
-- **Primary**: Deep Teal (#0F766E)
+- **Primary (light)**: ResQ green (HSL 145 63% 49%)
+- **Primary (dark)**: Google AI Studio green **#34a853** (HSL 135 53% 43%) — used for primary, accent, ring, sidebar in dark mode
 - **Secondary**: Slate Blue (#334155)
-- **Accent**: Soft Amber (#F59E0B)
+- **Accent (light)**: Soft Amber (#F59E0B)
 - **Success**: Sage Green (#16A34A)
-- **Background**: White (#FFFFFF)
+- **Background**: White (#FFFFFF); dark: `hsl(210 22% 10%)`
+- **Dark mode utilities**: `.studio-green-bg`, `.studio-green-border`, `.studio-green-text` use #34a853
 
 ## Freshness detector & ML
 

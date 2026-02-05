@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { BarChart3, Users, Utensils, Truck, LogOut, Building2, TrendingUp, Sun, Moon, Globe, ChevronDown, ArrowLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft } from 'lucide-react';
+import { AppShell } from '@/components/AppShell';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type CardId = 'peopleServed' | 'mealsDelivered' | 'deliveriesCompleted' | 'activeVolunteers' | 'co2Prevented' | 'foodRescued';
@@ -14,15 +15,6 @@ interface OrganisationReportProps {
 }
 
 const languageLabels = { en: 'English', ta: 'Tamil', hi: 'Hindi' };
-
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 // Chart data for organisation report
 const monthlyTrendData = [
@@ -177,21 +169,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   onLogout,
 }) => {
   const [selectedCardId, setSelectedCardId] = useState<CardId | null>(null);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const languageMenuRef = useRef<HTMLDivElement>(null);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
   const report = defaultReport;
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (languageMenuRef.current && !languageMenuRef.current.contains(target)) setLanguageMenuOpen(false);
-      if (profileMenuRef.current && !profileMenuRef.current.contains(target)) setProfileMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   if (selectedCardId) {
     return (
@@ -213,144 +191,18 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
     } ${clickable ? 'cursor-pointer hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500' : ''}`;
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
-    }`}>
-      {/* Header */}
-      <header className={`sticky top-0 z-40 backdrop-blur-lg border-b ${
-        darkMode ? 'bg-emerald-950/98 border-emerald-700/40' : 'bg-white/98 border-slate-200'
-      }`}>
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Building2 className={`w-8 h-8 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
-            <div>
-              <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Organisation Report
-              </h1>
-              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                {user.name} · {user.role}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Language dropdown */}
-            <div className="relative" ref={languageMenuRef}>
-              <button
-                type="button"
-                onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  darkMode ? 'bg-emerald-800/30 text-slate-200 hover:bg-emerald-700/40' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-                title="Language"
-              >
-                <Globe className="w-4 h-4" />
-                <span>{languageLabels[language]}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {languageMenuOpen && (
-                <div
-                  className={`absolute right-0 top-full mt-1 min-w-[140px] rounded-lg border shadow-lg py-1 z-50 ${
-                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-slate-200'
-                  }`}
-                >
-                  {(['en', 'ta', 'hi'] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => {
-                        setLanguage(lang);
-                        setLanguageMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm font-medium transition ${
-                        language === lang
-                          ? darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-50 text-emerald-800'
-                          : darkMode ? 'text-slate-200 hover:bg-emerald-900/40' : 'text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {languageLabels[lang]}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Light/Dark mode toggle */}
-            <button
-              type="button"
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2.5 rounded-lg transition ${
-                darkMode ? 'hover:bg-emerald-800/40 text-slate-200' : 'hover:bg-slate-200 text-slate-700'
-              }`}
-              title={darkMode ? 'Light mode' : 'Dark mode'}
-            >
-              {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-            </button>
-
-            {/* Profile icon & dropdown (works for all org users – seed or user-created credentials) */}
-            <div className="relative" ref={profileMenuRef}>
-              <button
-                type="button"
-                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className={`p-2.5 rounded-lg transition ${
-                  darkMode ? 'hover:bg-emerald-800/40 text-slate-200' : 'hover:bg-slate-200 text-slate-700'
-                }`}
-                title="Profile"
-                aria-label="Open profile menu"
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-                  darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
-                }`}>
-                  {getInitials(user.name)}
-                </div>
-              </button>
-              {profileMenuOpen && (
-                <div
-                  className={`absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-lg py-2 z-50 ${
-                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-slate-200'
-                  }`}
-                >
-                  <div className={`px-4 py-3 border-b ${darkMode ? 'border-emerald-700/50' : 'border-slate-200'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shrink-0 ${
-                        darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
-                      }`}>
-                        {getInitials(user.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-semibold text-sm truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                          {user.name}
-                        </p>
-                        <p className={`text-xs truncate ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          {user.email}
-                        </p>
-                        <p className={`text-xs mt-1 capitalize ${darkMode ? 'text-amber-400' : 'text-emerald-600'}`}>
-                          {user.role}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      onLogout();
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
-                      darkMode ? 'text-red-300 hover:bg-red-900/30' : 'text-red-700 hover:bg-red-50'
-                    }`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Log out
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <AppShell
+      title="Organisation Report"
+      subtitle={`${user.name} · ${user.role}`}
+      darkMode={darkMode}
+      setDarkMode={setDarkMode}
+      language={language}
+      setLanguage={setLanguage}
+      languageLabels={languageLabels}
+      user={user}
+      onLogout={onLogout}
+    >
+      <div className="space-y-8">
         {/* Overall summary */}
         <section className={`rounded-2xl border p-6 ${
           darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
@@ -568,8 +420,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
             </button>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 };
 

@@ -1,4 +1,5 @@
-const { pool } = require('../server');
+const pool = require('../config/database');
+const geolib = require('geolib');
 
 class MatchingController {
   
@@ -329,6 +330,104 @@ class MatchingController {
     } catch (error) {
       console.error('Error updating match status:', error);
       res.status(500).json({ error: 'Failed to update match status' });
+    }
+  }
+
+  /**
+   * GET /api/matches/recommended/:food_post_id
+   * AI-assisted: returns ranked NGO recommendations for a food post (distance, capacity, food type, demand).
+   */
+  static async getRecommendedMatches(req, res) {
+    try {
+      const { food_post_id } = req.params;
+      const topN = Math.min(parseInt(req.query.top) || 5, 20);
+
+      const connection = await pool.getConnection();
+      try {
+        const [posts] = await connection.query(
+          `SELECT fp.*, u.latitude AS donor_lat, u.longitude AS donor_lon
+           FROM food_posts fp
+           JOIN restaurants r ON r.id = fp.restaurant_id
+           JOIN users u ON u.id = r.user_id
+           WHERE fp.id = ? AND fp.status = 'POSTED'`,
+          [food_post_id]
+        );
+        if (posts.length === 0) {
+          return res.status(404).json({ error: 'Food post not found or not available' });
+        }
+        const post = posts[0];
+        const donorLat = parseFloat(post.donor_lat || post.latitude);
+        const donorLon = parseFloat(post.donor_lon || post.longitude);
+        const quantity = post.quantity_servings || 0;
+        const foodType = post.food_type || 'others';
+
+        const [ngos] = await connection.query(
+          `SELECT n.id, n.organization_name, n.daily_capacity, n.used_capacity,
+                  u.latitude, u.longitude,
+                  (n.daily_capacity - n.used_capacity) AS available_capacity
+           FROM ngos n
+           JOIN users u ON u.id = n.user_id
+           WHERE n.verified = 1 AND u.latitude IS NOT NULL AND u.longitude IS NOT NULL
+           AND (n.daily_capacity - n.used_capacity) > 0`
+        );
+
+        const [demandRows] = await connection.query(
+          `SELECT n.id AS ngo_id,
+                  COUNT(DISTINCT m.id) AS accepted_count
+           FROM ngos n
+           LEFT JOIN matches m ON m.ngo_id = n.id
+             AND m.status IN ('ACCEPTED', 'PICKED_UP', 'DELIVERED')
+             AND m.matched_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+           GROUP BY n.id`
+        );
+        const demandByNgo = {};
+        demandRows.forEach((r) => {
+          demandByNgo[r.ngo_id] = Number(r.accepted_count) || 0;
+        });
+
+        const scored = ngos.map((ngo) => {
+          const ngoLat = parseFloat(ngo.latitude);
+          const ngoLon = parseFloat(ngo.longitude);
+          const distanceM = geolib.getDistance(
+            { latitude: donorLat, longitude: donorLon },
+            { latitude: ngoLat, longitude: ngoLon }
+          );
+          const distanceKm = distanceM / 1000;
+
+          const available = Number(ngo.available_capacity) || 0;
+          const capacityPercent = (available / (Number(ngo.daily_capacity) || 1)) * 100;
+          const highDemand = ['meals', 'vegetables', 'baked'];
+
+          let demandBoost = 1.0;
+          const recentAccepted = demandByNgo[ngo.id] || 0;
+          if (recentAccepted >= 10) demandBoost = 1.25;
+          else if (recentAccepted >= 5) demandBoost = 1.15;
+
+          let overallScore = 0.5;
+          overallScore += distanceKm <= 2 ? 0.35 : distanceKm <= 5 ? 0.25 : distanceKm <= 10 ? 0.15 : 0.05;
+          overallScore += (capacityPercent / 100) * 0.3;
+          overallScore += highDemand.includes(foodType) ? 0.15 : 0.05;
+          overallScore = Math.min(1.0, overallScore * demandBoost);
+
+          return {
+            ngo_id: ngo.id,
+            organization_name: ngo.organization_name,
+            distance_km: Math.round(distanceKm * 10) / 10,
+            available_capacity: available,
+            match_score: Math.round(overallScore * 100) / 100,
+            demand_boost: demandBoost,
+          };
+        });
+
+        scored.sort((a, b) => b.match_score - a.match_score);
+        const top = scored.slice(0, topN);
+        res.json({ data: top, food_post_id: parseInt(food_post_id) });
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error getting recommended matches:', error);
+      res.status(500).json({ error: 'Failed to get recommended matches' });
     }
   }
 

@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info, Thermometer, User, Crown, LogOut } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AppShell } from '@/components/AppShell';
+import { AvailableFoodCarousel } from '@/components/AvailableFoodCarousel';
 import PostSurplusPage from './PostSurplus';
 import logoFull from '@/assets/logo-full.png';
 
@@ -76,6 +78,8 @@ const translations = {
     tipText: 'Every 1 kg of food rescued saves ~2.5 kg CO₂ and helps feed someone in need.',
     neededFoodMap: 'Needed food areas',
     howYouCanHelp: 'How you can help',
+    availableFood: "Today's Available Food",
+    searchFood: 'Search for surplus food...',
     postFoodNow: 'Post food now',
     viewMatches: 'View matches',
     seeImpact: 'See impact',
@@ -91,7 +95,6 @@ const translations = {
     thisWeek: 'This Week',
     thisMonth: 'This Month',
     thisYear: 'This Year',
-    weeklyTrend: 'Weekly Trend',
     keyInsights: 'Key Insights',
     periodComparison: 'Period Comparison',
     lastWeek: 'Last Week',
@@ -106,6 +109,11 @@ const translations = {
     donationValue: 'Donation Value',
     accept: 'Accept',
     decline: 'Decline',
+    allMatches: 'All',
+    matchPending: 'Pending',
+    matchAccepted: 'Accepted',
+    matchInDelivery: 'In delivery',
+    matchCompleted: 'Completed',
     yourImpact: 'Your Impact',
     seeHowMuch: 'See how much difference you\'re making',
     aboutResQMeal: 'About ResQ Meal',
@@ -116,13 +124,11 @@ const translations = {
     ourVision: 'Our vision',
     visionText: 'A world where surplus food is routinely rescued, shared, and measured—reducing hunger and environmental impact in every community we serve.',
     howItWorks: 'How it works',
-    postSurplus: 'Post surplus',
     postSurplusDesc: 'Donors add surplus food with quantity, expiry, and optional AI freshness check.',
     getMatched: 'Get matched',
     getMatchedDesc: 'NGOs see relevant listings; our system suggests the best matches by need and distance.',
     confirmDeliver: 'Confirm & deliver',
     confirmDeliverDesc: 'Volunteers pick up and deliver. Track status and complete with proof of delivery.',
-    seeImpact: 'See impact',
     seeImpactDesc: 'Meals saved, CO₂ prevented, and water saved are tracked and shown in your dashboard.',
     websiteFeatures: 'Website features & details',
     websiteFeaturesDesc: 'ResQ Meal includes the following features to support donors, NGOs, and volunteers:',
@@ -189,6 +195,8 @@ const translations = {
     tipText: 'ஒவ்வொரு 1 கிலோ உணவு மீட்பும் ~2.5 கிலோ CO₂ சேமிக்கிறது.',
     neededFoodMap: 'தேவையான உணவு பகுதிகள்',
     howYouCanHelp: 'நீங்கள் எவ்வாறு உதவ முடியும்',
+    availableFood: 'இன்றைய கிடைக்கும் உணவு',
+    searchFood: 'உதிரி உணவைத் தேடுங்கள்...',
     postFoodNow: 'இப்போது உணவு பதிவு',
     viewMatches: 'பொருத்தங்களைக் காண்க',
     seeImpact: 'தாக்கத்தைக் காண்க',
@@ -204,7 +212,6 @@ const translations = {
     thisWeek: 'இந்த வாரம்',
     thisMonth: 'இந்த மாதம்',
     thisYear: 'இந்த ஆண்டு',
-    weeklyTrend: 'வாராந்திர போக்கு',
     keyInsights: 'முக்கிய நுண்ணறிவுகள்',
     periodComparison: 'காலகட்ட ஒப்பீடு',
     lastWeek: 'கடந்த வாரம்',
@@ -219,6 +226,11 @@ const translations = {
     donationValue: 'நன்கொடை மதிப்பு',
     accept: 'ஏற்க',
     decline: 'நிராகரி',
+    allMatches: 'அனைத்தும்',
+    matchPending: 'நிலுவையில்',
+    matchAccepted: 'ஏற்றுக்கொள்ளப்பட்டது',
+    matchInDelivery: 'டெலிவரியில்',
+    matchCompleted: 'முடிந்தது',
     yourImpact: 'உங்கள் தாக்கம்',
     seeHowMuch: 'நீங்கள் எவ்வளவு வித்தியாசத்தை ஏற்படுத்துகிறீர்கள் என்பதைப் பார்க்கவும்',
     aboutResQMeal: 'ResQ Meal பற்றி',
@@ -229,13 +241,11 @@ const translations = {
     ourVision: 'எங்கள் பார்வை',
     visionText: 'மிகுதி உணவு வழக்கமாக மீட்கப்பட்டு, பகிர்ந்து, அளவிடப்படும் ஒரு உலகம்—ஒவ்வொரு சமூகத்திலும் பசி மற்றும் சுற்றுச்சூழல் தாக்கத்தைக் குறைத்தல்.',
     howItWorks: 'இது எவ்வாறு செயல்படுகிறது',
-    postSurplus: 'மிகுதியை இடுகையிடுங்கள்',
     postSurplusDesc: 'நன்கொடையாளர்கள் அளவு, காலாவதி மற்றும் விருப்பமான AI புதுமையான சோதனையுடன் மிகுதி உணவைச் சேர்க்கிறார்கள்.',
     getMatched: 'பொருந்தவும்',
     getMatchedDesc: 'NGO-கள் தொடர்புடைய பட்டியல்களைப் பார்க்கின்றன; எங்கள் அமைப்பு தேவை மற்றும் தூரத்தின் அடிப்படையில் சிறந்த பொருத்தங்களை பரிந்துரைக்கிறது.',
     confirmDeliver: 'உறுதிப்படுத்தி வழங்குங்கள்',
     confirmDeliverDesc: 'தன்னார்வலர்கள் எடுத்துச் சென்று வழங்குகிறார்கள். நிலையைக் கண்காணித்து டெலிவரி சான்றுடன் முடிக்கவும்.',
-    seeImpact: 'தாக்கத்தைப் பார்க்கவும்',
     seeImpactDesc: 'சேமிக்கப்பட்ட உணவு, தடுக்கப்பட்ட CO₂ மற்றும் சேமிக்கப்பட்ட நீர் உங்கள் டாஷ்போர்டில் கண்காணிக்கப்பட்டு காட்டப்படுகிறது.',
     websiteFeatures: 'வலைத்தள அம்சங்கள் & விவரங்கள்',
     websiteFeaturesDesc: 'ResQ Meal நன்கொடையாளர்கள், NGO-கள் மற்றும் தன்னார்வலர்களை ஆதரிக்க பின்வரும் அம்சங்களை உள்ளடக்கியது:',
@@ -302,6 +312,8 @@ const translations = {
     tipText: 'हर 1 किलो बचाया भोजन ~2.5 किलो CO₂ बचाता है।',
     neededFoodMap: 'जरूरत वाले खाद्य क्षेत्र',
     howYouCanHelp: 'आप कैसे मदद कर सकते हैं',
+    availableFood: 'आज का उपलब्ध भोजन',
+    searchFood: 'अतिरिक्त भोजन खोजें...',
     postFoodNow: 'अभी भोजन पोस्ट करें',
     viewMatches: 'मैच देखें',
     seeImpact: 'प्रभाव देखें',
@@ -317,7 +329,6 @@ const translations = {
     thisWeek: 'इस सप्ताह',
     thisMonth: 'इस महीने',
     thisYear: 'इस वर्ष',
-    weeklyTrend: 'साप्ताहिक प्रवृत्ति',
     keyInsights: 'मुख्य अंतर्दृष्टि',
     periodComparison: 'अवधि तुलना',
     lastWeek: 'पिछला सप्ताह',
@@ -332,6 +343,11 @@ const translations = {
     donationValue: 'दान मूल्य',
     accept: 'स्वीकार करें',
     decline: 'अस्वीकार करें',
+    allMatches: 'सभी',
+    matchPending: 'लंबित',
+    matchAccepted: 'स्वीकृत',
+    matchInDelivery: 'डिलीवरी में',
+    matchCompleted: 'पूर्ण',
     yourImpact: 'आपका प्रभाव',
     seeHowMuch: 'देखें कि आप कितना अंतर बना रहे हैं',
     aboutResQMeal: 'ResQ Meal के बारे में',
@@ -342,13 +358,11 @@ const translations = {
     ourVision: 'हमारी दृष्टि',
     visionText: 'एक ऐसी दुनिया जहां अधिशेष भोजन नियमित रूप से बचाया, साझा और मापा जाता है—हर समुदाय में भूख और पर्यावरणीय प्रभाव को कम करना।',
     howItWorks: 'यह कैसे काम करता है',
-    postSurplus: 'अधिशेष पोस्ट करें',
     postSurplusDesc: 'दानदाता मात्रा, समाप्ति और वैकल्पिक AI ताजगी जांच के साथ अधिशेष भोजन जोड़ते हैं।',
     getMatched: 'मेल खाएं',
     getMatchedDesc: 'NGO प्रासंगिक सूचियां देखते हैं; हमारी प्रणाली आवश्यकता और दूरी के आधार पर सर्वोत्तम मैच सुझाती है।',
     confirmDeliver: 'पुष्टि करें और वितरित करें',
     confirmDeliverDesc: 'स्वयंसेवक ले जाते हैं और वितरित करते हैं। स्थिति ट्रैक करें और डिलीवरी प्रमाण के साथ पूरा करें।',
-    seeImpact: 'प्रभाव देखें',
     seeImpactDesc: 'बचाए गए भोजन, रोके गए CO₂ और बचाया गया पानी आपके डैशबोर्ड में ट्रैक और दिखाया जाता है।',
     websiteFeatures: 'वेबसाइट सुविधाएं और विवरण',
     websiteFeaturesDesc: 'ResQ Meal में दानदाताओं, NGO और स्वयंसेवकों का समर्थन करने के लिए निम्नलिखित सुविधाएं शामिल हैं:',
@@ -385,15 +399,10 @@ function pickRandomTip() {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = null, loginKey = 0, onOpenSignIn, onLogout, darkMode, setDarkMode, language, setLanguage }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [didYouKnowTip, setDidYouKnowTip] = useState(() => pickRandomTip());
-  const languageMenuRef = useRef<HTMLDivElement>(null);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
 
   const user = auth ?? { name: 'Guest', email: '', role: 'guest', profilePhoto: null };
@@ -401,28 +410,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
   useEffect(() => {
     setDidYouKnowTip(pickRandomTip());
   }, [loginKey]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (languageMenuRef.current && !languageMenuRef.current.contains(e.target as Node)) {
-        setLanguageMenuOpen(false);
-      }
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
-        setProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   const features = [
     { id: 'post', icon: '📤', label: 'Post Food', color: 'from-emerald-500 to-emerald-600' },
@@ -454,238 +441,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
   ];
 
   return (
-    <div className={`min-h-screen w-full max-w-full transition-all duration-300 ${
-      darkMode 
-        ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-950' 
-        : 'bg-white'
-    }`}>
-      
-      {/* Header – fixed height so hamburger and logo align with sidebar */}
-      <header className={`sticky top-0 z-40 h-[72px] flex items-center backdrop-blur-lg transition-all duration-300 border-b ${
-        darkMode 
-          ? 'bg-gradient-to-r from-emerald-950/98 via-blue-950/98 to-slate-950/98 border-emerald-700/40' 
-          : 'bg-white border-slate-200'
-      }`}>
-        <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`shrink-0 p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center ${
-                darkMode
-                  ? 'hover:bg-emerald-800/40 text-slate-200'
-                  : 'hover:bg-slate-200 text-slate-700'
-              }`}
-              aria-label="Toggle menu"
-            >
-              <Menu className="w-6 h-6" strokeWidth={2} />
-            </button>
-            <button
-              onClick={() => {
-                setActivePage('dashboard');
-                setSelectedFeature(null);
-                setSidebarOpen(false);
-              }}
-              className="flex items-center justify-center focus:outline-none rounded transition-opacity hover:opacity-90 min-h-[44px]"
-              aria-label="ResQ Meal - Back to dashboard"
-            >
-              <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px] object-contain object-left" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Language Button (dropdown) */}
-            <div className="relative" ref={languageMenuRef}>
-              <button
-                type="button"
-                onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  darkMode ? 'bg-emerald-800/30 text-slate-200 hover:bg-emerald-700/40' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-                title={t.language}
-              >
-                <Globe className="w-4 h-4" />
-                <span>{languageLabels[language]}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {languageMenuOpen && (
-                <div
-                  className={`absolute right-0 top-full mt-1 min-w-[140px] rounded-lg border shadow-lg py-1 z-50 ${
-                    darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-gray-200'
-                  }`}
-                >
-                  {(['en', 'ta', 'hi'] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => {
-                        setLanguage(lang);
-                        setLanguageMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm font-medium transition ${
-                        language === lang
-                          ? darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-slate-100 text-slate-900'
-                          : darkMode ? 'text-slate-200 hover:bg-emerald-900/40' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {languageLabels[lang]}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2.5 rounded-lg transition-all duration-200 ${
-                darkMode
-                  ? 'hover:bg-emerald-800/40 text-slate-200'
-                  : 'hover:bg-slate-200 text-slate-700'
-              }`}
-              title={darkMode ? 'Light mode' : 'Dark mode'}
-            >
-              {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-            </button>
-
-            {/* Sign in (when not logged in) or Profile dropdown (when volunteer logged in) */}
-            <div className="relative" ref={profileMenuRef}>
-              {!auth ? (
-                <button
-                  type="button"
-                  onClick={onOpenSignIn}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
-                    darkMode ? 'bg-emerald-600/30 text-emerald-200 hover:bg-emerald-600/50' : 'bg-emerald-600 text-white hover:bg-emerald-500'
-                  }`}
-                >
-                  <User className="w-4 h-4" />
-                  {t.signIn}
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                    className={`p-2.5 rounded-lg transition-all duration-200 ${
-                      darkMode
-                        ? 'hover:bg-emerald-800/40 text-slate-200'
-                        : 'hover:bg-slate-200 text-slate-700'
-                    }`}
-                    title={t.profile}
-                  >
-                    <User className="w-6 h-6" />
-                  </button>
-                  {profileMenuOpen && (
-                    <div
-                      className={`absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-lg py-2 z-50 ${
-                        darkMode ? 'bg-emerald-950/95 border-emerald-600/30' : 'bg-white border-gray-200'
-                      }`}
-                    >
-                      <div className={`px-4 py-3 border-b ${darkMode ? 'border-emerald-700/50' : 'border-gray-200'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
-                            darkMode ? 'bg-emerald-600/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
-                          }`}>
-                            {getInitials(user.name)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`font-semibold text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {user.name}
-                            </p>
-                            <p className={`text-xs truncate ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
-                              {user.email}
-                            </p>
-                            <p className={`text-xs mt-1 capitalize ${darkMode ? 'text-amber-400' : 'text-emerald-600'}`}>
-                              {user.role}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setProfileMenuOpen(false);
-                          onSettingsClick();
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
-                          darkMode
-                            ? 'text-slate-200 hover:bg-emerald-900/40'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <SettingsIcon className="w-4 h-4" />
-                        {t.goToSettings}
-                      </button>
-                      {onLogout && (
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            onLogout();
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm font-medium transition flex items-center gap-2 ${
-                            darkMode ? 'text-red-300 hover:bg-red-900/30' : 'text-red-700 hover:bg-red-50'
-                          }`}
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Log out
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Sidebar / Hamburger Menu – aligned with header; nav items left-aligned */}
-      <aside className={`fixed left-0 top-[72px] h-[calc(100vh-72px)] w-64 transition-all duration-300 transform overflow-y-auto ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } ${
-        darkMode 
-          ? 'bg-gradient-to-b from-emerald-950 to-blue-950 border-r border-emerald-700/30' 
-          : 'bg-gradient-to-b from-slate-50 to-emerald-50/80 border-r border-slate-200/50'
-      } backdrop-blur-lg z-30`}>
-        <nav className="p-4 space-y-1" aria-label="Main navigation">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (item.id === 'settings') {
-                    setSidebarOpen(false);
-                    onSettingsClick();
-                  } else {
-                    setActivePage(item.id as any);
-                    setSidebarOpen(false);
-                    setSelectedFeature(null);
-                  }
-                }}
-                className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left ${
-                  isActive
-                    ? darkMode
-                      ? 'bg-gradient-to-r from-emerald-600/30 to-blue-600/25 shadow-lg border border-emerald-500/40'
-                      : 'bg-gradient-to-r from-emerald-400/30 to-emerald-500/20 shadow-md border border-emerald-400/40'
-                    : darkMode
-                    ? 'hover:bg-emerald-900/25 text-slate-200'
-                    : 'hover:bg-slate-200/30 text-slate-800'
-                }`}
-              >
-                <Icon className="w-5 h-5 shrink-0 flex items-center justify-center" aria-hidden />
-                <span className={`font-semibold transition-all duration-200 truncate ${
-                  isActive ? (darkMode ? 'text-emerald-200' : 'text-emerald-700') : (darkMode ? 'text-slate-200' : 'text-slate-700')
-                }`}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className={`w-full max-w-full min-w-0 ${sidebarOpen ? 'md:ml-64' : ''} transition-all duration-300`}>
+    <AppShell
+      title="ResQ Meal"
+      logo={<img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px] object-contain object-left" />}
+      sidebarItems={navigationItems}
+      activeId={activePage}
+      onNavigate={(id) => {
+        if (id === 'settings') onSettingsClick();
+        else { setActivePage(id as typeof activePage); setSelectedFeature(null); }
+      }}
+      darkMode={darkMode}
+      setDarkMode={setDarkMode}
+      language={language}
+      setLanguage={setLanguage}
+      languageLabels={languageLabels}
+      user={auth ?? undefined}
+      onLogout={onLogout}
+      onSettingsClick={onSettingsClick}
+      onSignIn={onOpenSignIn}
+    >
         {/* Dashboard Page – consistent max-width and text alignment */}
         {activePage === 'dashboard' && (
           <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
@@ -737,6 +511,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 </button>
               </div>
             </div>
+
+            {/* Today's Available Food – carousel (day nav + plate + info card) */}
+            <AvailableFoodCarousel
+              darkMode={darkMode}
+              title={t.availableFood}
+              searchPlaceholder={t.searchFood}
+            />
 
             {/* Today's Activity + Pending / Active – text left-aligned */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1036,16 +817,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
             t={t}
           />
         )}
-      </main>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-20 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -1055,7 +826,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
           animation: fadeIn 0.3s ease-out;
         }
       `}</style>
-    </div>
+    </AppShell>
   );
 };
 
@@ -1258,7 +1029,18 @@ const FeatureDetailsPage: React.FC<{ feature: string; darkMode: boolean; onBack:
 };
 
 // Matches Page Component
+type MatchTab = 'all' | 'pending' | 'accepted' | 'in_delivery' | 'completed';
+const MATCH_TAB_STATUSES: Record<MatchTab, string[]> = {
+  all: [],
+  pending: ['MATCHED'],
+  accepted: ['ACCEPTED'],
+  in_delivery: ['PICKED_UP', 'IN_TRANSIT'],
+  completed: ['DELIVERED'],
+};
+
 const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
+  const [activeTab, setActiveTab] = useState<MatchTab>('all');
+
   const matches = [
     {
       id: 1,
@@ -1286,7 +1068,45 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
       maxTemp: 4,
       availabilityHours: 4,
     },
+    {
+      id: 3,
+      foodName: 'Boiled eggs + apple shake',
+      ngo: 'Homeless Shelter',
+      org: 'City Shelter - Est. 2010',
+      distance: '0.8 km',
+      status: 'PICKED_UP',
+      meals: 12,
+      donation: '₹2,500 equivalent',
+      minTemp: 4,
+      maxTemp: 60,
+      availabilityHours: 2,
+    },
+    {
+      id: 4,
+      foodName: 'Bread and pastries',
+      ngo: 'School Meals Program',
+      org: 'Education Trust - Est. 2018',
+      distance: '3.1 km',
+      status: 'DELIVERED',
+      meals: 50,
+      donation: '₹6,000 equivalent',
+      minTemp: 0,
+      maxTemp: 25,
+      availabilityHours: 24,
+    },
   ];
+
+  const tabLabels: { id: MatchTab; label: string }[] = [
+    { id: 'all', label: t.allMatches },
+    { id: 'pending', label: t.matchPending },
+    { id: 'accepted', label: t.matchAccepted },
+    { id: 'in_delivery', label: t.matchInDelivery },
+    { id: 'completed', label: t.matchCompleted },
+  ];
+
+  const filteredMatches = activeTab === 'all'
+    ? matches
+    : matches.filter((m) => MATCH_TAB_STATUSES[activeTab].includes(m.status));
 
   return (
     <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn`}>
@@ -1301,7 +1121,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
         {t.backToDashboard}
       </button>
 
-      <div className={`rounded-2xl p-8 mb-8 transition-all duration-300 border ${
+      <div className={`rounded-2xl p-8 mb-6 transition-all duration-300 border ${
         darkMode
           ? 'bg-gradient-to-br from-emerald-900/40 to-blue-900/50 border-emerald-600/30 shadow-xl'
           : 'bg-gradient-to-br from-blue-400/15 to-emerald-400/15 border-blue-300/50 shadow-lg'
@@ -1314,8 +1134,32 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
         </p>
       </div>
 
+      {/* Match status tabs */}
+      <div className={`flex flex-wrap gap-2 mb-6 rounded-xl p-2 border ${
+        darkMode ? 'bg-slate-800/50 border-slate-600' : 'bg-slate-100 border-slate-200'
+      }`}>
+        {tabLabels.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`shrink-0 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
+              activeTab === tab.id
+                ? darkMode
+                  ? 'bg-amber-600/50 text-amber-200'
+                  : 'bg-amber-200 text-amber-900'
+                : darkMode
+                  ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
-        {matches.map((match) => (
+        {filteredMatches.map((match) => (
           <div
             key={match.id}
             className={`rounded-2xl p-6 transition-all duration-300 transform hover:scale-105 cursor-pointer border ${

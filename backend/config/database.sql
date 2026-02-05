@@ -151,3 +151,18 @@ CREATE TABLE delivery_proofs (
   FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
   INDEX idx_verified (verified)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ==================== AI FEEDBACK TABLE (for learning from outcomes) ====================
+CREATE TABLE IF NOT EXISTS ai_feedback (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  match_id INT NOT NULL,
+  ngo_id INT NOT NULL,
+  food_post_id INT NOT NULL,
+  outcome ENUM('accepted', 'rejected', 'delivered') NOT NULL,
+  delay_minutes INT NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_match_id (match_id),
+  INDEX idx_ngo_id (ngo_id),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

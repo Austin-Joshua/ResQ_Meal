@@ -47,6 +47,10 @@
     --ring: 145 63% 49%;
 
     --radius: 0.75rem;
+    /* AI Studio–style layout */
+    --studio-content-radius: 1rem;
+    --studio-sidebar-width: 16rem;
+    --studio-header-height: 3.5rem;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -66,17 +70,22 @@
   }
 
   .dark {
+    /* Google AI Studio–style green (primary accent in dark mode) */
+    --studio-green: #34a853;
+    --studio-green-hsl: 135 53% 43%;
+    --studio-green-muted: 135 40% 35%;
+
     --background: 210 22% 10%;
     --foreground: 210 20% 98%;
 
-    /* Dark green/blue tint on surfaces (not text) */
+    /* Dark green tint on surfaces (AI Studio green) */
     --card: 205 45% 14%;
     --card-foreground: 210 20% 98%;
 
     --popover: 205 45% 14%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 145 63% 49%;
+    --primary: 135 53% 43%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 82% 50%;
@@ -85,24 +94,24 @@
     --muted: 205 40% 18%;
     --muted-foreground: 210 12% 65%;
 
-    --accent: 37 89% 51%;
+    --accent: 135 53% 43%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 6 74% 57%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 205 45% 22%;
+    --border: 135 30% 28%;
     --input: 205 40% 20%;
-    --ring: 145 63% 49%;
+    --ring: 135 53% 43%;
 
     --sidebar-background: 205 50% 12%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 145 63% 49%;
+    --sidebar-primary: 135 53% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 205 45% 18%;
+    --sidebar-accent: 135 35% 22%;
     --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 205 45% 22%;
-    --sidebar-ring: 145 63% 49%;
+    --sidebar-border: 135 30% 22%;
+    --sidebar-ring: 135 53% 43%;
   }
 }
 
@@ -164,5 +173,36 @@
 
   .shadow-card-hover {
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  /* AI Studio–style content panel (blends with dark/light) */
+  .studio-panel {
+    border-radius: var(--studio-content-radius);
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .studio-panel-elevated {
+    border-radius: var(--studio-content-radius);
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Dark mode: Google AI Studio green (#34a853) – use wherever green accent is needed */
+  .dark .studio-green-bg {
+    background-color: hsl(var(--studio-green-hsl) / 0.15);
+  }
+  .dark .studio-green-border {
+    border-color: hsl(var(--studio-green-hsl) / 0.4);
+  }
+  .dark .studio-green-text {
+    color: var(--studio-green);
+  }
+  .dark .studio-green-ring {
+    --tw-ring-color: var(--studio-green);
   }
 }

@@ -18,12 +18,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling (don't redirect on login/register 401)
+// Response interceptor: on 401/403 (missing or invalid/expired token), clear auth and redirect to login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error.response?.status;
     const isAuthRequest = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
-    if (error.response?.status === 401 && !isAuthRequest) {
+    if (!isAuthRequest && (status === 401 || status === 403)) {
       localStorage.removeItem('resqmeal_token');
       localStorage.removeItem('resqmeal_user');
       window.location.href = '/';
@@ -45,6 +46,9 @@ export const authApi = {
 export const foodApi = {
   postFood: (data: any) => api.post('/food', data),
   getMyPosts: () => api.get('/food/my-posts'),
+  /** Get available food for NGOs (POSTED/MATCHED/ACCEPTED/PICKED_UP, not expired). Query: latitude?, longitude?, radius_km?, food_type?, min_urgency?, max_urgency?, limit? */
+  getAvailableFood: (params?: Record<string, string | number>) =>
+    api.get('/food/available/all', { params }),
   updateFood: (id: string, data: any) => api.put(`/food/${id}`, data),
   deleteFood: (id: string) => api.delete(`/food/${id}`),
   /** Upload image for freshness check (uses fruit-veg-freshness-ai when backend is configured). */

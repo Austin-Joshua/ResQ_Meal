@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,19 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "@/context/LanguageContext";
 import LoginPage from "@/pages/Login";
 import OrganisationReport from "@/pages/OrganisationReport";
+import ResQMealApp from "@/pages/App";
 import type { LoginSuccessUser } from "@/pages/Login";
 
-const ResQMealApp = lazy(() => import("@/pages/App"));
-
 const queryClient = new QueryClient();
-
-function BaseAppFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <p className="text-slate-600 text-sm">Loading…</p>
-    </div>
-  );
-}
 
 const STORAGE_TOKEN = "resqmeal_token";
 const STORAGE_USER = "resqmeal_user";
@@ -38,7 +29,7 @@ function readAuth(): { token: string; user: LoginSuccessUser } | null {
 const App = () => {
   const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(false);
+  const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(true);
   /** Changes on each login so Dashboard can refresh "Did you know?" tip */
   const [loginKey, setLoginKey] = useState(() => Date.now());
   const [darkMode, setDarkMode] = useState(() => {
@@ -113,14 +104,12 @@ const App = () => {
       );
     }
     return (
-      <Suspense fallback={<BaseAppFallback />}>
-        <ResQMealApp
-          auth={auth?.user ?? null}
-          loginKey={loginKey}
-          onOpenSignIn={() => setShowLoginModal(true)}
-          onLogout={auth?.user ? handleLogout : undefined}
-        />
-      </Suspense>
+      <ResQMealApp
+        auth={auth?.user ?? null}
+        loginKey={loginKey}
+        onOpenSignIn={() => setShowLoginModal(true)}
+        onLogout={auth?.user ? handleLogout : undefined}
+      />
     );
   }, [auth, darkMode, language, isOrgAdmin, showSignInPageFirst]);
 

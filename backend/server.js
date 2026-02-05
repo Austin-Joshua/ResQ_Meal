@@ -40,8 +40,10 @@ const matchingRoutes = require('./routes/matchingRoutes');
 const ngoRoutes = require('./routes/ngoRoutes');
 const impactRoutes = require('./routes/impactRoutes');
 const userRoutes = require('./routes/userRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/food', foodRoutes);
 app.use('/api/matches', matchingRoutes);
 app.use('/api/ngos', ngoRoutes);

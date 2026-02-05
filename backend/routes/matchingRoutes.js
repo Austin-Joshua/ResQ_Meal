@@ -32,6 +32,13 @@ router.get('/for-ngo/all', authenticateToken, MatchingController.getMatchesForNG
 router.get('/for-restaurant/all', authenticateToken, MatchingController.getMatchesForRestaurant);
 
 /**
+ * GET /api/matches/recommended/:food_post_id
+ * AI-assisted: ranked NGO recommendations for a food post (distance, capacity, food type, demand).
+ * Query: top (default 5, max 20)
+ */
+router.get('/recommended/:food_post_id', authenticateToken, MatchingController.getRecommendedMatches);
+
+/**
  * GET /api/matches/:id
  * Get match details with timeline
  */

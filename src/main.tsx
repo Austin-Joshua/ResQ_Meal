@@ -1,32 +1,58 @@
-import React, { Component, type ErrorInfo, type ReactNode } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+import App from "./App";
 import "./index.css";
 
-class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
   state = { hasError: false, error: null as Error | null };
 
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("App error:", error, info.componentStack);
-  }
-
   render() {
     if (this.state.hasError && this.state.error) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900 text-white">
-          <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
-          <p className="text-sm text-slate-300 mb-4 max-w-md">{this.state.error.message}</p>
-          <button
-            type="button"
-            onClick={() => this.setState({ hasError: false, error: null })}
-            className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium"
-          >
-            Try again
-          </button>
+        <div style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          fontFamily: "system-ui, sans-serif",
+          background: "#f8fafc",
+          color: "#0f172a",
+        }}>
+          <div style={{ maxWidth: 480 }}>
+            <h1 style={{ fontSize: 18, marginBottom: 8 }}>Something went wrong</h1>
+            <pre style={{
+              padding: 16,
+              background: "#f1f5f9",
+              borderRadius: 8,
+              overflow: "auto",
+              fontSize: 13,
+            }}>
+              {this.state.error.message}
+            </pre>
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false, error: null })}
+              style={{
+                marginTop: 16,
+                padding: "8px 16px",
+                background: "#0f172a",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+              }}
+            >
+              Try again
+            </button>
+          </div>
         </div>
       );
     }

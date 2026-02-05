@@ -51,12 +51,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
-      darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
+      darkMode ? 'bg-[hsl(var(--background))]' : 'bg-[hsl(var(--muted))]/30'
     }`}>
-      <div className={`w-full max-w-md rounded-2xl border shadow-xl transition-all duration-300 ${
-        darkMode ? 'bg-emerald-900/40 border-emerald-600/30' : 'bg-white border-slate-200'
-      }`}>
-        <div className="p-8">
+      <div className="studio-panel-elevated w-full max-w-md p-8 transition-all duration-300">
           <div className="flex justify-center mb-6">
             <img src={logoMark} alt="" className="h-16 w-16 object-contain opacity-90" />
           </div>
@@ -159,7 +156,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
               Browse site without signing in
             </button>
           )}
-        </div>
       </div>
     </div>
   );
