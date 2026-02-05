@@ -114,6 +114,49 @@ If login fails with "Invalid email or password":
    `UPDATE users SET password = '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm' WHERE email IN ('chef@kitchen.com','ngo@savechildren.com','volunteer@community.com','baker@artisan.com');`  
    Or re-run the full seed (after dropping/recreating the DB or clearing the `users` table) with `backend/config/seed.sql`.
 
+## Freshness detector & ML models
+
+The **Fresh Food Checker** (photo or environment-based) works without any ML setup: if no ML URLs are set in `backend/.env`, the backend returns **mock** assessments. To use **trained models** from the links in `docs/FRESHNESS_REFERENCES.md`:
+
+### One-command model setup (image-based)
+
+From the repo root, download pre-trained models from the official GitHub repos:
+
+```bash
+node scripts/setup-freshness-models.js
+```
+
+This clones (shallow) and copies:
+
+- **[fruit-veg-freshness-ai](https://github.com/captraj/fruit-veg-freshness-ai)** → `ml-services/fruit-veg-freshness/rottenvsfresh98pval.h5`
+- **[Freshness-Detector](https://github.com/Kayuemkhan/Freshness-Detector)** (TFLite) → `ml-services/freshness-detector-tflite/model.tflite`
+- **[freshvision](https://github.com/devdezzies/freshvision)** → `ml-services/freshvision/models/effnetb0_freshvisionv0_10_epochs.pt`
+
+### Environment-based model (trains on startup)
+
+**Food-Freshness-Analyzer** ([Parabellum768](https://github.com/Parabellum768/Food-Freshness-Analyzer)) does **not** need a downloaded file: it **trains** a RandomForest on synthetic environmental data when the service starts. Use it for temperature/humidity/storage-time checks:
+
+```bash
+cd ml-services/food-freshness-analyzer
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8001
+```
+
+### Wire the backend to ML services
+
+In `backend/.env` set the URL(s) for the service(s) you run:
+
+| Service | Env variable | Example |
+|--------|----------------|---------|
+| fruit-veg-freshness (image) | `FRESHNESS_AI_URL` | `http://localhost:8000` |
+| Freshness-Detector TFLite (image) | `FRESHNESS_TFLITE_URL` | `http://localhost:8002` |
+| FreshVision (image) | `FRESHNESS_FRESHVISION_URL` | `http://localhost:8004` |
+| Food-Freshness-Analyzer (environment) | `FRESHNESS_ENV_AI_URL` | `http://localhost:8001` |
+
+The backend tries image-based services in order (Bedrock → TFLite → Roboflow → FreshVision → fruit-veg-freshness); the first that is configured and responding is used. Environment-based checks use `FRESHNESS_ENV_AI_URL` only.
+
 ## UI Design System
 
 - **Primary**: Deep Teal (#0F766E)
@@ -121,6 +164,29 @@ If login fails with "Invalid email or password":
 - **Accent**: Soft Amber (#F59E0B)
 - **Success**: Sage Green (#16A34A)
 - **Background**: White (#FFFFFF)
+
+## Freshness detector & ML
+
+The food freshness detector (via image upload or environmental parameters) is designed to integrate with external Machine Learning microservices. By default, the system uses mock data for freshness assessments.
+
+To enable real ML-driven freshness detection:
+
+1.  **Select an ML service**: The `ml-services/` directory contains various Python FastAPI wrappers for ML models (e.g., `fruit-veg-freshness`). Choose one to set up.
+2.  **Obtain the trained model**: Most ML services require a pre-trained model file (e.g., `.h5` or `.tflite`). These files are *not* included in this repository due to their size. Follow the instructions in the specific `ml-services/<service-name>/README.md` to clone the upstream model repository and copy the necessary model files.
+3.  **Install Python dependencies**: For your chosen ML service, create a Python virtual environment and install the dependencies specified in its `requirements.txt`.
+4.  **Run the ML service**: Start the FastAPI application for the chosen service. For example, for `fruit-veg-freshness`:
+    ```bash
+    cd ml-services/fruit-veg-freshness
+    # (activate virtualenv)
+    uvicorn main:app --host 0.0.0.0 --port 8000
+    ```
+5.  **Configure backend**: In your `backend/.env` file, set the appropriate URL for the running ML service. For `fruit-veg-freshness`, you would add:
+    ```
+    FRESHNESS_AI_URL=http://localhost:8000
+    ```
+    (Ensure the port matches what your ML service is running on).
+
+After these steps, the backend's `FoodQualityVerification` service will call your running ML service for actual freshness predictions instead of using mock data.
 
 ## License
 

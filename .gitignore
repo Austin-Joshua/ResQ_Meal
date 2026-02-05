@@ -39,3 +39,10 @@ coverage/
 
 # Uploads
 uploads/
+
+# ML model setup temp clone
+.freshness-models-tmp/
+# Downloaded ML weights (run scripts/setup-freshness-models.js to fetch)
+ml-services/fruit-veg-freshness/*.h5
+ml-services/freshness-detector-tflite/model.tflite
+ml-services/freshvision/models/
