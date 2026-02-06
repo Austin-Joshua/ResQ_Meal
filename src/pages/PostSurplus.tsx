@@ -99,6 +99,8 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
         quantity_servings: quantity < 1 ? 1 : quantity,
         description: formData.description ? String(formData.description).trim() : undefined,
         address: String(formData.address || '').trim(),
+        latitude: 13.0827, // Default to Chennai if not provided
+        longitude: 80.2707, // Default to Chennai if not provided
         safety_window_minutes: Number(formData.safetyWindow) || 30,
         min_storage_temp_celsius: formData.minTemp != null ? Number(formData.minTemp) : undefined,
         max_storage_temp_celsius: formData.maxTemp != null ? Number(formData.maxTemp) : undefined,

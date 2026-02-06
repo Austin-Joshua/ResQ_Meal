@@ -1,13 +1,10 @@
-function getPool() {
-  const { pool } = require('../server');
-  return pool;
-}
+const pool = require('../config/database');
 
 /**
  * Get NGO id for the current user (role must be ngo).
  */
 async function getNgoIdForUser(userId) {
-  const [rows] = await getPool().query('SELECT id FROM ngos WHERE user_id = ?', [userId]);
+  const [rows] = await pool.query('SELECT id FROM ngos WHERE user_id = ?', [userId]);
   return rows[0]?.id ?? null;
 }
 
@@ -15,7 +12,7 @@ async function getNgoIdForUser(userId) {
  * Get restaurant id for the current user (role must be restaurant / donor).
  */
 async function getRestaurantIdForUser(userId) {
-  const [rows] = await getPool().query('SELECT id FROM restaurants WHERE user_id = ?', [userId]);
+  const [rows] = await pool.query('SELECT id FROM restaurants WHERE user_id = ?', [userId]);
   return rows[0]?.id ?? null;
 }
 
@@ -55,13 +52,13 @@ async function postFood(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid food_type' });
     }
 
-    const [result] = await getPool().query(
+    const [result] = await pool.query(
       `INSERT INTO organisation_food (restaurant_id, food_name, food_type, quantity_servings, description, address, latitude, longitude, freshness_score, quality_score, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
       [restaurantId, food_name, food_type, quantity_servings, description || null, address, latitude || null, longitude || null, freshness_score ?? null, quality_score ?? null]
     );
 
-    const [rows] = await getPool().query('SELECT * FROM organisation_food WHERE id = ?', [result.insertId]);
+    const [rows] = await pool.query('SELECT * FROM organisation_food WHERE id = ?', [result.insertId]);
     return res.status(201).json({
       success: true,
       data: rows[0],
@@ -88,7 +85,7 @@ async function getMyOrganisationFood(req, res) {
       if (!restaurantId) {
         return res.json({ success: true, data: [] });
       }
-      const [rows] = await getPool().query(
+      const [rows] = await pool.query(
         'SELECT * FROM organisation_food WHERE restaurant_id = ? ORDER BY created_at DESC',
         [restaurantId]
       );
@@ -98,7 +95,7 @@ async function getMyOrganisationFood(req, res) {
     if (!ngoId) {
       return res.json({ success: true, data: [] });
     }
-    const [rows] = await getPool().query(
+    const [rows] = await pool.query(
       'SELECT * FROM organisation_food WHERE ngo_id = ? ORDER BY created_at DESC',
       [ngoId]
     );
@@ -115,7 +112,7 @@ async function getMyOrganisationFood(req, res) {
  */
 async function getAvailableOrganisationFood(req, res) {
   try {
-    const [rows] = await getPool().query(
+    const [rows] = await pool.query(
       `SELECT of.*,
          COALESCE(n.organization_name, r.business_name) AS organization_name
        FROM organisation_food of

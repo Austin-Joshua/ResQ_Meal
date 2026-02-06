@@ -272,6 +272,8 @@ const translations: Translations = {
     eliteMyRegistrations: 'My registrations',
     eliteBackToElite: 'Back to Elite Mode',
     eliteNoRegistrationsYet: 'No registrations yet. Register your home and list foods to get started.',
+    registrationSuccess: 'Registration Successful!',
+    notificationMessage: 'How You\'ll Be Notified',
 
     // Detailed Reports
     clickForDetails: 'Click for details',
@@ -633,6 +635,8 @@ const translations: Translations = {
     eliteMyRegistrations: 'என் பதிவுகள்',
     eliteBackToElite: 'எலைட் மோடிற்கு திரும்பு',
     eliteNoRegistrationsYet: 'இன்னும் பதிவுகள் இல்லை. தொடங்க உங்கள் வீட்டை பதிவு செய்து உணவுகளை பட்டியலிடுங்கள்.',
+    registrationSuccess: 'பதிவு வெற்றிகரமாக!',
+    notificationMessage: 'நீங்கள் எவ்வாறு அறிவிக்கப்படுவீர்கள்',
 
     clickForDetails: 'விவரங்களுக்கு கிளிக் செய்யவும்',
     backToReport: 'அறிக்கைக்கு திரும்பு',
@@ -992,6 +996,8 @@ const translations: Translations = {
     eliteMyRegistrations: 'मेरे पंजीकरण',
     eliteBackToElite: 'एलीट मोड पर वापस',
     eliteNoRegistrationsYet: 'अभी तक कोई पंजीकरण नहीं। शुरू करने के लिए अपना घर पंजीकृत करें और भोजन सूचीबद्ध करें।',
+    registrationSuccess: 'पंजीकरण सफल!',
+    notificationMessage: 'आपको कैसे अधिसूचित किया जाएगा',
 
     clickForDetails: 'विवरण के लिए क्लिक करें',
     backToReport: 'रिपोर्ट पर वापस',

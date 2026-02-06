@@ -125,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 : 'bg-white border-blue-200 shadow-sm shadow-blue-900/5'
             }`}>
               <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
-                {t('welcome')}
+                {t('welcome')}, {user?.name}!
               </h2>
               <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                 {t('missionToday')}
@@ -164,18 +164,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 >
                   <BarChart3 className="w-3 h-3" /> {t('seeImpact')}
                 </button>
-                {onOpenSignIn && (
-                  <button
-                    type="button"
-                    onClick={onOpenSignIn}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
-                      darkMode ? 'bg-slate-600/30 text-slate-300 hover:bg-slate-600/50 border border-slate-500/50' : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200'
-                    }`}
-                    title="Sign in as organisation / admin"
-                  >
-                    <ShieldCheck className="w-3 h-3" /> {t('adminOrg')}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -1376,16 +1364,24 @@ interface EliteFoodItem {
 }
 interface EliteRegistration {
   id: string;
+  fullName: string;
+  phoneNumber: string;
+  careHomeName: string;
   address: string;
   foods: EliteFoodItem[];
+  registeredAt: string;
 }
 
 // Elite Mode Page – for elders in care homes who eat marriage/event food and food ordered by kids, not donated surplus
 const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
-  const [eliteView, setEliteView] = useState<'info' | 'register'>('info');
+  const [eliteView, setEliteView] = useState<'info' | 'register' | 'confirmed'>('info');
+  const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [careHomeName, setCareHomeName] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
   const [foods, setFoods] = useState<EliteFoodItem[]>([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
   const [registrations, setRegistrations] = useState<EliteRegistration[]>([]);
+  const [lastRegistration, setLastRegistration] = useState<EliteRegistration | null>(null);
 
   const openMapsForAddress = (address: string) => {
     const encoded = encodeURIComponent(address);
@@ -1403,21 +1399,120 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
   };
 
   const submitRegistration = () => {
+    const trimmedFullName = fullName.trim();
+    const trimmedPhone = phoneNumber.trim();
+    const trimmedCareHome = careHomeName.trim();
     const trimmedAddress = homeAddress.trim();
-    if (!trimmedAddress) return;
+    
+    if (!trimmedFullName || !trimmedPhone || !trimmedCareHome || !trimmedAddress) {
+      alert('Please fill in all required fields: Full name, phone number, care home name, and address');
+      return;
+    }
+
     const foodList = foods.filter((f) => f.name.trim() || f.type.trim() || f.quantity.trim());
-    setRegistrations((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), address: trimmedAddress, foods: foodList('length') ? foodList : foods.map((f) => ({ ...f, name: f.name || '—', type: f.type || '—', quantity: f.quantity || '—' })) },
-    ]);
+    const newRegistration: EliteRegistration = {
+      id: crypto.randomUUID(),
+      fullName: trimmedFullName,
+      phoneNumber: trimmedPhone,
+      careHomeName: trimmedCareHome,
+      address: trimmedAddress,
+      foods: foodList.length ? foodList : foods.map((f) => ({ ...f, name: f.name || '—', type: f.type || '—', quantity: f.quantity || '—' })),
+      registeredAt: new Date().toLocaleString(),
+    };
+
+    setRegistrations((prev) => [...prev, newRegistration]);
+    setLastRegistration(newRegistration);
+    
+    // Reset form
+    setFullName('');
+    setPhoneNumber('');
+    setCareHomeName('');
     setHomeAddress('');
     setFoods([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
+    
+    // Show confirmation
+    setEliteView('confirmed');
   };
 
   const cardCls = darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm';
   const inputCls = darkMode
     ? 'bg-slate-800/50 border-slate-600 text-slate-100 placeholder-slate-400 focus:ring-amber-500/50 focus:border-amber-500'
     : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-500 focus:ring-amber-400 focus:border-amber-500';
+
+  // Confirmation view: success message
+  if (eliteView === 'confirmed' && lastRegistration) {
+    return (
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
+        <div className={`max-w-2xl mx-auto rounded-2xl p-8 transition-all duration-300 border ${
+          darkMode ? 'bg-emerald-900/30 border-emerald-600/30' : 'bg-emerald-50 border-emerald-200'
+        }`}>
+          <div className="flex justify-center mb-6">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl ${
+              darkMode ? 'bg-emerald-600/40' : 'bg-emerald-100'
+            }`}>
+              ✅
+            </div>
+          </div>
+          
+          <h2 className={`text-3xl font-bold text-center mb-3 ${darkMode ? 'text-emerald-300' : 'text-emerald-800'}`}>
+            {t('registrationSuccess')}
+          </h2>
+          
+          <p className={`text-center text-lg mb-8 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+            Welcome, {lastRegistration.fullName}!
+          </p>
+
+          <div className={`rounded-xl p-6 mb-8 ${darkMode ? 'bg-slate-800/40 border-slate-600' : 'bg-white border-slate-200'} border`}>
+            <h3 className={`font-semibold mb-4 text-lg ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+              🔔 {t('notificationMessage')}
+            </h3>
+            <div className={`space-y-3 ${darkMode ? 'text-blue-100' : 'text-slate-700'}`}>
+              <p className="text-base leading-relaxed">
+                <strong>Whenever special food is prepared or made</strong>, we will notify you immediately!
+              </p>
+              <p className="text-base leading-relaxed">
+                When you <strong>accept</strong> the food notification, our delivery team will bring it directly to your doorstep at <strong>{lastRegistration.careHomeName}</strong>.
+              </p>
+              <p className="text-base leading-relaxed">
+                You can track your delivery in real-time and receive updates via SMS at <strong>{lastRegistration.phoneNumber}</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div className={`rounded-xl p-6 mb-8 ${darkMode ? 'bg-blue-900/20 border-blue-600/30' : 'bg-blue-50 border-blue-200'} border`}>
+            <h3 className={`font-semibold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+              📋 Your Registration Details:
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p><strong>Care Home:</strong> {lastRegistration.careHomeName}</p>
+              <p><strong>Address:</strong> {lastRegistration.address}</p>
+              <p><strong>Contact:</strong> {lastRegistration.phoneNumber}</p>
+              <p><strong>Registered on:</strong> {lastRegistration.registeredAt}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => setEliteView('register')}
+              className={`px-6 py-3 rounded-xl font-semibold transition ${
+                darkMode ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+              }`}
+            >
+              Register Another
+            </button>
+            <button
+              onClick={() => setEliteView('info')}
+              className={`px-6 py-3 rounded-xl font-semibold transition ${
+                darkMode ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-slate-300 text-slate-900 hover:bg-slate-400'
+              }`}
+            >
+              Back to Elite Mode
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Register view: form + My registrations with map link
   if (eliteView === 'register') {
@@ -1437,17 +1532,58 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
             {t('eliteRegisterHome')}
           </h2>
           <p className={`mb-6 ${darkMode ? 'text-blue-100' : 'text-slate-600'}`}>
-            {t('eliteRegisterHomeDesc')}
+            Please provide the essential details below to register for Elite Mode.
           </p>
 
-          <label className="block mb-4">
+          {/* User Details Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <label className="block">
+              <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                Full Name *
+              </span>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter your full name"
+                className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+              />
+            </label>
+            <label className="block">
+              <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                Phone Number *
+              </span>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Enter your phone number"
+                className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+              />
+            </label>
+          </div>
+
+          <label className="block mb-6">
             <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-              {t('eliteHomeAddress')}
+              Care Home / Organization Name *
+            </span>
+            <input
+              type="text"
+              value={careHomeName}
+              onChange={(e) => setCareHomeName(e.target.value)}
+              placeholder="Enter the care home or organization name"
+              className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+            />
+          </label>
+
+          <label className="block mb-6">
+            <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+              {t('eliteHomeAddress')} *
             </span>
             <input
               type="text"
               value={homeAddress}
-              onChange={(e) => setHomeAddress(e.target('value'))}
+              onChange={(e) => setHomeAddress(e.target.value)}
               placeholder={t('eliteHomeAddressPlaceholder')}
               className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
             />
@@ -1474,21 +1610,21 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
                   <input
                     type="text"
                     value={f.name}
-                    onChange={(e) => updateFood(f.id, 'name', e.target('value'))}
+                    onChange={(e) => updateFood(f.id, 'name', e.target.value)}
                     placeholder={t('eliteFoodName')}
                     className={`flex-1 min-w-[120px] rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={f.type}
-                    onChange={(e) => updateFood(f.id, 'type', e.target('value'))}
+                    onChange={(e) => updateFood(f.id, 'type', e.target.value)}
                     placeholder={t('eliteFoodType')}
                     className={`flex-1 min-w-[120px] rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={f.quantity}
-                    onChange={(e) => updateFood(f.id, 'quantity', e.target('value'))}
+                    onChange={(e) => updateFood(f.id, 'quantity', e.target.value)}
                     placeholder={t('eliteQuantity')}
                     className={`w-24 rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
@@ -1531,23 +1667,33 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
                     darkMode ? 'bg-slate-800/40 border-slate-600' : 'bg-slate-50 border-slate-200'
                   }`}
                 >
+                  <div className="mb-3">
+                    <p className={`font-semibold ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>
+                      {reg.careHomeName}
+                    </p>
+                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                      {reg.fullName} • {reg.phoneNumber}
+                    </p>
+                  </div>
                   <p className={`font-medium mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                    {reg.address}
+                    📍 {reg.address}
                   </p>
                   {reg.foods.length > 0 && (
                     <p className={`text-sm mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      {reg.foods.map((f) => `${f.name || '—'} (${f.type || '—'}) × ${f.quantity || '—'}`).join(' · ')}
+                      <strong>Foods available:</strong> {reg.foods.map((f) => `${f.name || '—'} (${f.type || '—'}) × ${f.quantity || '—'}`).join(' · ')}
                     </p>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => openMapsForAddress(reg.address)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      darkMode ? 'bg-emerald-600/50 text-emerald-200 hover:bg-emerald-600/70' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                    }`}
-                  >
-                    <MapPin className="w-4 h-4" /> {t('eliteViewOnMap')}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openMapsForAddress(reg.address)}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        darkMode ? 'bg-emerald-600/50 text-emerald-200 hover:bg-emerald-600/70' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                      }`}
+                    >
+                      <MapPin className="w-4 h-4" /> {t('eliteViewOnMap')}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -1857,7 +2003,7 @@ const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = (
 const ProgressFill: React.FC<{ percentage: number; className: string }> = ({ percentage, className }) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (ref.current) ref.current('style').width = `${percentage}%`;
+    if (ref.current) ref.current.style.width = `${percentage}%`;
   }, [percentage]);
   return <div ref={ref} className={className} />;
 };

@@ -413,8 +413,10 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                       min="1"
                       value={addFoodForm.quantity_servings}
                       onChange={(e) => setAddFoodForm((f) => ({ ...f, quantity_servings: Number(e.target.value) || 1 }))}
+                      placeholder="10"
+                      title={t('quantity')}
                       className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                        darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
+                        darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
                       }`}
                     />
                   </div>
@@ -469,6 +471,20 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border text-left ${
+            darkMode
+              ? 'bg-gradient-to-br from-blue-900/50 to-blue-950/50 border-[#D4AF37]/30 shadow-xl'
+              : 'bg-white border-blue-200 shadow-sm shadow-blue-900/5'
+          }`}>
+            <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+              {t('welcome')}, {user.name}!
+            </h2>
+            <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+              {t('missionToday')}
+            </p>
+          </div>
+
           {/* Overall summary */}
         <section className={`rounded-2xl border p-6 ${
           darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'

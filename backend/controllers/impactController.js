@@ -1,4 +1,4 @@
-const { pool } = require('../server');
+const pool = require('../config/database');
 
 class ImpactController {
   
