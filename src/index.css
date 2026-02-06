@@ -205,4 +205,47 @@
   .dark .studio-green-ring {
     --tw-ring-color: var(--studio-green);
   }
+
+  /* Error Boundary Styles */
+  .error-boundary-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    font-family: system-ui, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .error-boundary-content {
+    max-width: 480px;
+  }
+
+  .error-boundary-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .error-boundary-pre {
+    padding: 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    overflow: auto;
+    font-size: 13px;
+  }
+
+  .error-boundary-button {
+    margin-top: 16px;
+    padding: 8px 16px;
+    background: #0f172a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .error-boundary-button:hover {
+    background: #1e293b;
+  }
 }

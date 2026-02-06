@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Dashboard from './Dashboard';
 import SettingsPage from './SettingsPage';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface BaseAuthUser {
   id?: number;
@@ -14,9 +15,12 @@ interface ResQMealAppProps {
   loginKey?: number;
   onOpenSignIn?: () => void;
   onLogout?: () => void;
+  language?: 'en' | 'ta' | 'hi';
+  setLanguage?: (lang: 'en' | 'ta' | 'hi') => void;
 }
 
-export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey = 0, onOpenSignIn, onLogout }) => {
+export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey = 0, onOpenSignIn, onLogout, language: propLanguage = 'en', setLanguage: propSetLanguage }) => {
+  const { t } = useLanguage();
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
   const [darkMode, setDarkMode] = useState(() => {
     try {
@@ -26,7 +30,8 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey 
       return false;
     }
   });
-  const [language, setLanguage] = useState<'en' | 'ta' | 'hi'>('en');
+  const language = propLanguage;
+  const setLanguage = propSetLanguage ?? (() => {});
 
   useEffect(() => {
     try {
@@ -68,7 +73,7 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey 
                 : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white'
             }`}
           >
-            ← Back to Dashboard
+            ← {t('backToDashboard')}
           </button>
           <SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} language={language} setLanguage={setLanguage} />
         </div>

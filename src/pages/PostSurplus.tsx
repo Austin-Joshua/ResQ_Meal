@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, AlertCircle, CheckCircle, MapPin, Clock, Users, Thermometer } from 'lucide-react';
 import FreshFoodChecker from '../components/FreshFoodChecker';
 import { foodApi } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PostSurplusPageProps {
   darkMode: boolean;
@@ -29,6 +30,7 @@ interface FormData {
 }
 
 const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) => {
+  const { t } = useLanguage();
   const [step, setStep] = useState<'check' | 'form' | 'review' | 'success'>('check');
   const [posting, setPosting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -90,16 +92,17 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
     setSubmitError(null);
     setPosting(true);
     try {
+      const quantity = Number(formData.quantity) || 1;
       const payload = {
-        food_name: formData.foodName,
+        food_name: String(formData.foodName || '').trim(),
         food_type: formData.foodType,
-        quantity_servings: formData.quantity,
-        description: formData.description || undefined,
-        address: formData.address,
-        safety_window_minutes: formData.safetyWindow,
-        min_storage_temp_celsius: formData.minTemp ?? undefined,
-        max_storage_temp_celsius: formData.maxTemp ?? undefined,
-        availability_time_hours: formData.availabilityHours ?? undefined,
+        quantity_servings: quantity < 1 ? 1 : quantity,
+        description: formData.description ? String(formData.description).trim() : undefined,
+        address: String(formData.address || '').trim(),
+        safety_window_minutes: Number(formData.safetyWindow) || 30,
+        min_storage_temp_celsius: formData.minTemp != null ? Number(formData.minTemp) : undefined,
+        max_storage_temp_celsius: formData.maxTemp != null ? Number(formData.maxTemp) : undefined,
+        availability_time_hours: formData.availabilityHours != null ? Number(formData.availabilityHours) : undefined,
       };
       const { data } = await foodApi.postFood(payload);
       setPostedId(data?.id ?? null);
@@ -108,7 +111,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
       const message = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
         : null;
-      setSubmitError(message || 'Failed to post food. Please try again.');
+      setSubmitError(message || t('failedToPostFood'));
     } finally {
       setPosting(false);
     }
@@ -164,9 +167,9 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              ← Back
+              ← {t('back')}
             </button>
-            <h1 className="text-2xl font-bold">Post Surplus Food</h1>
+            <h1 className="text-2xl font-bold">{t('postSurplusFood')}</h1>
           </div>
         </div>
       </header>
@@ -175,7 +178,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-4 mb-8">
-          {['Fresh Check', 'Details', 'Review', 'Success'].map((label, idx) => (
+          {[t('freshCheck'), t('details'), t('review'), t('success')].map((label, idx) => (
             <React.Fragment key={idx}>
               <div className="flex flex-col items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${
@@ -315,7 +318,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 <label className={`block text-sm font-medium mb-2 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Quantity (Servings) *
+                  {t('quantityServings')} *
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -323,7 +326,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                     name="quantity"
                     value={formData.quantity}
                     onChange={handleInputChange}
-                    placeholder="Number of servings"
+                    placeholder={t('numberOfServings')}
                     min="1"
                     required
                     className={`flex-1 px-4 py-2 rounded-lg border transition ${
@@ -344,7 +347,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                     darkMode ? 'text-gray-300' : 'text-gray-700'
                   }`}
                 >
-                  Safety Window (Minutes) *
+                  {t('safetyWindowMinutes')} *
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -371,7 +374,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 <label className={`block text-sm font-medium mb-2 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Storage Temperature Range (°C) *
+                  {t('storageTempRange')} *
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-2">
@@ -380,7 +383,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                       name="minTemp"
                       value={formData.minTemp ?? ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, minTemp: e.target.value ? parseFloat(e.target.value) : null }))}
-                      placeholder="Min temp"
+                      placeholder={t('minTemp')}
                       step="0.5"
                       min="-20"
                       max="100"
@@ -391,7 +394,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                           : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
                       } focus:outline-none`}
                     />
-                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Min</span>
+                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('min')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -399,7 +402,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                       name="maxTemp"
                       value={formData.maxTemp ?? ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, maxTemp: e.target.value ? parseFloat(e.target.value) : null }))}
-                      placeholder="Max temp"
+                      placeholder={t('maxTemp')}
                       step="0.5"
                       min="-20"
                       max="100"
@@ -410,7 +413,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                           : 'bg-white border-gray-300 text-gray-900 focus:border-teal-600'
                       } focus:outline-none`}
                     />
-                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Max</span>
+                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('max')}</span>
                   </div>
                 </div>
                 <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
@@ -423,7 +426,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 <label className={`block text-sm font-medium mb-2 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Available For (Hours)
+                  {t('availableForHours')}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -452,7 +455,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 <label className={`block text-sm font-medium mb-2 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Location Name *
+                  {t('locationName')} *
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -477,13 +480,13 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 <label className={`block text-sm font-medium mb-2 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Full Address *
+                  {t('fullAddress')} *
                 </label>
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  placeholder="Enter complete pickup address"
+                  placeholder={t('enterPickupAddress')}
                   rows={3}
                   required
                   className={`w-full px-4 py-2 rounded-lg border transition ${
@@ -499,13 +502,13 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 <label className={`block text-sm font-medium mb-2 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Additional Notes
+                  {t('additionalNotes')}
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Any special instructions or details about the food"
+                  placeholder={t('specialInstructions')}
                   rows={2}
                   className={`w-full px-4 py-2 rounded-lg border transition ${
                     darkMode
@@ -527,13 +530,13 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                ← Back to Fresh Check
+                ← {t('backToFreshCheck')}
               </button>
               <button
                 type="submit"
                 className={`flex-1 py-3 rounded-lg font-semibold text-white transition bg-teal-600 hover:bg-teal-700`}
               >
-                Continue to Review →
+                {t('continueToReview')} →
               </button>
             </div>
           </form>
@@ -547,7 +550,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
             <h2 className={`text-xl font-bold mb-6 ${
               darkMode ? 'text-white' : 'text-gray-900'
             }`}>
-              Review Your Post
+              {t('reviewYourPost')}
             </h2>
 
             <div className="space-y-4 mb-6">
@@ -556,7 +559,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 ? 'bg-emerald-900/40 border-emerald-600/30'
                 : 'bg-gray-50 border-gray-200'
               }`}>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Food Name</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('foodName')}</p>
                 <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {formData.foodName} ({formData.foodType})
                 </p>
@@ -568,7 +571,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 ? 'bg-emerald-900/40 border-emerald-600/30'
                 : 'bg-gray-50 border-gray-200'
                 }`}>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Quantity</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('quantity')}</p>
                   <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     {formData.quantity} servings
                   </p>
@@ -579,7 +582,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 ? 'bg-emerald-900/40 border-emerald-600/30'
                 : 'bg-gray-50 border-gray-200'
                 }`}>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Safety Window</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('safetyWindow')}</p>
                   <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     {formData.safetyWindow} mins
                   </p>
@@ -591,12 +594,12 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 : 'bg-gray-50 border-gray-200'
                 }`}>
                   <p className={`text-sm flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <Thermometer className="w-3 h-3" /> Temperature Range
+                    <Thermometer className="w-3 h-3" /> {t('temperatureRange')}
                   </p>
                   <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     {formData.minTemp !== null && formData.maxTemp !== null
                       ? `${formData.minTemp}°C - ${formData.maxTemp}°C`
-                      : 'Not specified'}
+                      : t('notSpecified')}
                   </p>
                 </div>
 
@@ -606,12 +609,12 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 : 'bg-gray-50 border-gray-200'
                 }`}>
                   <p className={`text-sm flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <Clock className="w-3 h-3" /> Available For
+                    <Clock className="w-3 h-3" /> {t('availableFor')}
                   </p>
                   <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     {formData.availabilityHours !== null
                       ? `${formData.availabilityHours} hours`
-                      : 'Not specified'}
+                      : t('notSpecified')}
                   </p>
                 </div>
               </div>
@@ -621,7 +624,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 ? 'bg-emerald-900/40 border-emerald-600/30'
                 : 'bg-gray-50 border-gray-200'
               }`}>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Location</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('location')}</p>
                 <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {formData.location}
                 </p>
@@ -632,7 +635,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                   ? 'bg-green-900/20 border-green-700/50'
                   : 'bg-green-50 border-green-200'
               }`}>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Quality Score</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('qualityScore')}</p>
                 <p className={`font-semibold text-lg ${
                   darkMode ? 'text-green-400' : 'text-green-600'
                 }`}>
@@ -661,7 +664,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                ← Edit Details
+                ← {t('editDetails')}
               </button>
               <button
                 type="button"
@@ -669,7 +672,7 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                 disabled={posting}
                 className={`flex-1 py-3 rounded-lg font-semibold text-white transition disabled:opacity-50 bg-green-600 hover:bg-green-700`}
               >
-                {posting ? 'Posting…' : '✓ Confirm & Post'}
+                {posting ? t('posting') : `✓ ${t('confirmAndPost')}`}
               </button>
             </div>
           </div>
@@ -688,11 +691,10 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
             <h2 className={`text-3xl font-bold mb-2 ${
               darkMode ? 'text-white' : 'text-gray-900'
             }`}>
-              Food Posted Successfully!
+              {t('foodPostedSuccess')}
             </h2>
             <p className={`mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Your surplus food has been posted and is now available for NGOs to request.
-              Matched NGOs will be notified shortly.
+              {t('foodPostedSuccessDesc')}
             </p>
 
             <div className={`p-4 rounded-lg mb-6 ${
@@ -714,13 +716,13 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                Go to Dashboard
+                {t('goToDashboard')}
               </button>
               <button
                 onClick={handleNewPost}
                 className={`flex-1 py-3 rounded-lg font-semibold text-white transition bg-teal-600 hover:bg-teal-700`}
               >
-                Post Another
+                {t('postAnother')}
               </button>
             </div>
           </div>

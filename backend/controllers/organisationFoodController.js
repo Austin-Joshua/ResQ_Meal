@@ -12,17 +12,26 @@ async function getNgoIdForUser(userId) {
 }
 
 /**
+ * Get restaurant id for the current user (role must be restaurant / donor).
+ */
+async function getRestaurantIdForUser(userId) {
+  const [rows] = await getPool().query('SELECT id FROM restaurants WHERE user_id = ?', [userId]);
+  return rows[0]?.id ?? null;
+}
+
+/**
  * POST /api/organisation/food
- * Organisation (NGO) adds food that will be visible to volunteers.
+ * Donors (restaurant) add food that will be visible to volunteers. NGOs cannot add food.
  */
 async function postFood(req, res) {
   try {
-    if (req.user.role !== 'ngo') {
-      return res.status(403).json({ success: false, message: 'Only organisations (NGOs) can add food.' });
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'restaurant') {
+      return res.status(403).json({ success: false, message: 'Only donors (restaurants) can add food.' });
     }
-    const ngoId = await getNgoIdForUser(req.user.id);
-    if (!ngoId) {
-      return res.status(403).json({ success: false, message: 'NGO profile not found.' });
+    const restaurantId = await getRestaurantIdForUser(req.user.id);
+    if (!restaurantId) {
+      return res.status(403).json({ success: false, message: 'Donor (restaurant) profile not found.' });
     }
 
     const {
@@ -33,6 +42,8 @@ async function postFood(req, res) {
       address,
       latitude,
       longitude,
+      freshness_score,
+      quality_score,
     } = req.body;
 
     if (!food_name || !address) {
@@ -45,9 +56,9 @@ async function postFood(req, res) {
     }
 
     const [result] = await getPool().query(
-      `INSERT INTO organisation_food (ngo_id, food_name, food_type, quantity_servings, description, address, latitude, longitude, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
-      [ngoId, food_name, food_type, quantity_servings, description || null, address, latitude || null, longitude || null]
+      `INSERT INTO organisation_food (restaurant_id, food_name, food_type, quantity_servings, description, address, latitude, longitude, freshness_score, quality_score, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
+      [restaurantId, food_name, food_type, quantity_servings, description || null, address, latitude || null, longitude || null, freshness_score ?? null, quality_score ?? null]
     );
 
     const [rows] = await getPool().query('SELECT * FROM organisation_food WHERE id = ?', [result.insertId]);
@@ -64,18 +75,29 @@ async function postFood(req, res) {
 
 /**
  * GET /api/organisation/food
- * List food posted by the current organisation (NGO).
+ * List food posted by the current donor (restaurant) or NGO.
  */
 async function getMyOrganisationFood(req, res) {
   try {
-    if (req.user.role !== 'ngo') {
-      return res.status(403).json({ success: false, message: 'Only organisations can view their food list.' });
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'ngo' && role !== 'restaurant') {
+      return res.status(403).json({ success: false, message: 'Only donors or organisations can view their food list.' });
+    }
+    if (role === 'restaurant') {
+      const restaurantId = await getRestaurantIdForUser(req.user.id);
+      if (!restaurantId) {
+        return res.json({ success: true, data: [] });
+      }
+      const [rows] = await getPool().query(
+        'SELECT * FROM organisation_food WHERE restaurant_id = ? ORDER BY created_at DESC',
+        [restaurantId]
+      );
+      return res.json({ success: true, data: rows });
     }
     const ngoId = await getNgoIdForUser(req.user.id);
     if (!ngoId) {
-      return res.status(403).json({ success: false, message: 'NGO profile not found.' });
+      return res.json({ success: true, data: [] });
     }
-
     const [rows] = await getPool().query(
       'SELECT * FROM organisation_food WHERE ngo_id = ? ORDER BY created_at DESC',
       [ngoId]
@@ -89,15 +111,18 @@ async function getMyOrganisationFood(req, res) {
 
 /**
  * GET /api/organisation/food/available
- * List all organisation food with status PENDING (for volunteers to see).
+ * List all organisation food with status PENDING (for volunteers to see; donors + NGO).
  */
 async function getAvailableOrganisationFood(req, res) {
   try {
     const [rows] = await getPool().query(
-      `SELECT of.*, n.organization_name
+      `SELECT of.*,
+         COALESCE(n.organization_name, r.business_name) AS organization_name
        FROM organisation_food of
-       JOIN ngos n ON n.id = of.ngo_id
+       LEFT JOIN ngos n ON n.id = of.ngo_id
+       LEFT JOIN restaurants r ON r.id = of.restaurant_id
        WHERE of.status = 'PENDING'
+         AND (of.ngo_id IS NOT NULL OR of.restaurant_id IS NOT NULL)
        ORDER BY of.created_at DESC`
     );
     return res.json({ success: true, data: rows });

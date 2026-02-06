@@ -72,12 +72,34 @@ class FoodController {
   }
 
   /**
+   * Get restaurant id for the current user (role restaurant).
+   */
+  static async getRestaurantIdForUser(userId) {
+    const [rows] = await pool.query('SELECT id FROM restaurants WHERE user_id = ?', [userId]);
+    return rows[0]?.id ?? null;
+  }
+
+  /**
    * POST /api/food
-   * Restaurant posts excess food
+   * Restaurant (donor) posts excess food. If user has no restaurant record, one is created so any authenticated user can post.
    */
   static async postFood(req, res) {
     try {
-      const restaurantId = req.user.id;
+      let restaurantId = await FoodController.getRestaurantIdForUser(req.user.id);
+      if (!restaurantId) {
+        const connection = await pool.getConnection();
+        try {
+          const [userRows] = await connection.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
+          const businessName = (userRows[0]?.name || 'Donor').trim() || 'Donor';
+          const [insertResult] = await connection.query(
+            'INSERT INTO restaurants (user_id, business_name) VALUES (?, ?)',
+            [req.user.id, businessName]
+          );
+          restaurantId = insertResult.insertId;
+        } finally {
+          connection.release();
+        }
+      }
       const {
         food_name,
         food_type,
@@ -151,7 +173,10 @@ class FoodController {
    */
   static async getMyPosts(req, res) {
     try {
-      const restaurantId = req.user.id;
+      const restaurantId = await FoodController.getRestaurantIdForUser(req.user.id);
+      if (!restaurantId) {
+        return res.json({ data: [], count: 0 });
+      }
       const { status, limit = 20, offset = 0 } = req.query;
 
       let query = 'SELECT * FROM food_posts WHERE restaurant_id = ?';
@@ -237,7 +262,7 @@ class FoodController {
         params.push(parseInt(max_urgency));
       }
 
-      query += ` ORDER BY urgency_score DESC, posted_at ASC LIMIT ${limit}`;
+      query += ` ORDER BY posted_at DESC, urgency_score DESC LIMIT ${limit}`;
 
       const connection = await pool.getConnection();
       try {
@@ -260,7 +285,10 @@ class FoodController {
   static async updateFoodPost(req, res) {
     try {
       const { id } = req.params;
-      const restaurantId = req.user.id;
+      const restaurantId = await FoodController.getRestaurantIdForUser(req.user.id);
+      if (!restaurantId) {
+        return res.status(403).json({ error: 'Only donors (restaurants) can update food posts.' });
+      }
       const { food_name, quantity_servings, description, photo_url } = req.body;
 
       const connection = await pool.getConnection();
@@ -308,7 +336,10 @@ class FoodController {
   static async deleteFoodPost(req, res) {
     try {
       const { id } = req.params;
-      const restaurantId = req.user.id;
+      const restaurantId = await FoodController.getRestaurantIdForUser(req.user.id);
+      if (!restaurantId) {
+        return res.status(403).json({ error: 'Only donors (restaurants) can delete food posts.' });
+      }
 
       const connection = await pool.getConnection();
       try {
@@ -339,13 +370,20 @@ class FoodController {
   /**
    * POST /api/food/assess-freshness
    * Upload image; returns freshness assessment (uses fruit-veg-freshness-ai when FRESHNESS_AI_URL is set).
+   * On ML/processing error, returns a mock assessment with 200 so the frontend always gets a valid shape.
    */
   static async assessFreshness(req, res) {
     try {
       if (!req.file || !req.file.path) {
         return res.status(400).json({ error: 'No image file uploaded' });
       }
-      const assessment = await FoodQualityVerification.assessFreshnessForFrontend(req.file.path);
+      let assessment;
+      try {
+        assessment = await FoodQualityVerification.assessFreshnessForFrontend(req.file.path);
+      } catch (err) {
+        console.error('Error assessing freshness (using mock):', err);
+        assessment = FoodQualityVerification.mockFrontendAssessment();
+      }
       res.json(assessment);
     } catch (error) {
       console.error('Error assessing freshness:', error);
@@ -357,6 +395,7 @@ class FoodController {
    * POST /api/food/assess-freshness-by-environment
    * Body: { temperature, humidity, time_stored_hours, gas? }.
    * Uses Food-Freshness-Analyzer when FRESHNESS_ENV_AI_URL is set.
+   * On ML/processing error, returns a mock assessment with 200 so the frontend always gets a valid shape.
    */
   static async assessFreshnessByEnvironment(req, res) {
     try {
@@ -366,12 +405,18 @@ class FoodController {
           error: 'Missing required fields: temperature, humidity, time_stored_hours',
         });
       }
-      const assessment = await FoodQualityVerification.assessFreshnessByEnvironmentForFrontend({
-        temperature: Number(temperature),
-        humidity: Number(humidity),
-        time_stored_hours: Number(time_stored_hours),
-        gas: gas != null ? Number(gas) : undefined,
-      });
+      let assessment;
+      try {
+        assessment = await FoodQualityVerification.assessFreshnessByEnvironmentForFrontend({
+          temperature: Number(temperature),
+          humidity: Number(humidity),
+          time_stored_hours: Number(time_stored_hours),
+          gas: gas != null ? Number(gas) : undefined,
+        });
+      } catch (err) {
+        console.error('Error assessing freshness by environment (using mock):', err);
+        assessment = FoodQualityVerification.mockFrontendAssessment();
+      }
       res.json(assessment);
     } catch (error) {
       console.error('Error assessing freshness by environment:', error);

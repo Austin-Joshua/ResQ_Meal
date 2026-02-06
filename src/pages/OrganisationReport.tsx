@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin } from 'lucide-react';
+import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin, Zap, X, Thermometer, FileText, Settings as SettingsIcon } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { organisationApi } from '@/services/api';
+import FreshFoodChecker from '@/components/FreshFoodChecker';
+import { useLanguage } from '@/context/LanguageContext';
+import { NATIVE_LANGUAGE_LABELS } from '@/lib/utils';
+import { SettingsPage } from './SettingsPage';
+
+/** Assessment from Fresh Food Checker (optional step before posting food). */
+interface OrgFoodAssessment {
+  qualityScore: number;
+  freshness: 'excellent' | 'good' | 'fair' | 'poor';
+  status: 'approved' | 'rejected';
+  analysis?: { recommendedTempRange?: { min: number; max: number }; recommendedAvailabilityHours?: number };
+}
 
 type CardId = 'peopleServed' | 'mealsDelivered' | 'deliveriesCompleted' | 'activeVolunteers' | 'co2Prevented' | 'foodRescued';
+type ActivePage = 'report' | 'freshFoodAnalyser' | 'postFood' | 'settings';
 
 interface OrganisationReportProps {
   darkMode: boolean;
@@ -14,8 +27,6 @@ interface OrganisationReportProps {
   user: { name: string; email: string; role: string };
   onLogout: () => void;
 }
-
-const languageLabels = { en: 'English', ta: 'Tamil', hi: 'Hindi' };
 
 // Chart data for organisation report
 const monthlyTrendData = [
@@ -27,82 +38,75 @@ const monthlyTrendData = [
   { month: 'Feb', meals: 2150, people: 1240 },
 ];
 
-const overallBarData = [
-  { name: 'People served', value: 12450, fill: '#10b981' },
-  { name: 'Meals delivered', value: 18620, fill: '#059669' },
-  { name: 'Deliveries', value: 892, fill: '#0d9488' },
-  { name: 'Volunteers', value: 34, fill: '#14b8a6' },
-];
-
-// Extended data for detail views (sample breakdowns)
-const extendedData: Record<CardId, { title: string; subtitle: string; rows: { label: string; value: string }[] }> = {
+// Extended data for detail views (sample breakdowns) - function to get translated data
+const getExtendedData = (t: (key: string) => string): Record<CardId, { title: string; subtitle: string; rows: { label: string; value: string }[] }> => ({
   peopleServed: {
-    title: 'People served',
-    subtitle: 'Total beneficiaries',
+    title: t('peopleServed'),
+    subtitle: t('totalBeneficiaries'),
     rows: [
-      { label: 'This month', value: '1,240' },
-      { label: 'Last month', value: '1,180' },
-      { label: 'Quarter to date', value: '3,650' },
-      { label: 'Year to date', value: '12,450' },
-      { label: 'Top location', value: 'Downtown Community Kitchen' },
+      { label: t('thisMonth'), value: '1,240' },
+      { label: t('lastMonth'), value: '1,180' },
+      { label: t('quarterToDate'), value: '3,650' },
+      { label: t('yearToDate'), value: '12,450' },
+      { label: t('topLocation'), value: 'Downtown Community Kitchen' },
     ],
   },
   mealsDelivered: {
-    title: 'Meals delivered',
-    subtitle: 'All time',
+    title: t('mealsDelivered'),
+    subtitle: t('allTime'),
     rows: [
-      { label: 'This month', value: '2,150' },
-      { label: 'Last month', value: '1,980' },
-      { label: 'Average per delivery', value: '21 meals' },
-      { label: 'Total all time', value: '18,620' },
-      { label: 'Peak day this month', value: '142 meals (Feb 3)' },
+      { label: t('thisMonth'), value: '2,150' },
+      { label: t('lastMonth'), value: '1,980' },
+      { label: t('averagePerDelivery'), value: '21 meals' },
+      { label: t('totalAllTime'), value: '18,620' },
+      { label: t('peakDayThisMonth'), value: '142 meals (Feb 3)' },
     ],
   },
   deliveriesCompleted: {
-    title: 'Deliveries completed',
-    subtitle: 'Successful runs',
+    title: t('deliveriesCompleted'),
+    subtitle: t('successfulRuns'),
     rows: [
-      { label: 'This month', value: '98' },
-      { label: 'Last month', value: '92' },
-      { label: 'On-time rate', value: '94%' },
-      { label: 'Total successful', value: '892' },
-      { label: 'Avg. distance per run', value: '4.2 km' },
+      { label: t('thisMonth'), value: '98' },
+      { label: t('lastMonth'), value: '92' },
+      { label: t('onTimeRate'), value: '94%' },
+      { label: t('totalSuccessful'), value: '892' },
+      { label: t('avgDistancePerRun'), value: '4.2 km' },
     ],
   },
   activeVolunteers: {
-    title: 'Active volunteers',
-    subtitle: 'This month',
+    title: t('activeVolunteers'),
+    subtitle: t('thisMonth'),
     rows: [
-      { label: 'New this month', value: '5' },
-      { label: 'Completed 5+ deliveries', value: '12' },
-      { label: 'Top volunteer (deliveries)', value: 'Arjun R. (28)' },
-      { label: 'Total active', value: '34' },
-      { label: 'Retention rate', value: '88%' },
+      { label: t('newThisMonth'), value: '5' },
+      { label: t('completed5PlusDeliveries'), value: '12' },
+      { label: t('topVolunteerDeliveries'), value: 'Arjun R. (28)' },
+      { label: t('totalActive'), value: '34' },
+      { label: t('retentionRate'), value: '88%' },
     ],
   },
   co2Prevented: {
-    title: 'CO₂ prevented',
-    subtitle: 'Equivalent emissions avoided',
+    title: t('co2Prevented'),
+    subtitle: t('equivalentEmissionsAvoided'),
     rows: [
-      { label: 'This month', value: '520 kg' },
-      { label: 'Last month', value: '480 kg' },
-      { label: 'Year to date', value: '4,650 kg' },
-      { label: 'Equivalent car km', value: '~18,600 km' },
-      { label: 'Equivalent trees (1 year)', value: '~210 trees' },
+      { label: t('thisMonth'), value: '520 kg' },
+      { label: t('lastMonth'), value: '480 kg' },
+      { label: t('yearToDate'), value: '4,650 kg' },
+      { label: t('equivalentCarKm'), value: '~18,600 km' },
+      { label: t('equivalentTrees1Year'), value: '~210 trees' },
     ],
   },
   foodRescued: {
-    title: 'Food rescued',
-    subtitle: 'Weight diverted from waste',
+    title: t('foodRescued'),
+    subtitle: t('weightDivertedFromWaste'),
     rows: [
-      { label: 'This month', value: '1,040 kg' },
-      { label: 'Last month', value: '990 kg' },
-      { label: 'Year to date', value: '9,320 kg' },
-      { label: 'Primary category', value: 'Prepared meals (62%)' },
-      { label: 'Partners involved', value: '8 restaurants, 3 NGOs' },
+      { label: t('thisMonth'), value: '1,040 kg' },
+      { label: t('lastMonth'), value: '990 kg' },
+      { label: t('yearToDate'), value: '9,320 kg' },
+      { label: t('primaryCategory'), value: 'Prepared meals (62%)' },
+      { label: t('partnersInvolved'), value: '8 restaurants, 3 NGOs' },
     ],
   },
-};
+});
 
 function ReportCardDetailView({
   cardId,
@@ -113,7 +117,8 @@ function ReportCardDetailView({
   darkMode: boolean;
   onBack: () => void;
 }) {
-  const data = extendedData[cardId];
+  const { t } = useLanguage();
+  const data = getExtendedData(t)[cardId];
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <button
@@ -124,7 +129,7 @@ function ReportCardDetailView({
         }`}
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to report
+        {t('backToReport')}
       </button>
       <div className={`rounded-2xl border p-6 ${
         darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
@@ -133,7 +138,7 @@ function ReportCardDetailView({
           {data.title}
         </h2>
         <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-          {data.subtitle} — extended breakdown
+          {data.subtitle} — {t('extendedBreakdown')}
         </p>
         <dl className="space-y-4">
           {data.rows.map((row) => (
@@ -171,17 +176,35 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   user,
   onLogout,
 }) => {
+  const { t } = useLanguage();
+  const [activePage, setActivePage] = useState<ActivePage>('report');
+  const [showSettings, setShowSettings] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<CardId | null>(null);
   const [organisationFood, setOrganisationFood] = useState<Array<{ id: number; food_name: string; food_type: string; quantity_servings: number; address?: string; status: string; organization_name?: string; created_at?: string }>>([]);
   const [addFoodLoading, setAddFoodLoading] = useState(false);
   const [addFoodMessage, setAddFoodMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [addFoodForm, setAddFoodForm] = useState({ food_name: '', food_type: 'meals' as const, quantity_servings: 10, description: '', address: '' });
+  const [addFoodStep, setAddFoodStep] = useState<'form' | 'check'>('form');
+  const [addFoodAssessment, setAddFoodAssessment] = useState<OrgFoodAssessment | null>(null);
+  const [foodListLoading, setFoodListLoading] = useState(true);
   const report = defaultReport;
+  
+  // Get translated bar data
+  const overallBarData = [
+    { name: t('peopleServed'), value: 12450, fill: '#10b981' },
+    { name: t('mealsDelivered'), value: 18620, fill: '#059669' },
+    { name: t('deliveries'), value: 892, fill: '#0d9488' },
+    { name: t('volunteers'), value: 34, fill: '#14b8a6' },
+  ];
 
   const loadOrganisationFood = () => {
+    setFoodListLoading(true);
     organisationApi.getMyFood()
-      .then((res) => setOrganisationFood(Array.isArray(res.data?.data) ? res.data.data : []))
-      .catch(() => setOrganisationFood([]));
+      .then((res) => {
+        setOrganisationFood(Array.isArray(res.data?.data) ? res.data.data : []);
+      })
+      .catch(() => setOrganisationFood([]))
+      .finally(() => setFoodListLoading(false));
   };
 
   useEffect(() => { loadOrganisationFood(); }, []);
@@ -189,7 +212,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   const handleAddFood = (e: React.FormEvent) => {
     e.preventDefault();
     if (!addFoodForm.food_name.trim() || !addFoodForm.address.trim()) {
-      setAddFoodMessage({ type: 'error', text: 'Food name and address are required.' });
+      setAddFoodMessage({ type: 'error', text: t('foodNameAndAddressRequired') });
       return;
     }
     setAddFoodLoading(true);
@@ -200,17 +223,68 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
       quantity_servings: Number(addFoodForm.quantity_servings) || 1,
       description: addFoodForm.description.trim() || undefined,
       address: addFoodForm.address.trim(),
+      freshness_score: addFoodAssessment?.qualityScore ?? undefined,
+      quality_score: addFoodAssessment?.qualityScore ?? undefined,
     })
       .then(() => {
-        setAddFoodMessage({ type: 'success', text: 'Food added. It will appear on the volunteer page.' });
+        setAddFoodMessage({ type: 'success', text: t('foodAddedSuccess') });
         setAddFoodForm({ food_name: '', food_type: 'meals', quantity_servings: 10, description: '', address: '' });
+        setAddFoodAssessment(null);
         loadOrganisationFood();
       })
       .catch((err: any) => {
-        setAddFoodMessage({ type: 'error', text: err.response?.data?.message || 'Failed to add food.' });
+        setAddFoodMessage({ type: 'error', text: err.response?.data?.message || t('failedToAddFood') });
       })
       .finally(() => setAddFoodLoading(false));
   };
+
+  const handleFreshnessPass = (assessment: OrgFoodAssessment) => {
+    setAddFoodAssessment(assessment);
+    setAddFoodStep('form');
+  };
+
+  // Sidebar navigation items
+  const sidebarItems = [
+    { id: 'report' as ActivePage, icon: FileText, label: t('adminOrgReport') },
+    { id: 'freshFoodAnalyser' as ActivePage, icon: Thermometer, label: t('freshFoodAnalyser') },
+    { id: 'postFood' as ActivePage, icon: Plus, label: t('postFood') },
+    { id: 'settings' as ActivePage, icon: SettingsIcon, label: t('settings') },
+  ];
+
+  const handleNavigate = (id: ActivePage) => {
+    if (id === 'settings') {
+      setShowSettings(true);
+    } else {
+      setActivePage(id);
+      setSelectedCardId(null);
+    }
+  };
+
+  if (showSettings) {
+    return (
+      <div className={`min-h-screen transition-colors duration-300 ${
+        darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
+      }`}>
+        <button
+          onClick={() => setShowSettings(false)}
+          className={`fixed top-4 left-4 z-50 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+            darkMode
+              ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900'
+              : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white'
+          }`}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {t('backToDashboard')}
+        </button>
+        <SettingsPage 
+          darkMode={darkMode} 
+          setDarkMode={setDarkMode} 
+          language={language} 
+          setLanguage={setLanguage} 
+        />
+      </div>
+    );
+  }
 
   if (selectedCardId) {
     return (
@@ -233,27 +307,213 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
 
   return (
     <AppShell
-      title="Organisation Report"
+      title={t('adminOrgReport')}
       subtitle={`${user.name} · ${user.role}`}
+      sidebarItems={sidebarItems}
+      activeId={activePage}
+      onNavigate={handleNavigate}
       darkMode={darkMode}
       setDarkMode={setDarkMode}
       language={language}
       setLanguage={setLanguage}
-      languageLabels={languageLabels}
+      languageLabels={NATIVE_LANGUAGE_LABELS}
       user={user}
       onLogout={onLogout}
+      onSettingsClick={() => setShowSettings(true)}
     >
-      <div className="space-y-8">
-        {/* Overall summary */}
+      {activePage === 'freshFoodAnalyser' ? (
+        <div className="max-w-4xl mx-auto">
+          <div className={`rounded-2xl border p-6 ${
+            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          }`}>
+            <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+              <Thermometer className="w-6 h-6" />
+              {t('freshFoodAnalyser')}
+            </h2>
+            <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              {t('addFoodDonorsDesc')}
+            </p>
+            <FreshFoodChecker
+              darkMode={darkMode}
+              onPass={(assessment) => {
+                setAddFoodAssessment({
+                  qualityScore: assessment.qualityScore,
+                  freshness: assessment.freshness,
+                  status: assessment.status,
+                  analysis: assessment.analysis,
+                });
+              }}
+              onFail={() => {}}
+            />
+          </div>
+        </div>
+      ) : activePage === 'postFood' ? (
+        <div className="max-w-2xl mx-auto">
+          <div className={`rounded-2xl border p-6 ${
+            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          }`}>
+            <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+              <Plus className="w-6 h-6" />
+              {t('postFood')}
+            </h2>
+            <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              {t('addFoodDonorsDesc')}
+            </p>
+            {addFoodStep === 'check' ? (
+              <div className="max-w-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('freshCheck')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAddFoodStep('form')}
+                    className={`text-sm px-3 py-1.5 rounded-lg border transition ${darkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    {t('skipFillForm')}
+                  </button>
+                </div>
+                <FreshFoodChecker
+                  darkMode={darkMode}
+                  onPass={handleFreshnessPass as (a: unknown) => void}
+                  onFail={() => setAddFoodStep('form')}
+                />
+              </div>
+            ) : (
+              <form onSubmit={handleAddFood} className="space-y-4 max-w-xl">
+                {addFoodAssessment && (
+                  <div className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${
+                    darkMode ? 'bg-emerald-900/40 border-emerald-600/40' : 'bg-emerald-50 border-emerald-200'
+                  }`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Zap className={`w-5 h-5 shrink-0 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+                      <span className={`text-sm font-medium truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {t('freshness')}: {addFoodAssessment.freshness} – {addFoodAssessment.qualityScore}%
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAddFoodAssessment(null)}
+                      className={`p-1.5 rounded-lg shrink-0 transition ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-200 text-slate-600'}`}
+                      aria-label={t('clearFreshnessResult')}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                {!addFoodAssessment && (
+                  <button
+                    type="button"
+                    onClick={() => setAddFoodStep('check')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                      darkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Zap className="w-4 h-4" />
+                    {t('checkFreshnessFirstOptional')}
+                  </button>
+                )}
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('foodName')} *</label>
+                  <input
+                    type="text"
+                    value={addFoodForm.food_name}
+                    onChange={(e) => setAddFoodForm((f) => ({ ...f, food_name: e.target.value }))}
+                    placeholder={t('foodNamePlaceholder')}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                      darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('type')}</label>
+                    <select
+                      aria-label={t('foodType')}
+                      value={addFoodForm.food_type}
+                      onChange={(e) => setAddFoodForm((f) => ({ ...f, food_type: e.target.value as typeof addFoodForm.food_type }))}
+                      className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                        darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
+                      }`}
+                    >
+                      {FOOD_TYPES.map((ft) => (
+                        <option key={ft} value={ft}>
+                          {t(`foodType_${ft}`) || ft.replace(/^./, (c) => c.toUpperCase())}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('quantity')} *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={addFoodForm.quantity_servings}
+                      onChange={(e) => setAddFoodForm((f) => ({ ...f, quantity_servings: Number(e.target.value) || 1 }))}
+                      className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                        darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('address')} *</label>
+                  <input
+                    type="text"
+                    value={addFoodForm.address}
+                    onChange={(e) => setAddFoodForm((f) => ({ ...f, address: e.target.value }))}
+                    placeholder={t('addressPlaceholder')}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                      darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('description')}</label>
+                  <textarea
+                    value={addFoodForm.description}
+                    onChange={(e) => setAddFoodForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder={t('descriptionPlaceholder')}
+                    rows={3}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                      darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                    }`}
+                  />
+                </div>
+                {addFoodMessage && (
+                  <div className={`p-3 rounded-lg text-sm ${
+                    addFoodMessage.type === 'success'
+                      ? darkMode ? 'bg-emerald-900/40 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
+                      : darkMode ? 'bg-red-900/40 text-red-300' : 'bg-red-50 text-red-700'
+                  }`}>
+                    {addFoodMessage.text}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={addFoodLoading}
+                  className={`w-full px-4 py-3 rounded-lg font-semibold transition ${
+                    darkMode
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {addFoodLoading ? t('adding') : t('addFood')}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Overall summary */}
         <section className={`rounded-2xl border p-6 ${
           darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <BarChart3 className="w-5 h-5" />
-            Overall report
+            {t('overallReport')}
           </h2>
           <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            Summary of your organisation&apos;s impact and activity. Click a card for extended details.
+            {t('overallReportDesc')}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -265,14 +525,14 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Users className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  People served
+                  {t('peopleServed')}
                 </span>
               </div>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 {report.peopleServed.toLocaleString()}
               </p>
               <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Total beneficiaries · Click for details
+                {t('totalBeneficiaries')} · {t('clickForDetails')}
               </p>
             </button>
 
@@ -284,14 +544,14 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Utensils className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Meals delivered
+                  {t('mealsDelivered')}
                 </span>
               </div>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 {report.mealsDelivered.toLocaleString()}
               </p>
               <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                All time · Click for details
+                {t('allTime')} · {t('clickForDetails')}
               </p>
             </button>
 
@@ -303,14 +563,14 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Truck className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Deliveries completed
+                  {t('deliveriesCompleted')}
                 </span>
               </div>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 {report.deliveriesCompleted.toLocaleString()}
               </p>
               <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Successful runs · Click for details
+                {t('successfulRuns')} · {t('clickForDetails')}
               </p>
             </button>
 
@@ -322,142 +582,20 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Users className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Active volunteers
+                  {t('activeVolunteers')}
                 </span>
               </div>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 {report.activeVolunteers}
               </p>
               <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                This month · Click for details
+                {t('thisMonth')} · {t('clickForDetails')}
               </p>
             </button>
           </div>
         </section>
 
-        {/* Add food – reflected on volunteer page */}
-        <section className={`rounded-2xl border p-6 ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
-        }`}>
-          <h2 className={`text-lg font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-            <Plus className="w-5 h-5" />
-            Add food
-          </h2>
-          <p className={`text-sm mb-4 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-            Add food that needs pickup or delivery. It will appear on the volunteer page for volunteers to see and respond.
-          </p>
-          <form onSubmit={handleAddFood} className="space-y-4 max-w-xl">
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Food name *</label>
-              <input
-                type="text"
-                value={addFoodForm.food_name}
-                onChange={(e) => setAddFoodForm((f) => ({ ...f, food_name: e.target.value }))}
-                placeholder="e.g. Rice and curry, Bread rolls"
-                className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                  darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
-                }`}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Type</label>
-                <select
-                  aria-label="Food type"
-                  value={addFoodForm.food_type}
-                  onChange={(e) => setAddFoodForm((f) => ({ ...f, food_type: e.target.value as typeof addFoodForm.food_type }))}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                    darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
-                  }`}
-                >
-                  {FOOD_TYPES.map((t) => (
-                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Servings</label>
-                <input
-                  type="number"
-                  min={1}
-                  aria-label="Number of servings"
-                  placeholder="e.g. 10"
-                  value={addFoodForm.quantity_servings}
-                  onChange={(e) => setAddFoodForm((f) => ({ ...f, quantity_servings: Number(e.target.value) || 1 }))}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                    darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
-                  }`}
-                />
-              </div>
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Address / pickup location *</label>
-              <input
-                type="text"
-                value={addFoodForm.address}
-                onChange={(e) => setAddFoodForm((f) => ({ ...f, address: e.target.value }))}
-                placeholder="e.g. 123 Main St, Chennai"
-                className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                  darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
-                }`}
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Description (optional)</label>
-              <textarea
-                value={addFoodForm.description}
-                onChange={(e) => setAddFoodForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Any notes for volunteers"
-                rows={2}
-                className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                  darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
-                }`}
-              />
-            </div>
-            {addFoodMessage && (
-              <p className={`text-sm ${addFoodMessage.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                {addFoodMessage.text}
-              </p>
-            )}
-            <button
-              type="submit"
-              disabled={addFoodLoading}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
-                darkMode
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50'
-              }`}
-            >
-              {addFoodLoading ? 'Adding…' : 'Add food'}
-            </button>
-          </form>
-          {organisationFood.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-              <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Food you added (visible to volunteers)</h3>
-              <ul className="space-y-2">
-                {organisationFood.map((item) => (
-                  <li
-                    key={item.id}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
-                      darkMode ? 'bg-slate-800/50' : 'bg-slate-50'
-                    }`}
-                  >
-                    <Utensils className={`w-4 h-4 shrink-0 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                    <div className="min-w-0 flex-1">
-                      <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.food_name}</p>
-                      <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                        <MapPin className="w-3 h-3" /> {item.address}
-                      </p>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
-                      {item.quantity_servings} servings · {item.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+        {/* Post Food section removed - now accessible via hamburger menu */}
 
         {/* This month vs last month */}
         <section className={`rounded-2xl border p-6 ${
@@ -465,22 +603,22 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <TrendingUp className="w-5 h-5" />
-            Monthly comparison
+            {t('monthlyComparison')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>This month (meals)</p>
+              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{t('thisMonthMeals')}</p>
               <p className={`text-3xl font-bold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
                 {report.thisMonth.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Last month (meals)</p>
+              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{t('lastMonthMeals')}</p>
               <p className={`text-3xl font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                 {report.lastMonth.toLocaleString()}
               </p>
               <p className={`text-sm mt-1 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                +{Math.round(((report.thisMonth - report.lastMonth) / report.lastMonth) * 100)}% vs last month
+                +{Math.round(((report.thisMonth - report.lastMonth) / report.lastMonth) * 100)}% {t('vsLastMonth')}
               </p>
             </div>
           </div>
@@ -492,10 +630,10 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <BarChart3 className="w-5 h-5" />
-            Impact trends
+            {t('impactTrends')}
           </h2>
           <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            Monthly meals delivered and people served over the last 6 months.
+            {t('impactTrendsDesc')}
           </p>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -512,8 +650,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                   labelStyle={{ color: darkMode ? '#d1fae5' : '#0f172a' }}
                   formatter={(value: number) => [value.toLocaleString(), '']}
                 />
-                <Line type="monotone" dataKey="meals" name="Meals" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981' }} />
-                <Line type="monotone" dataKey="people" name="People served" stroke="#0d9488" strokeWidth={2} dot={{ fill: '#0d9488' }} />
+                <Line type="monotone" dataKey="meals" name={t('meals')} stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981' }} />
+                <Line type="monotone" dataKey="people" name={t('peopleServed')} stroke="#0d9488" strokeWidth={2} dot={{ fill: '#0d9488' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -524,10 +662,10 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <TrendingUp className="w-5 h-5" />
-            Overview (all time)
+            {t('overviewAllTime')}
           </h2>
           <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            Key metrics comparison.
+            {t('keyMetricsComparison')}
           </p>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -543,7 +681,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                   }}
                   formatter={(value: number) => [value.toLocaleString(), '']}
                 />
-                <Bar dataKey="value" name="Value" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" name={t('value')} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

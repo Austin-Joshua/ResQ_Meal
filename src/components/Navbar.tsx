@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import logoFull from '@/assets/logo-full.png';
+import logoIcon from '/BG remove.png';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -60,7 +60,9 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center shrink-0">
-          <img src={logoFull} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 w-auto max-w-[180px]" />
+          <div className="rounded-lg p-2 bg-slate-100 dark:bg-white/10">
+            <img src={logoIcon} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 w-auto max-w-[180px] object-contain" />
+          </div>
         </Link>
 
         {/* Desktop Navigation */}

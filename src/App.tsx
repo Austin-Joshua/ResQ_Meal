@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "@/context/LanguageContext";
 import LoginPage from "@/pages/Login";
 import OrganisationReport from "@/pages/OrganisationReport";
+import VolunteerMode from "@/pages/VolunteerMode";
 import ResQMealApp from "@/pages/App";
 import type { LoginSuccessUser } from "@/pages/Login";
 
@@ -38,7 +39,7 @@ function readAuth(): { token: string; user: LoginSuccessUser } | null {
 const App = () => {
   const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(true);
+  const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(false);
   /** Changes on each login so Dashboard can refresh "Did you know?" tip */
   const [loginKey, setLoginKey] = useState(() => Date.now());
   const [darkMode, setDarkMode] = useState(() => {
@@ -72,12 +73,13 @@ const App = () => {
 
   const handleLoginSuccess = (user: LoginSuccessUser, token: string, rememberMe = true) => {
     const storage = getStorage(rememberMe);
-    storage.setItem(STORAGE_TOKEN, token);
-    storage.setItem(STORAGE_USER, JSON.stringify(user));
-    // Clear the other storage so only one session is active
-    const other = rememberMe ? sessionStorage : localStorage;
-    other.removeItem(STORAGE_TOKEN);
-    other.removeItem(STORAGE_USER);
+    try {
+      storage.setItem(STORAGE_TOKEN, token);
+      storage.setItem(STORAGE_USER, JSON.stringify(user));
+      const other = rememberMe ? sessionStorage : localStorage;
+      other.removeItem(STORAGE_TOKEN);
+      other.removeItem(STORAGE_USER);
+    } catch (_) {}
     setAuth({ token, user });
     setShowLoginModal(false);
     setLoginKey(Date.now());
@@ -91,25 +93,42 @@ const App = () => {
     setAuth(null);
   };
 
-  const isOrgAdmin = auth?.user?.role === "restaurant" || auth?.user?.role === "ngo";
+  const role = auth?.user?.role?.toLowerCase?.() ?? "";
+  const isOrgAdmin = role === "restaurant" || role === "ngo";
+  const isVolunteer = role === "volunteer";
   const showSignInPageFirst = !auth && !showBaseWithoutAuth;
 
-  const content = useMemo(() => {
+  // Single source of truth: org login redirects to OrganisationReport; volunteer to VolunteerMode; no intermediate flicker
+  const content = (() => {
     if (showSignInPageFirst) {
       return (
         <LoginPage
           darkMode={darkMode}
           onSuccess={handleLoginSuccess}
           onBrowseWithoutSignIn={() => {
-          setShowBaseWithoutAuth(true);
-          setLoginKey(Date.now());
-        }}
+            setShowBaseWithoutAuth(true);
+            setLoginKey(Date.now());
+          }}
         />
       );
     }
     if (isOrgAdmin && auth?.user) {
       return (
         <OrganisationReport
+          key={`org-${auth.user.id}`}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+    if (isVolunteer && auth?.user) {
+      return (
+        <VolunteerMode
+          key={`volunteer-${auth.user.id}`}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           language={language}
@@ -125,18 +144,20 @@ const App = () => {
         loginKey={loginKey}
         onOpenSignIn={() => setShowLoginModal(true)}
         onLogout={auth?.user ? handleLogout : undefined}
+        language={language}
+        setLanguage={setLanguage}
       />
     );
-  }, [auth, darkMode, language, isOrgAdmin, showSignInPageFirst]);
+  })();
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <LanguageProvider>
+        <LanguageProvider language={language} setLanguage={setLanguage}>
           {content}
-          {showLoginModal && !showSignInPageFirst && (
+          {showLoginModal && !showSignInPageFirst && !isOrgAdmin && (
             <div
               className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
               role="dialog"

@@ -9,24 +9,31 @@ const api = axios.create({
   },
 });
 
+// Read token from same storage as app (localStorage then sessionStorage)
+function getAuthToken(): string | null {
+  return localStorage.getItem('resqmeal_token') || sessionStorage.getItem('resqmeal_token') || null;
+}
+
 // Request interceptor to add auth token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('resqmeal_token');
+  const token = getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Response interceptor: on 401/403 (missing or invalid/expired token), clear auth and redirect to login
+// Response interceptor: on 401 (invalid/expired token) clear auth and redirect; on 403 do not (user stays on page)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
     const isAuthRequest = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
-    if (!isAuthRequest && (status === 401 || status === 403)) {
+    if (!isAuthRequest && status === 401) {
       localStorage.removeItem('resqmeal_token');
       localStorage.removeItem('resqmeal_user');
+      sessionStorage.removeItem('resqmeal_token');
+      sessionStorage.removeItem('resqmeal_user');
       window.location.href = '/';
     }
     return Promise.reject(error);
@@ -55,9 +62,7 @@ export const foodApi = {
   assessFreshness: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    return api.post('/food/assess-freshness', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return api.post('/food/assess-freshness', formData);
   },
   /** Check freshness by storage conditions (temperature, humidity, time) - Food-Freshness-Analyzer. */
   assessFreshnessByEnvironment: (data: {
@@ -70,9 +75,7 @@ export const foodApi = {
   classifyImage: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    return api.post('/food/classify-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return api.post('/food/classify-image', formData);
   },
 };
 
@@ -85,8 +88,17 @@ export const matchApi = {
 
 // Organisation food (NGO adds food → reflected on volunteer page)
 export const organisationApi = {
-  postFood: (data: { food_name: string; food_type?: string; quantity_servings?: number; description?: string; address: string; latitude?: number; longitude?: number }) =>
-    api.post('/organisation/food', data),
+  postFood: (data: {
+    food_name: string;
+    food_type?: string;
+    quantity_servings?: number;
+    description?: string;
+    address: string;
+    latitude?: number;
+    longitude?: number;
+    freshness_score?: number | null;
+    quality_score?: number | null;
+  }) => api.post('/organisation/food', data),
   getMyFood: () => api.get('/organisation/food'),
   getAvailableFood: () => api.get('/organisation/food/available'),
 };

@@ -16,39 +16,16 @@ class AppErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError && this.state.error) {
       return (
-        <div style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-          fontFamily: "system-ui, sans-serif",
-          background: "#f8fafc",
-          color: "#0f172a",
-        }}>
-          <div style={{ maxWidth: 480 }}>
-            <h1 style={{ fontSize: 18, marginBottom: 8 }}>Something went wrong</h1>
-            <pre style={{
-              padding: 16,
-              background: "#f1f5f9",
-              borderRadius: 8,
-              overflow: "auto",
-              fontSize: 13,
-            }}>
+        <div className="error-boundary-container">
+          <div className="error-boundary-content">
+            <h1 className="error-boundary-title">Something went wrong</h1>
+            <pre className="error-boundary-pre">
               {this.state.error.message}
             </pre>
             <button
               type="button"
               onClick={() => this.setState({ hasError: false, error: null })}
-              style={{
-                marginTop: 16,
-                padding: "8px 16px",
-                background: "#0f172a",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                cursor: "pointer",
-              }}
+              className="error-boundary-button"
             >
               Try again
             </button>
@@ -60,7 +37,8 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(document.getElementById("root")!);
+root.render(
   <AppErrorBoundary>
     <App />
   </AppErrorBoundary>

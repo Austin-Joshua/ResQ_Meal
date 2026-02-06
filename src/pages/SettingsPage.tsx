@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Moon, Sun, Globe, Building2, Heart, TrendingUp, ChevronDown, ChevronUp, Settings, User, Palette } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface SettingsPageProps {
   darkMode: boolean;
@@ -9,19 +10,19 @@ interface SettingsPageProps {
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMode, language: propLanguage, setLanguage: propSetLanguage }) => {
-  const [language, setLanguageLocal] = useState<'en' | 'ta' | 'hi'>(propLanguage || 'en');
+  const { t: tContext, language: contextLanguage, setLanguage: setContextLanguage } = useLanguage();
   const [expandedSections, setExpandedSections] = useState({
     userDetails: false,
     orgInfo: false,
     donationStats: false,
   });
   
-  const currentLanguage = propLanguage || language;
+  const currentLanguage = propLanguage || contextLanguage;
   const handleLanguageChange = (lang: 'en' | 'ta' | 'hi') => {
     if (propSetLanguage) {
       propSetLanguage(lang);
     } else {
-      setLanguageLocal(lang);
+      setContextLanguage(lang);
     }
   };
 
@@ -32,103 +33,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
     }));
   };
 
+  // Use centralized translations, fallback to key if not found
   const t = (key: string): string => {
-    const translations: Record<string, Record<string, string>> = {
-      en: {
-        settings: 'Settings',
-        userDetails: 'User Details',
-        name: 'Name',
-        email: 'Email',
-        phone: 'Phone',
-        address: 'Address',
-        role: 'Role',
-        language: 'Language',
-        darkMode: 'Dark Mode',
-        english: 'English',
-        tamil: 'Tamil',
-        hindi: 'Hindi',
-        restaurant: 'Restaurant',
-        ngo: 'NGO',
-        volunteer: 'Volunteer',
-        save: 'Save Changes',
-        saved: 'Settings saved successfully!',
-        preferences: 'Preferences',
-        organizationInfo: 'Organization Information',
-        orgName: 'Organization Name',
-        orgType: 'Organization Type',
-        license: 'License/Registration Number',
-        website: 'Website',
-        registrationDate: 'Registration Date',
-        donationStats: 'Donation Statistics',
-        totalDonations: 'Total Donations',
-        mealsContributed: 'Meals Contributed',
-        moneyValue: 'Estimated Value',
-        impactContribution: 'Your Impact Contribution',
-      },
-      ta: {
-        settings: 'அமைப்புகள்',
-        userDetails: 'பயனர் விவரங்கள்',
-        name: 'பெயர்',
-        email: 'மின்னஞ்சல்',
-        phone: 'தொலைபேசி',
-        address: 'முகவரி',
-        role: 'பங்கு',
-        language: 'மொழி',
-        darkMode: 'இரண்ட பயன்முறை',
-        english: 'ஆங்கிலம்',
-        tamil: 'தமிழ்',
-        hindi: 'இந்தி',
-        restaurant: 'உணவகம்',
-        ngo: 'NGO',
-        volunteer: 'தன்னார்வலர்',
-        save: 'மாற்றங்களை சேமிக்கவும்',
-        saved: 'அமைப்புகள் வெற்றிகரமாக சேமிக்கப்பட்டது!',
-        preferences: 'விருப்பங்கள்',
-        organizationInfo: 'நிறுவன தகவல்',
-        orgName: 'நிறுவன பெயர்',
-        orgType: 'நிறுவன வகை',
-        license: 'உரிமம்/பதிவு எண்',
-        website: 'வலைத்தளம்',
-        registrationDate: 'பதிவு தேதி',
-        donationStats: 'நன்கொடை புள்ளியியல்',
-        totalDonations: 'மொத்த நன்கொடைகள்',
-        mealsContributed: 'பங்களிக்கப்பட்ட உணவு',
-        moneyValue: 'மதிப்பிடப்பட்ட மதிப்பு',
-        impactContribution: 'உங்கள் தாக்கம் பங்களிப்பு',
-      },
-      hi: {
-        settings: 'सेटिंग्स',
-        userDetails: 'उपयोगकर्ता विवरण',
-        name: 'नाम',
-        email: 'ईमेल',
-        phone: 'फोन',
-        address: 'पता',
-        role: 'भूमिका',
-        language: 'भाषा',
-        darkMode: 'डार्क मोड',
-        english: 'अंग्रेजी',
-        tamil: 'तमिल',
-        hindi: 'हिंदी',
-        restaurant: 'रेस्तरां',
-        ngo: 'NGO',
-        volunteer: 'स्वयंसेवक',
-        save: 'परिवर्तन सहेजें',
-        saved: 'सेटिंग्स सफलतापूर्वक सहेजी गईं!',
-        preferences: 'वरीयताएँ',
-        organizationInfo: 'संगठन जानकारी',
-        orgName: 'संगठन का नाम',
-        orgType: 'संगठन का प्रकार',
-        license: 'लाइसेंस/पंजीकरण संख्या',
-        website: 'वेबसाइट',
-        registrationDate: 'पंजीकरण तिथि',
-        donationStats: 'दान आंकड़े',
-        totalDonations: 'कुल दान',
-        mealsContributed: 'योगदान दिए गए भोजन',
-        moneyValue: 'अनुमानित मूल्य',
-        impactContribution: 'आपका प्रभाव योगदान',
-      },
-    };
-    return translations[currentLanguage]?.[key] || key;
+    return tContext(key);
   };
 
   const [formData, setFormData] = useState({

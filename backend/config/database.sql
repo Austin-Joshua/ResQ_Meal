@@ -98,10 +98,11 @@ CREATE TABLE food_posts (
   FULLTEXT INDEX idx_food_name_text (food_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ==================== ORGANISATION FOOD (NGO-posted food for volunteers) ====================
+-- ==================== ORGANISATION FOOD (donor/restaurant or NGO-posted food for volunteers) ====================
 CREATE TABLE organisation_food (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  ngo_id INT NOT NULL,
+  ngo_id INT NULL,
+  restaurant_id INT NULL,
   food_name VARCHAR(255) NOT NULL,
   food_type ENUM('meals', 'vegetables', 'baked', 'dairy', 'fruits', 'others') NOT NULL DEFAULT 'others',
   quantity_servings INT NOT NULL DEFAULT 1,
@@ -109,11 +110,15 @@ CREATE TABLE organisation_food (
   address VARCHAR(255),
   latitude DECIMAL(10, 8),
   longitude DECIMAL(11, 8),
+  freshness_score INT NULL COMMENT 'From Fresh Food Checker (0-100)',
+  quality_score INT NULL COMMENT 'From Fresh Food Checker (0-100)',
   status ENUM('PENDING', 'ASSIGNED', 'DELIVERED') DEFAULT 'PENDING',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (ngo_id) REFERENCES ngos(id) ON DELETE CASCADE,
+  FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
   INDEX idx_ngo_id (ngo_id),
+  INDEX idx_restaurant_id (restaurant_id),
   INDEX idx_status (status),
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -186,3 +191,11 @@ CREATE TABLE IF NOT EXISTS ai_feedback (
   INDEX idx_ngo_id (ngo_id),
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- If organisation_food already exists without freshness columns, run:
+-- ALTER TABLE organisation_food ADD COLUMN freshness_score INT NULL, ADD COLUMN quality_score INT NULL;
+-- If organisation_food exists with ngo_id NOT NULL only, allow donor (restaurant) food:
+-- ALTER TABLE organisation_food MODIFY ngo_id INT NULL;
+-- ALTER TABLE organisation_food ADD COLUMN restaurant_id INT NULL;
+-- ALTER TABLE organisation_food ADD CONSTRAINT fk_of_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
+-- ALTER TABLE organisation_food ADD INDEX idx_restaurant_id (restaurant_id);
