@@ -6,7 +6,7 @@ import { AvailableFoodCarousel } from '@/components/AvailableFoodCarousel';
 import { useLanguage } from '@/context/LanguageContext';
 import { NATIVE_LANGUAGE_LABELS } from '@/lib/utils';
 import { SettingsPage } from './SettingsPage';
-import logoIcon from '/BG remove.png';
+import { AppLogo } from '@/components/AppLogo';
 
 interface VolunteerModeProps {
   darkMode: boolean;
@@ -37,7 +37,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
     'Every 1 kg of food rescued saves ~2.5 kg CO₂ and helps feed someone in need.',
     'Roughly one third of food produced for human consumption is lost or wasted globally each year.',
     'Food waste in landfills produces methane, a greenhouse gas many times more potent than CO₂.',
-    'Donating surplus food can reduce your organisation's carbon footprint and support local communities.',
+    'Donating surplus food can reduce your organisation\'s carbon footprint and support local communities.',
     'Rescuing just 10% of avoidable food waste could feed millions of people in need.',
     'Keeping surplus food in the "human consumption" loop saves water, energy, and land used to grow it.',
   ];
@@ -70,14 +70,14 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
   if (showSettings) {
     return (
       <div className={`min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
+        darkMode ? 'bg-gradient-to-br from-blue-950 via-blue-950 to-slate-900' : 'bg-white'
       }`}>
         <button
           onClick={() => setShowSettings(false)}
           className={`fixed top-4 left-4 z-50 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
             darkMode
               ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900'
-              : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white'
+              : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
           }`}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -96,7 +96,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
   return (
     <AppShell
       title="ResQ Meal"
-      logo={<img src={logoIcon} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px] object-contain object-left" />}
+      logo={<AppLogo size="header" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px]" />}
       onLogoClick={() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
@@ -112,7 +112,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
       <div className="space-y-6 pb-6">
         {/* Welcome Section */}
         <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h1 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             {t('welcomeBack')}, {user.name || 'Volunteer'}!
@@ -132,7 +132,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
         {/* Activity & Help Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
           }`}>
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
               <Clock className="w-4 h-4 shrink-0" /> {t('recentActivity')}
@@ -153,7 +153,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
             </ul>
           </div>
           <div className={`rounded-2xl p-6 transition-all duration-300 border ${
-            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
           }`}>
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-amber-400' : 'text-slate-600'}`}>
               {t('howYouCanHelp')}
@@ -163,8 +163,8 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
                 <p className={`text-2xl font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>{availableFood.length}</p>
                 <p className={`text-xs font-medium mt-1 ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t('availableFood')}</p>
               </div>
-              <div className={`p-4 rounded-xl ${darkMode ? 'bg-emerald-600/20' : 'bg-emerald-50'}`}>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>{deliveries.filter(d => d.status !== 'DELIVERED').length}</p>
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-blue-600/20' : 'bg-blue-50'}`}>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>{deliveries.filter(d => d.status !== 'DELIVERED').length}</p>
                 <p className={`text-xs font-medium mt-1 ${darkMode ? 'text-slate-200' : 'text-slate-600'}`}>{t('activeDeliveries')}</p>
               </div>
             </div>
@@ -173,7 +173,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
 
         {/* Did you know tip */}
         <div className={`rounded-xl p-4 transition-all duration-300 border ${
-          darkMode ? 'bg-emerald-900/25 border-emerald-600/30' : 'bg-amber-50 border-amber-200'
+          darkMode ? 'bg-blue-900/25 border-blue-600/30' : 'bg-amber-50 border-amber-200'
         }`}>
           <p className={`text-sm font-semibold flex items-center gap-2 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
             <Leaf className="w-4 h-4 shrink-0" /> {t('didYouKnow')}
@@ -185,10 +185,10 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
 
         {/* Needed food areas – map */}
         <div className={`rounded-2xl overflow-hidden transition-all duration-300 border ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h3 className={`text-sm font-bold uppercase tracking-wider px-4 py-3 flex items-center gap-2 border-b ${
-            darkMode ? 'text-amber-400 border-emerald-700/30' : 'text-slate-600 border-slate-100'
+            darkMode ? 'text-amber-400 border-blue-700/30' : 'text-slate-600 border-slate-100'
           }`}>
             <MapPin className="w-4 h-4 shrink-0" /> {t('neededFoodMap')}
           </h3>
@@ -210,9 +210,9 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
         {/* Available food from organisations – detailed list (only show if there's data or loading) */}
         {(availableFood.length > 0 || availableFoodLoading) && (
           <div className={`rounded-2xl overflow-hidden transition-all duration-300 border ${
-            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
           }`}>
-            <div className={`border-b px-4 py-3 ${darkMode ? 'border-emerald-700/30' : 'border-slate-200'}`}>
+            <div className={`border-b px-4 py-3 ${darkMode ? 'border-blue-700/30' : 'border-slate-200'}`}>
               <h2 className={`font-semibold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 <Utensils className="w-4 h-4" />
                 {t('availableFoodFromDonors')}
@@ -231,7 +231,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
                       key={item.id}
                       className={`p-4 rounded-lg border transition ${
                         darkMode 
-                          ? 'border-emerald-700/30 bg-emerald-900/20 hover:bg-emerald-900/30' 
+                          ? 'border-blue-700/30 bg-blue-900/20 hover:bg-blue-900/30' 
                           : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
                       }`}
                     >
@@ -247,7 +247,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
                       )}
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <span className={`inline-block text-xs px-2 py-1 rounded ${
-                          darkMode ? 'bg-emerald-600/30 text-emerald-300' : 'bg-emerald-100 text-emerald-700'
+                          darkMode ? 'bg-blue-600/30 text-blue-300' : 'bg-blue-100 text-blue-700'
                         }`}>
                           {item.status}
                         </span>
@@ -268,9 +268,9 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
         {/* My deliveries (only show if there's data or loading) */}
         {(deliveries.length > 0 || loading) && (
           <div className={`rounded-2xl overflow-hidden transition-all duration-300 border ${
-            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
           }`}>
-            <div className={`border-b px-4 py-3 ${darkMode ? 'border-emerald-700/30' : 'border-slate-200'}`}>
+            <div className={`border-b px-4 py-3 ${darkMode ? 'border-blue-700/30' : 'border-slate-200'}`}>
               <h2 className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 {t('myDeliveries')}
               </h2>
@@ -285,7 +285,7 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
                       key={d.id}
                       className={`p-3 rounded-lg border ${
                         darkMode 
-                          ? 'border-emerald-700/30 bg-emerald-900/20' 
+                          ? 'border-blue-700/30 bg-blue-900/20' 
                           : 'border-slate-200 bg-slate-50'
                       }`}
                     >

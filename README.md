@@ -10,7 +10,15 @@ A web platform connecting restaurants and food establishments with NGOs and volu
 
 ## Quick Start
 
-### Run frontend and backend together (for login to work)
+### ✅ Check Backend Status First
+
+Before starting, verify backend connection:
+```bash
+cd backend
+npm run verify
+```
+
+### 🚀 Run Frontend and Backend Together (Recommended)
 
 From the project root, after configuring `backend/.env` and seeding the database:
 
@@ -20,7 +28,17 @@ cd backend && npm install && cd ..
 npm run dev:all
 ```
 
-This starts the API on `http://localhost:5000` and the app on `http://localhost:5173`. Open the app URL and sign in (see Test login credentials below).
+This starts:
+- ✅ Backend API on `http://localhost:5000`
+- ✅ Frontend app on `http://localhost:5173`
+- ✅ Automatic CORS configuration
+- ✅ Connection verification
+
+Open `http://localhost:5173` and check the login page for "Backend connected" status indicator.
+
+### App logo (frontend and backend)
+
+Add your app logo so it appears in the header, login page, and browser tab. Place a file named **`logo.png`** (or `logo.jpg`) in the **`public/`** folder. Recommended: square, 256×256 or 512×512 px. The app uses the path `/logo.png` everywhere; the same path works for the frontend and for backend links (e.g. emails). See `public/LOGO_README.txt` for details. Until you add the file, the UI shows an “Add logo” placeholder.
 
 ### Frontend only
 

@@ -7,16 +7,46 @@ const mysql = require('mysql2/promise');
 const app = express();
 
 // ==================== MIDDLEWARE ====================
+// CORS Configuration - Allow all localhost ports for development
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:3000',
   'http://localhost:8080',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:8080',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
-app.use(cors({
-  origin: allowedOrigins,
+
+// In development, allow any localhost origin
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // In development, allow any localhost origin
+    if (process.env.NODE_ENV === 'development') {
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+    }
+    
+    // Check against allowed origins
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
@@ -68,8 +98,48 @@ app.use((err, req, res, next) => {
 
 // ==================== SERVER STARTUP ====================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`ResQ Meal API running on http://localhost:${PORT}`);
-});
+
+// Check if port is available
+const net = require('net');
+
+function checkPortAvailable(port) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.listen(port, () => {
+      server.once('close', () => resolve(true));
+      server.close();
+    });
+    server.on('error', () => resolve(false));
+  });
+}
+
+async function startServer() {
+  const portAvailable = await checkPortAvailable(PORT);
+  
+  if (!portAvailable) {
+    console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);
+    console.error(`\nPlease either:`);
+    console.error(`1. Stop the process using port ${PORT}`);
+    console.error(`2. Change PORT in backend/.env to a different port (e.g., 5001)`);
+    console.error(`3. Find and kill the process: netstat -ano | findstr :${PORT} (Windows) or lsof -ti:${PORT} | xargs kill (Mac/Linux)\n`);
+    process.exit(1);
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n✅ ResQ Meal API running on http://localhost:${PORT}`);
+    console.log(`📡 CORS enabled for: ${allowedOrigins.join(', ')}`);
+    console.log(`🌐 Development mode: All localhost origins allowed\n`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);
+      console.error(`Please stop the process using this port or change PORT in backend/.env\n`);
+    } else {
+      console.error(`\n❌ Server error:`, err.message);
+    }
+    process.exit(1);
+  });
+}
+
+startServer();
 
 module.exports = { app, pool };

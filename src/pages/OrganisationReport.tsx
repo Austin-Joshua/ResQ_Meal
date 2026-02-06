@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin, Zap, X, Thermometer, FileText, Settings as SettingsIcon } from 'lucide-react';
+import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin, Zap, X, FileText, Settings as SettingsIcon } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { organisationApi } from '@/services/api';
@@ -7,6 +7,7 @@ import FreshFoodChecker from '@/components/FreshFoodChecker';
 import { useLanguage } from '@/context/LanguageContext';
 import { NATIVE_LANGUAGE_LABELS } from '@/lib/utils';
 import { SettingsPage } from './SettingsPage';
+import { AppLogo } from '@/components/AppLogo';
 
 /** Assessment from Fresh Food Checker (optional step before posting food). */
 interface OrgFoodAssessment {
@@ -17,7 +18,7 @@ interface OrgFoodAssessment {
 }
 
 type CardId = 'peopleServed' | 'mealsDelivered' | 'deliveriesCompleted' | 'activeVolunteers' | 'co2Prevented' | 'foodRescued';
-type ActivePage = 'report' | 'freshFoodAnalyser' | 'postFood' | 'settings';
+type ActivePage = 'report' | 'postFood' | 'settings';
 
 interface OrganisationReportProps {
   darkMode: boolean;
@@ -125,14 +126,14 @@ function ReportCardDetailView({
         type="button"
         onClick={onBack}
         className={`flex items-center gap-2 mb-6 px-3 py-2 rounded-lg text-sm font-medium transition ${
-          darkMode ? 'text-slate-300 hover:bg-emerald-900/40' : 'text-slate-600 hover:bg-slate-100'
+          darkMode ? 'text-slate-300 hover:bg-blue-900/40' : 'text-slate-600 hover:bg-slate-100'
         }`}
       >
         <ArrowLeft className="w-4 h-4" />
         {t('backToReport')}
       </button>
       <div className={`rounded-2xl border p-6 ${
-        darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+        darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           {data.title}
@@ -143,10 +144,10 @@ function ReportCardDetailView({
         <dl className="space-y-4">
           {data.rows.map((row) => (
             <div key={row.label} className={`flex justify-between items-center py-2 border-b ${
-              darkMode ? 'border-emerald-700/30' : 'border-slate-100'
+              darkMode ? 'border-blue-700/30' : 'border-slate-100'
             }`}>
               <dt className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{row.label}</dt>
-              <dd className={`font-semibold ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>{row.value}</dd>
+              <dd className={`font-semibold ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>{row.value}</dd>
             </div>
           ))}
         </dl>
@@ -184,7 +185,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   const [addFoodLoading, setAddFoodLoading] = useState(false);
   const [addFoodMessage, setAddFoodMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [addFoodForm, setAddFoodForm] = useState({ food_name: '', food_type: 'meals' as const, quantity_servings: 10, description: '', address: '' });
-  const [addFoodStep, setAddFoodStep] = useState<'form' | 'check'>('form');
+  const [addFoodStep, setAddFoodStep] = useState<'form' | 'check'>('check');
   const [addFoodAssessment, setAddFoodAssessment] = useState<OrgFoodAssessment | null>(null);
   const [foodListLoading, setFoodListLoading] = useState(true);
   const report = defaultReport;
@@ -230,6 +231,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         setAddFoodMessage({ type: 'success', text: t('foodAddedSuccess') });
         setAddFoodForm({ food_name: '', food_type: 'meals', quantity_servings: 10, description: '', address: '' });
         setAddFoodAssessment(null);
+        setAddFoodStep('check'); // Reset to freshness check step
         loadOrganisationFood();
       })
       .catch((err: any) => {
@@ -246,7 +248,6 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   // Sidebar navigation items
   const sidebarItems = [
     { id: 'report' as ActivePage, icon: FileText, label: t('adminOrgReport') },
-    { id: 'freshFoodAnalyser' as ActivePage, icon: Thermometer, label: t('freshFoodAnalyser') },
     { id: 'postFood' as ActivePage, icon: Plus, label: t('postFood') },
     { id: 'settings' as ActivePage, icon: SettingsIcon, label: t('settings') },
   ];
@@ -263,14 +264,14 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   if (showSettings) {
     return (
       <div className={`min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
+        darkMode ? 'bg-gradient-to-br from-blue-950 via-blue-950 to-slate-900' : 'bg-white'
       }`}>
         <button
           onClick={() => setShowSettings(false)}
           className={`fixed top-4 left-4 z-50 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
             darkMode
               ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900'
-              : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white'
+              : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
           }`}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -289,7 +290,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   if (selectedCardId) {
     return (
       <div className={`min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
+        darkMode ? 'bg-gradient-to-br from-blue-950 via-blue-950 to-slate-900' : 'bg-white'
       }`}>
         <ReportCardDetailView
           cardId={selectedCardId}
@@ -302,13 +303,14 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
 
   const cardClass = (clickable?: boolean) =>
     `rounded-xl p-4 border transition-all duration-200 ${
-      darkMode ? 'bg-emerald-900/40 border-emerald-600/30' : 'bg-slate-50 border-slate-200'
-    } ${clickable ? 'cursor-pointer hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500' : ''}`;
+      darkMode ? 'bg-blue-900/40 border-blue-600/30' : 'bg-slate-50 border-slate-200'
+    } ${clickable ? 'cursor-pointer hover:ring-2 hover:ring-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`;
 
   return (
     <AppShell
       title={t('adminOrgReport')}
       subtitle={`${user.name} · ${user.role}`}
+      logo={<AppLogo size="header" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px]" />}
       sidebarItems={sidebarItems}
       activeId={activePage}
       onNavigate={handleNavigate}
@@ -321,67 +323,42 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
       onLogout={onLogout}
       onSettingsClick={() => setShowSettings(true)}
     >
-      {activePage === 'freshFoodAnalyser' ? (
-        <div className="max-w-4xl mx-auto">
-          <div className={`rounded-2xl border p-6 ${
-            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
-          }`}>
-            <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              <Thermometer className="w-6 h-6" />
-              {t('freshFoodAnalyser')}
-            </h2>
-            <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-              {t('addFoodDonorsDesc')}
-            </p>
-            <FreshFoodChecker
-              darkMode={darkMode}
-              onPass={(assessment) => {
-                setAddFoodAssessment({
-                  qualityScore: assessment.qualityScore,
-                  freshness: assessment.freshness,
-                  status: assessment.status,
-                  analysis: assessment.analysis,
-                });
-              }}
-              onFail={() => {}}
-            />
-          </div>
-        </div>
-      ) : activePage === 'postFood' ? (
+      {activePage === 'postFood' ? (
         <div className="max-w-2xl mx-auto">
           <div className={`rounded-2xl border p-6 ${
-            darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+            darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               <Plus className="w-6 h-6" />
               {t('postFood')}
             </h2>
             <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-              {t('addFoodDonorsDesc')}
+              {t('addFoodDonorsDesc')} Freshness check is required before posting.
             </p>
             {addFoodStep === 'check' ? (
               <div className="max-w-xl">
-                <div className="flex items-center justify-between mb-4">
-                  <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('freshCheck')}</span>
-                  <button
-                    type="button"
-                    onClick={() => setAddFoodStep('form')}
-                    className={`text-sm px-3 py-1.5 rounded-lg border transition ${darkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
-                  >
-                    {t('skipFillForm')}
-                  </button>
+                <div className="mb-4">
+                  <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {t('freshCheck')} <span className="text-red-500">*</span> (Required)
+                  </span>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Please complete the freshness check before posting food.
+                  </p>
                 </div>
                 <FreshFoodChecker
                   darkMode={darkMode}
                   onPass={handleFreshnessPass as (a: unknown) => void}
-                  onFail={() => setAddFoodStep('form')}
+                  onFail={() => {
+                    // Don't allow skipping - user must pass freshness check
+                    setAddFoodMessage({ type: 'error', text: t('freshnessCheckRequired') || 'Freshness check is required. Please ensure your food passes the quality check.' });
+                  }}
                 />
               </div>
             ) : (
               <form onSubmit={handleAddFood} className="space-y-4 max-w-xl">
                 {addFoodAssessment && (
                   <div className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${
-                    darkMode ? 'bg-emerald-900/40 border-emerald-600/40' : 'bg-emerald-50 border-emerald-200'
+                    darkMode ? 'bg-blue-900/40 border-blue-600/40' : 'bg-blue-50 border-blue-200'
                   }`}>
                     <div className="flex items-center gap-2 min-w-0">
                       <Zap className={`w-5 h-5 shrink-0 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
@@ -398,18 +375,6 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                )}
-                {!addFoodAssessment && (
-                  <button
-                    type="button"
-                    onClick={() => setAddFoodStep('check')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition ${
-                      darkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Zap className="w-4 h-4" />
-                    {t('checkFreshnessFirstOptional')}
-                  </button>
                 )}
                 <div>
                   <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{t('foodName')} *</label>
@@ -481,7 +446,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                 {addFoodMessage && (
                   <div className={`p-3 rounded-lg text-sm ${
                     addFoodMessage.type === 'success'
-                      ? darkMode ? 'bg-emerald-900/40 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
+                      ? darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700'
                       : darkMode ? 'bg-red-900/40 text-red-300' : 'bg-red-50 text-red-700'
                   }`}>
                     {addFoodMessage.text}
@@ -492,8 +457,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                   disabled={addFoodLoading}
                   className={`w-full px-4 py-3 rounded-lg font-semibold transition ${
                     darkMode
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {addFoodLoading ? t('adding') : t('addFood')}
@@ -506,7 +471,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         <div className="space-y-8">
           {/* Overall summary */}
         <section className={`rounded-2xl border p-6 ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <BarChart3 className="w-5 h-5" />
@@ -523,7 +488,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               className={`text-left ${cardClass(true)}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Users className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                <Users className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   {t('peopleServed')}
                 </span>
@@ -542,7 +507,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               className={`text-left ${cardClass(true)}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Utensils className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                <Utensils className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   {t('mealsDelivered')}
                 </span>
@@ -561,7 +526,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               className={`text-left ${cardClass(true)}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Truck className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                <Truck className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   {t('deliveriesCompleted')}
                 </span>
@@ -580,7 +545,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               className={`text-left ${cardClass(true)}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Users className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                <Users className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 <span className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   {t('activeVolunteers')}
                 </span>
@@ -599,7 +564,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
 
         {/* This month vs last month */}
         <section className={`rounded-2xl border p-6 ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <TrendingUp className="w-5 h-5" />
@@ -608,7 +573,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{t('thisMonthMeals')}</p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+              <p className={`text-3xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                 {report.thisMonth.toLocaleString()}
               </p>
             </div>
@@ -617,7 +582,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
               <p className={`text-3xl font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                 {report.lastMonth.toLocaleString()}
               </p>
-              <p className={`text-sm mt-1 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+              <p className={`text-sm mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                 +{Math.round(((report.thisMonth - report.lastMonth) / report.lastMonth) * 100)}% {t('vsLastMonth')}
               </p>
             </div>
@@ -626,7 +591,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
 
         {/* Charts */}
         <section className={`rounded-2xl border p-6 ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <BarChart3 className="w-5 h-5" />
@@ -658,7 +623,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         </section>
 
         <section className={`rounded-2xl border p-6 ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             <TrendingUp className="w-5 h-5" />
@@ -689,7 +654,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
 
         {/* Environmental impact */}
         <section className={`rounded-2xl border p-6 ${
-          darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm'
+          darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
         }`}>
           <h2 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             Environmental impact
@@ -698,8 +663,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
             <button
               type="button"
               onClick={() => setSelectedCardId('co2Prevented')}
-              className={`text-left p-4 rounded-xl transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                darkMode ? 'bg-emerald-900/40 hover:bg-emerald-900/50' : 'bg-slate-50 hover:bg-slate-100'
+              className={`text-left p-4 rounded-xl transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                darkMode ? 'bg-blue-900/40 hover:bg-blue-900/50' : 'bg-slate-50 hover:bg-slate-100'
               }`}
             >
               <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>CO₂ prevented</p>
@@ -711,8 +676,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
             <button
               type="button"
               onClick={() => setSelectedCardId('foodRescued')}
-              className={`text-left p-4 rounded-xl transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                darkMode ? 'bg-emerald-900/40 hover:bg-emerald-900/50' : 'bg-slate-50 hover:bg-slate-100'
+              className={`text-left p-4 rounded-xl transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                darkMode ? 'bg-blue-900/40 hover:bg-blue-900/50' : 'bg-slate-50 hover:bg-slate-100'
               }`}
             >
               <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Food rescued</p>
@@ -724,6 +689,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
           </div>
         </section>
       </div>
+      )}
     </AppShell>
   );
 };

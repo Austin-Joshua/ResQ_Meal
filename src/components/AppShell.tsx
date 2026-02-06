@@ -104,80 +104,76 @@ export function AppShell({
   return (
     <div
       className={cn(
-        'min-h-screen w-full transition-colors duration-300',
-        isDark ? 'bg-[hsl(var(--background))]' : 'bg-white'
+        'fixed inset-0 w-full h-full overflow-hidden transition-colors duration-300',
+        isDark ? 'bg-[hsl(var(--background))]' : 'bg-blue-50/40'
       )}
     >
-      {/* Top bar – AI Studio style: compact, blurred, border-b */}
+      {/* Top bar – dark blue with majestic gold accents; logo + title always visible */}
       <header
         className={cn(
-          'sticky top-0 z-40 flex h-14 items-center border-b transition-colors duration-200',
-          isDark ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80' : 'bg-white border-border',
-          'border-border'
+          'fixed top-0 left-0 right-0 z-40 flex h-[4.5rem] md:h-20 items-center border-b border-blue-900/50 transition-colors duration-200',
+          'bg-[#1e3a5f] text-white'
         )}
       >
-        <div className="flex w-full items-center justify-between gap-4 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="flex w-full items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4 md:px-6 py-2">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             {hasSidebar && (
               <button
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
-                className="shrink-0 rounded-lg p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="shrink-0 p-2.5 sm:p-3 text-white/90 transition-colors hover:text-white"
                 aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
               >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             )}
-            {logo && !sidebarOpen && (
-              <div className={cn('flex items-center shrink-0 rounded-lg border border-border px-3 py-2 min-h-[48px] box-border', isDark ? 'bg-background/80' : 'bg-white')}>
-                {onLogoClick ? (
-                  <button
-                    type="button"
-                    onClick={onLogoClick}
-                    className={cn(
-                      'flex items-center justify-center p-2 rounded-lg cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50',
-                      isDark ? 'bg-white/10' : 'bg-slate-100'
-                    )}
-                    aria-label="Go to dashboard (home)"
-                  >
-                    <div className="[&_img]:h-9 [&_img]:sm:h-10 [&_img]:w-auto [&_img]:max-w-[180px] [&_img]:sm:max-w-[220px] [&_img]:object-contain [&_img]:object-left">
-                      {logo}
-                    </div>
-                  </button>
-                ) : (
-                  <div className={cn('flex items-center justify-center p-2 rounded-lg', isDark ? 'bg-white/10' : 'bg-slate-100')}>
-                    <div className="[&_img]:h-9 [&_img]:sm:h-10 [&_img]:w-auto [&_img]:max-w-[180px] [&_img]:sm:max-w-[220px] [&_img]:object-contain [&_img]:object-left">
-                      {logo}
-                    </div>
+            {/* Logo + brand name in top bar – always visible, larger size */}
+            {logo ? (
+              onLogoClick ? (
+                <button
+                  type="button"
+                  onClick={onLogoClick}
+                  className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0 rounded-lg py-1.5 pr-2 text-white transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  aria-label="Go to dashboard (home)"
+                >
+                  <div className="shrink-0 [&_img]:h-8 [&_img]:w-8 sm:[&_img]:h-9 sm:[&_img]:w-9 md:[&_img]:h-10 md:[&_img]:w-10 [&_img]:object-contain">
+                    {logo}
                   </div>
-                )}
-              </div>
-            )}
-            {!logo && (
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">ResQ Meal</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0 py-1.5">
+                  <div className="shrink-0 [&_img]:h-8 [&_img]:w-8 sm:[&_img]:h-9 sm:[&_img]:w-9 md:[&_img]:h-10 md:[&_img]:w-10 [&_img]:object-contain">
+                    {logo}
+                  </div>
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">ResQ Meal</span>
+                </div>
+              )
+            ) : (
               <div className="min-w-0">
-                <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
+                <h1 className="truncate text-lg sm:text-xl md:text-2xl font-bold text-white">{title}</h1>
                 {subtitle && (
-                  <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+                  <p className="truncate text-xs sm:text-sm text-white/80">{subtitle}</p>
                 )}
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
             {/* Language */}
             <div className="relative" ref={languageRef}>
               <button
                 type="button"
                 onClick={() => setLanguageMenuOpen((o) => !o)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                 title="Language"
               >
-                <Globe className="h-4 w-4" />
-                <span>{languageLabels[language]}</span>
-                <ChevronDown className={cn('h-4 w-4 transition-transform', languageMenuOpen && 'rotate-180')} />
+                <Globe className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">{languageLabels[language]}</span>
+                <ChevronDown className={cn('h-3 w-3 sm:h-4 sm:w-4 transition-transform', languageMenuOpen && 'rotate-180')} />
               </button>
               {languageMenuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border border-border bg-popover py-1 shadow-lg">
+                <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border border-blue-800/50 bg-[#1e3a5f] py-1 shadow-lg">
                   {(['en', 'ta', 'hi'] as const).map((lang) => (
                     <button
                       key={lang}
@@ -187,10 +183,10 @@ export function AppShell({
                         setLanguageMenuOpen(false);
                       }}
                       className={cn(
-                        'w-full px-4 py-2 text-left text-sm font-medium transition-colors',
+                        'w-full px-4 py-2 text-left text-sm font-medium transition-colors text-white',
                         language === lang
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-popover-foreground hover:bg-muted'
+                          ? 'bg-[#D4AF37] text-[#1e3a5f]'
+                          : 'hover:bg-white/10'
                       )}
                     >
                       {languageLabels[lang]}
@@ -204,10 +200,10 @@ export function AppShell({
             <button
               type="button"
               onClick={() => setDarkMode(!darkMode)}
-              className="rounded-lg p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-lg p-2 sm:p-2.5 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
               title={darkMode ? 'Light mode' : 'Dark mode'}
             >
-              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {darkMode ? <Sun className="h-5 w-5 sm:h-6 sm:w-6" /> : <Moon className="h-5 w-5 sm:h-6 sm:w-6" />}
             </button>
 
             {/* Profile or Sign in */}
@@ -217,19 +213,19 @@ export function AppShell({
                   <button
                     type="button"
                     onClick={() => setProfileMenuOpen((o) => !o)}
-                    className="flex items-center gap-2 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="flex items-center gap-2 rounded-lg p-1.5 sm:p-2 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                     title="Profile"
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    <span className="flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 items-center justify-center rounded-full bg-[#D4AF37]/20 text-xs sm:text-sm md:text-base font-semibold text-[#D4AF37] border border-[#D4AF37]/30">
                       {getInitials(user.name)}
                     </span>
                   </button>
                   {profileMenuOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-border bg-popover py-2 shadow-lg">
-                      <div className="border-b border-border px-4 py-3">
-                        <p className="truncate text-sm font-medium text-popover-foreground">{user.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                        <p className="mt-1 text-xs capitalize text-primary">{user.role}</p>
+                    <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-blue-800/50 bg-[#1e3a5f] py-2 shadow-lg">
+                      <div className="border-b border-blue-800/30 px-4 py-3">
+                        <p className="truncate text-sm font-medium text-white">{user.name}</p>
+                        <p className="truncate text-xs text-white/70">{user.email}</p>
+                        <p className="mt-1 text-xs capitalize text-[#D4AF37]">{user.role}</p>
                       </div>
                       {onSettingsClick && (
                         <button
@@ -238,7 +234,7 @@ export function AppShell({
                             setProfileMenuOpen(false);
                             onSettingsClick();
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-popover-foreground transition-colors hover:bg-muted"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
                         >
                           <Settings className="h-4 w-4" />
                           Settings
@@ -251,7 +247,7 @@ export function AppShell({
                             setProfileMenuOpen(false);
                             onLogout();
                           }}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20"
                         >
                           <LogOut className="h-4 w-4" />
                           Log out
@@ -264,10 +260,10 @@ export function AppShell({
                 <button
                   type="button"
                   onClick={onSignIn}
-                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  className="flex items-center gap-1.5 sm:gap-2 rounded-lg bg-white/20 border border-white/30 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-white/30"
                 >
-                  <User className="h-4 w-4" />
-                  Sign in
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Sign in</span>
                 </button>
               ) : null}
             </div>
@@ -275,29 +271,18 @@ export function AppShell({
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex pt-[4.5rem] md:pt-20">
         {/* Sidebar – opens from hamburger; when closed only the menu icon shows */}
         {hasSidebar && (
           <aside
             className={cn(
-              'fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] w-[var(--studio-sidebar-width)] overflow-y-auto border-r border-border transition-transform duration-300 ease-in-out',
-              isDark ? 'bg-card' : 'bg-white',
+              'fixed left-0 top-[4.5rem] md:top-20 z-30 h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5rem)] w-[var(--studio-sidebar-width)] overflow-y-auto transition-transform duration-300 ease-in-out',
+              'bg-[#1e3a5f]', // Dark blue background
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             )}
           >
-            {/* Logo inside sidebar when open – bordered container, proper placement */}
-            <div className="p-4 border-b border-border">
-              <div className={cn('rounded-lg border border-border p-3 flex flex-col items-center gap-2', isDark ? 'bg-background/80' : 'bg-white')}>
-                <img
-                  src="/BG%20remove.png"
-                  alt="ResQ Meal"
-                  className="h-14 w-20 object-contain"
-                />
-                <span className="text-sm font-semibold text-foreground">Resqmeal</span>
-                <span className="text-xs text-muted-foreground text-center">Nourishment for tomorrow.</span>
-              </div>
-            </div>
-            <nav className="flex flex-col gap-0.5 p-3" aria-label="Main navigation">
+            {/* Navigation items only – logo/title live in top bar */}
+            <nav className="flex flex-col pt-0 pb-2 px-2" aria-label="Main navigation">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeId === item.id;
@@ -315,13 +300,13 @@ export function AppShell({
                       }
                     }}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors',
+                      'flex w-full items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm font-medium transition-all duration-200',
                       isActive
-                        ? isDark ? 'bg-primary/10 text-primary' : 'bg-primary/10 text-primary'
-                        : isDark ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'text-muted-foreground hover:bg-gray-100 hover:text-foreground'
+                        ? 'bg-[#D4AF37] text-[#1e3a5f] border border-[#D4AF37]/50 shadow-md'
+                        : 'text-blue-200 hover:text-[#D4AF37] hover:bg-blue-900/20'
                     )}
                   >
-                    <Icon className="h-5 w-5 shrink-0" />
+                    <Icon className={cn('h-5 w-5 shrink-0', isActive ? 'text-[#1e3a5f]' : 'text-[#D4AF37]')} />
                     <span className="truncate">{item.label}</span>
                   </button>
                 );
@@ -333,12 +318,13 @@ export function AppShell({
         {/* Main content – full width when sidebar closed; margin when sidebar open */}
         <main
           className={cn(
-            'min-w-0 flex-1 transition-[margin] duration-300 ease-in-out',
-            isDark ? '' : 'bg-white',
-            hasSidebar && sidebarOpen && 'md:ml-[var(--studio-sidebar-width)]'
+            'min-w-0 flex-1 transition-[margin] duration-300 ease-in-out overflow-y-auto',
+            isDark ? '' : 'bg-blue-50/30',
+            hasSidebar && sidebarOpen && 'md:ml-[var(--studio-sidebar-width)]',
+            'h-[calc(100vh-4.5rem)] md:h-[calc(100vh-5rem)]'
           )}
         >
-          <div className={cn('mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8', contentClassName)}>
+          <div className={cn('mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8', contentClassName)}>
             {children}
           </div>
         </main>

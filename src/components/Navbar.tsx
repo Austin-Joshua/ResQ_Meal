@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import logoIcon from '/BG remove.png';
+import { AppLogo } from '@/components/AppLogo';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -61,7 +61,7 @@ export function Navbar() {
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center shrink-0">
           <div className="rounded-lg p-2 bg-slate-100 dark:bg-white/10">
-            <img src={logoIcon} alt="ResQ Meal - Turning surplus into sustenance" className="h-10 w-auto max-w-[180px] object-contain" />
+            <AppLogo size="navbar" className="h-10 w-auto max-w-[180px]" />
           </div>
         </Link>
 
@@ -94,7 +94,7 @@ export function Navbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={user?.profilePhoto} alt={user?.name} />
+                  <AvatarImage src={user?.profilePhoto || '/logo.png'} alt={user?.name} />
                   <AvatarFallback className="bg-primary/10 text-primary font-medium">
                     {user?.name ? getInitials(user.name) : 'U'}
                   </AvatarFallback>

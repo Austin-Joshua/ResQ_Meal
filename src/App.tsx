@@ -93,12 +93,9 @@ const App = () => {
     setAuth(null);
   };
 
-  const role = auth?.user?.role?.toLowerCase?.() ?? "";
-  const isOrgAdmin = role === "restaurant" || role === "ngo";
-  const isVolunteer = role === "volunteer";
   const showSignInPageFirst = !auth && !showBaseWithoutAuth;
 
-  // Single source of truth: org login redirects to OrganisationReport; volunteer to VolunteerMode; no intermediate flicker
+  // Route users based on role: restaurant/ngo → OrganisationReport (admin mode), volunteer → Dashboard
   const content = (() => {
     if (showSignInPageFirst) {
       return (
@@ -112,10 +109,14 @@ const App = () => {
         />
       );
     }
+    
+    // Route restaurant and ngo roles to OrganisationReport (admin/organization mode)
+    const userRole = auth?.user?.role?.toLowerCase();
+    const isOrgAdmin = userRole === 'restaurant' || userRole === 'ngo';
+    
     if (isOrgAdmin && auth?.user) {
       return (
         <OrganisationReport
-          key={`org-${auth.user.id}`}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           language={language}
@@ -125,19 +126,8 @@ const App = () => {
         />
       );
     }
-    if (isVolunteer && auth?.user) {
-      return (
-        <VolunteerMode
-          key={`volunteer-${auth.user.id}`}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          language={language}
-          setLanguage={setLanguage}
-          user={auth.user}
-          onLogout={handleLogout}
-        />
-      );
-    }
+    
+    // Volunteer and unauthenticated users see Dashboard with hamburger menu
     return (
       <ResQMealApp
         auth={auth?.user ?? null}
@@ -157,7 +147,7 @@ const App = () => {
         <Sonner />
         <LanguageProvider language={language} setLanguage={setLanguage}>
           {content}
-          {showLoginModal && !showSignInPageFirst && !isOrgAdmin && (
+          {showLoginModal && !showSignInPageFirst && (
             <div
               className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
               role="dialog"
