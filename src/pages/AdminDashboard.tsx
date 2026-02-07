@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { useMode, MODE_METADATA } from '@/context/ModeContext';
-import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle, Home, Settings } from 'lucide-react';
+import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle, Home, Settings, Info } from 'lucide-react';
 interface AdminDashboardProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
@@ -46,6 +46,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'dashboard', icon: Home, label: 'Dashboard' },
     { id: 'analytics', icon: TrendingUp, label: 'Analytics' },
     { id: 'users', icon: Users, label: 'Users' },
+    { id: 'about', icon: Info, label: 'About Us' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
   const [stats, setStats] = useState<PlatformStats>({
@@ -102,8 +103,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <AppShell
-      title="Admin Dashboard"
-      subtitle="System analytics, monitoring & management"
+      title="ResQ Meal"
+      subtitle={activePage === 'dashboard' || activePage === 'analytics' || activePage === 'users' ? 'System analytics, monitoring & management' : ''}
       sidebarItems={navigationItems}
       activeId={activePage}
       onNavigate={(id) => setActivePage(id)}
@@ -116,6 +117,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       onLogout={onLogout}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        {/* Dashboard & Analytics Page */}
+        {(activePage === 'dashboard' || activePage === 'analytics' || activePage === 'users') && (
+          <>
         {/* System Health Alert */}
           <div className={`mb-6 p-4 rounded-lg border-2 flex items-center gap-3 ${
             stats.systemHealth >= 95
@@ -447,6 +452,130 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
           </div>
+          </>
+        )}
+
+          {/* About Us Section */}
+          {activePage === 'about' && (
+            <div className={`p-6 rounded-lg border-2 ${
+              darkMode
+                ? 'bg-blue-900/20 border-blue-600'
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                About ResQ Meal
+              </h2>
+              <div className={`space-y-4 ${darkMode ? 'text-blue-200' : 'text-blue-900'}`}>
+                <p>
+                  ResQ Meal is a mission-driven platform connecting food donors with those in need. We bridge the gap between surplus food and hungry communities.
+                </p>
+                <p>
+                  🌟 <strong>Our Mission:</strong> Reduce food waste while fighting hunger through a collaborative ecosystem of restaurants, volunteers, and NGOs.
+                </p>
+                <p>
+                  🎯 <strong>Our Vision:</strong> A world where no edible food goes to waste and everyone has access to nutritious meals.
+                </p>
+                <p>
+                  💻 <strong>Admin Portal:</strong> Monitor platform performance, manage users, verify donations, and track system health across the entire ResQ Meal ecosystem.
+                </p>
+                <div className={`mt-4 p-3 rounded-lg ${darkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
+                  <p className="font-semibold mb-2">✨ Platform Statistics:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Thousands of meals delivered</li>
+                    <li>Tons of food waste prevented</li>
+                    <li>Active volunteers, restaurants & NGOs</li>
+                    <li>Growing community of change-makers</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Settings Section */}
+          {activePage === 'settings' && (
+            <div className={`p-6 rounded-lg border-2 ${
+              darkMode
+                ? 'bg-purple-900/20 border-purple-600'
+                : 'bg-purple-50 border-purple-200'
+            }`}>
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                Admin Settings
+              </h2>
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      🔐 Security Settings
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Configure
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    Manage platform security, user roles, and access controls
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      📊 Data & Analytics
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Configure
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    Configure data collection and reporting parameters
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      🔄 System Updates
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Check
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    View and manage system updates and maintenance schedules
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      ℹ️ Platform Info
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      View
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    View system information and support documentation
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </AppShell>
     );

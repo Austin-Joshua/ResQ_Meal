@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { useMode } from '@/context/ModeContext';
-import { Users, PackageOpen, TrendingUp, MapPin, Home, FileText } from 'lucide-react';
+import { Users, PackageOpen, TrendingUp, MapPin, Home, FileText, Info, Settings } from 'lucide-react';
 interface NGODashboardProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
@@ -39,6 +39,8 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
     { id: 'dashboard', icon: Home, label: 'Dashboard' },
     { id: 'browse', icon: PackageOpen, label: 'Browse Food' },
     { id: 'impact', icon: FileText, label: 'Impact Report' },
+    { id: 'about', icon: Info, label: 'About Us' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
   ];
   const [availableFood, setAvailableFood] = useState<FoodRequest[]>([
     {
@@ -130,8 +132,8 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
 
   return (
     <AppShell
-      title="NGO/Organization Dashboard"
-      subtitle="Browse food, request donations & distribute to beneficiaries"
+      title="ResQ Meal"
+      subtitle={activePage === 'dashboard' || activePage === 'browse' ? 'Browse food, request donations & distribute to beneficiaries' : ''}
       sidebarItems={navigationItems}
       activeId={activePage}
       onNavigate={(id) => setActivePage(id)}
@@ -145,6 +147,9 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
+        {/* Dashboard & Browse Page */}
+        {(activePage === 'dashboard' || activePage === 'browse') && (
+          <>
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             {[
@@ -328,6 +333,130 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
               </div>
             </div>
           </div>
+          </>
+        )}
+
+          {/* About Us Section */}
+          {activePage === 'about' && (
+            <div className={`p-6 rounded-lg border-2 ${
+              darkMode
+                ? 'bg-blue-900/20 border-blue-600'
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                About ResQ Meal
+              </h2>
+              <div className={`space-y-4 ${darkMode ? 'text-blue-200' : 'text-blue-900'}`}>
+                <p>
+                  ResQ Meal is a mission-driven platform connecting food donors with those in need. We bridge the gap between surplus food and hungry communities.
+                </p>
+                <p>
+                  🌟 <strong>Our Mission:</strong> Reduce food waste while fighting hunger through a collaborative ecosystem of restaurants, volunteers, and NGOs.
+                </p>
+                <p>
+                  🎯 <strong>Our Vision:</strong> A world where no edible food goes to waste and everyone has access to nutritious meals.
+                </p>
+                <p>
+                  🤝 <strong>How NGOs Benefit:</strong> Access fresh food donations from partner restaurants to serve your beneficiaries. Focus on impact while we handle logistics.
+                </p>
+                <div className={`mt-4 p-3 rounded-lg ${darkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
+                  <p className="font-semibold mb-2">✨ NGO Benefits:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Access to vetted restaurant partners</li>
+                    <li>Reliable food supply for beneficiaries</li>
+                    <li>Impact tracking & reporting</li>
+                    <li>Community visibility & recognition</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Settings Section */}
+          {activePage === 'settings' && (
+            <div className={`p-6 rounded-lg border-2 ${
+              darkMode
+                ? 'bg-purple-900/20 border-purple-600'
+                : 'bg-purple-50 border-purple-200'
+            }`}>
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                Settings
+              </h2>
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      📱 Notification Preferences
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Edit
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    Manage alerts for new food donations and requests
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      📍 Service Area
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Edit
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    Configure your organization's service locations
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      🍽️ Food Preferences
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Edit
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    Set preferred food types and dietary requirements
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-lg border-2 ${
+                  darkMode
+                    ? 'bg-purple-900/30 border-purple-700'
+                    : 'bg-purple-100 border-purple-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className={`font-semibold ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>
+                      ℹ️ Help & Support
+                    </p>
+                    <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                      Contact
+                    </button>
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300/70' : 'text-purple-700/70'}`}>
+                    Get help with food requests or report an issue
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </AppShell>
     );

@@ -4,7 +4,7 @@ import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
 import { BackendStatus } from '@/components/BackendStatus';
-import { ModeSelectionModal, UserMode } from '@/components/ModeSelectionModal';
+// Mode selection removed: using fixed quick-login credentials instead
 import { SignupModal } from '@/components/SignupModal';
 
 const REMEMBER_EMAIL_KEY = 'resqmeal_remember_email';
@@ -49,9 +49,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
   const [loading, setLoading] = useState(false);
   const [isBackendOffline, setIsBackendOffline] = useState(false);
   
-  // Mode selection state
-  const [showModeSelection, setShowModeSelection] = useState(false);
-  const [loginCredentials, setLoginCredentials] = useState<{ user: LoginSuccessUser; token: string; rememberMe: boolean } | null>(null);
+  // Quick-login credentials for development/testing
+  const TEST_CREDENTIALS: { label: string; email: string; password: string; role: string }[] = [
+    { label: 'Volunteer', email: 'volunteer@test.local', password: 'volunteer123', role: 'volunteer' },
+    { label: 'Restaurant', email: 'restaurant@test.local', password: 'restaurant123', role: 'restaurant' },
+    { label: 'NGO', email: 'ngo@test.local', password: 'ngo123', role: 'ngo' },
+    { label: 'Admin', email: 'admin@test.local', password: 'admin123', role: 'admin' },
+  ];
   
   // Signup state
   const [showSignup, setShowSignup] = useState(false);
@@ -100,14 +104,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const attemptLogin = async (loginEmail: string, loginPassword: string) => {
     setError(null);
     setIsBackendOffline(false);
     setLoading(true);
-    
     try {
-      // Quick backend health check before attempting login
       const healthCheck = await checkBackendHealth();
       if (!healthCheck.available) {
         setIsBackendOffline(true);
@@ -118,11 +119,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
         } else {
           setError(`Backend connection issue: ${healthCheck.error}. Check if backend is running on port 5000.`);
         }
-        setLoading(false);
         return;
       }
 
-      const { data } = await authApi.login(email.trim(), password);
+      const { data } = await authApi.login(loginEmail.trim(), loginPassword);
       if (data.success && data.data) {
         const { token, id, name, email: userEmail, role } = data.data;
         try {
@@ -130,11 +130,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
           if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, userEmail);
           else localStorage.removeItem(REMEMBER_EMAIL_KEY);
         } catch (_) {}
-        
-        // Store credentials and show mode selection modal instead of direct login
+
         const user: LoginSuccessUser = { id, name, email: userEmail, role };
-        setLoginCredentials({ user, token, rememberMe });
-        setShowModeSelection(true);
+        onSuccess(user, token, rememberMe);
       } else {
         setError('Invalid response from server.');
       }
@@ -152,23 +150,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
     }
   };
 
-  const handleModeSelected = (mode: UserMode) => {
-    if (!loginCredentials) return;
-    
-    // Store the selected mode preference in localStorage
-    try {
-      localStorage.setItem('resqmeal_mode_preference', mode);
-    } catch (_) {}
-    
-    // Update the user role to match the selected mode for routing purposes
-    const user = {
-      ...loginCredentials.user,
-      role: mode, // Override role with selected mode for dashboard routing
-    };
-    
-    setShowModeSelection(false);
-    onSuccess(user, loginCredentials.token, loginCredentials.rememberMe);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await attemptLogin(email, password);
   };
+
+  // Mode selection modal removed; login will immediately proceed on successful auth
 
   const handleSignupSuccess = (user: LoginSuccessUser, token: string) => {
     // On signup success, show a success message and redirect to login
@@ -194,15 +181,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
         />
       )}
 
-      {/* Mode Selection Modal */}
-      {showModeSelection && loginCredentials && (
-        <ModeSelectionModal
-          userName={loginCredentials.user.name}
-          userEmail={loginCredentials.user.email}
-          darkMode={darkMode}
-          onModeSelected={handleModeSelected}
-        />
-      )}
+      {/* Quick-login buttons for development/testing */}
+      <div className="mb-4">
+        <p className={`text-sm mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Quick login:</p>
+        <div className="grid grid-cols-2 gap-2">
+          {TEST_CREDENTIALS.map((c) => (
+            <button
+              key={c.label}
+              type="button"
+              onClick={async () => {
+                setEmail(c.email);
+                setPassword(c.password);
+                await attemptLogin(c.email, c.password);
+              }}
+              className={`py-2 px-3 rounded-lg text-sm font-medium transition border ${darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
       
       <div className={`w-full max-w-md p-5 sm:p-6 transition-all duration-300 rounded-2xl border shadow-lg ${
         darkMode
