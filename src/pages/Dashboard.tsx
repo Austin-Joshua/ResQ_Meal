@@ -164,18 +164,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 >
                   <BarChart3 className="w-3 h-3" /> {t('seeImpact')}
                 </button>
-                {onOpenSignIn && (
-                  <button
-                    type="button"
-                    onClick={onOpenSignIn}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
-                      darkMode ? 'bg-slate-600/30 text-slate-300 hover:bg-slate-600/50 border border-slate-500/50' : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200'
-                    }`}
-                    title="Sign in as organisation / admin"
-                  >
-                    <ShieldCheck className="w-3 h-3" /> {t('adminOrg')}
-                  </button>
-                )}
               </div>
             </div>
 
