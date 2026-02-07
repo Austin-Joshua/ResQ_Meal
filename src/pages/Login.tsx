@@ -4,6 +4,7 @@ import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
 import { BackendStatus } from '@/components/BackendStatus';
+import { ModeSelectionModal, UserMode } from '@/components/ModeSelectionModal';
 
 const REMEMBER_EMAIL_KEY = 'resqmeal_remember_email';
 const REMEMBER_ME_KEY = 'resqmeal_remember_me';
@@ -46,6 +47,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isBackendOffline, setIsBackendOffline] = useState(false);
+  
+  // Mode selection state
+  const [showModeSelection, setShowModeSelection] = useState(false);
+  const [loginCredentials, setLoginCredentials] = useState<{ user: LoginSuccessUser; token: string; rememberMe: boolean } | null>(null);
 
   const clearError = () => {
     setError(null);
@@ -121,7 +126,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
           if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, userEmail);
           else localStorage.removeItem(REMEMBER_EMAIL_KEY);
         } catch (_) {}
-        onSuccess({ id, name, email: userEmail, role }, token, rememberMe);
+        
+        // Store credentials and show mode selection modal instead of direct login
+        const user: LoginSuccessUser = { id, name, email: userEmail, role };
+        setLoginCredentials({ user, token, rememberMe });
+        setShowModeSelection(true);
       } else {
         setError('Invalid response from server.');
       }
@@ -139,10 +148,38 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
     }
   };
 
+  const handleModeSelected = (mode: UserMode) => {
+    if (!loginCredentials) return;
+    
+    // Store the selected mode preference in localStorage
+    try {
+      localStorage.setItem('resqmeal_mode_preference', mode);
+    } catch (_) {}
+    
+    // Update the user role to match the selected mode for routing purposes
+    const user = {
+      ...loginCredentials.user,
+      role: mode, // Override role with selected mode for dashboard routing
+    };
+    
+    setShowModeSelection(false);
+    onSuccess(user, loginCredentials.token, loginCredentials.rememberMe);
+  };
+
   return (
     <div className={`min-h-screen flex items-center justify-center p-3 sm:p-4 transition-colors duration-300 ${
       darkMode ? 'bg-[hsl(var(--background))]' : 'bg-blue-50/40'
     }`}>
+      {/* Mode Selection Modal */}
+      {showModeSelection && loginCredentials && (
+        <ModeSelectionModal
+          userName={loginCredentials.user.name}
+          userEmail={loginCredentials.user.email}
+          darkMode={darkMode}
+          onModeSelected={handleModeSelected}
+        />
+      )}
+      
       <div className={`w-full max-w-md p-5 sm:p-6 transition-all duration-300 rounded-2xl border shadow-lg ${
         darkMode
           ? 'bg-gradient-to-br from-blue-900/50 to-blue-950/50 border-[#D4AF37]/30'
