@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ModeSwitcher } from '@/components/ModeSwitcher';
 import { useMode, MODE_METADATA } from '@/context/ModeContext';
 import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle, LogOut, Moon, Sun } from 'lucide-react';
@@ -221,7 +221,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="space-y-4">
                   {modeStats.map((mode) => {
+                    // Calculate width to determine which predefined width class to use
                     const widthPercentage = (mode.count / stats.totalUsers) * 100;
+                    const colorMap: { [key: string]: string } = {
+                      'blue': 'bg-blue-600',
+                      'cyan': 'bg-cyan-600',
+                      'orange': 'bg-orange-600',
+                      'green': 'bg-green-600',
+                    };
+                    const barRef = useRef<HTMLDivElement>(null);
+                    useEffect(() => {
+                      if (barRef.current) {
+                        barRef.current.style.width = `${widthPercentage}%`;
+                      }
+                    }, [widthPercentage]);
                     return (
                       <div key={mode.name}>
                         <div className="flex items-center justify-between mb-1">
@@ -234,8 +247,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <div className={`w-full h-3 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
                           <div
-                            className={`h-full bg-${mode.color}-600`}
-                            style={{ width: `${widthPercentage}%` }}
+                            ref={barRef}
+                            className={`h-full transition-all ${colorMap[mode.color] || 'bg-slate-600'}`}
                           />
                         </div>
                       </div>
