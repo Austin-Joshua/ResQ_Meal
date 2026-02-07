@@ -224,6 +224,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
       quantity_servings: Number(addFoodForm.quantity_servings) || 1,
       description: addFoodForm.description.trim() || undefined,
       address: addFoodForm.address.trim(),
+      latitude: 13.0827, // Default Chennai coordinates
+      longitude: 80.2707,
       freshness_score: addFoodAssessment?.qualityScore ?? undefined,
       quality_score: addFoodAssessment?.qualityScore ?? undefined,
     })

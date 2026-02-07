@@ -99,10 +99,14 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
         quantity_servings: quantity < 1 ? 1 : quantity,
         description: formData.description ? String(formData.description).trim() : undefined,
         address: String(formData.address || '').trim(),
+        latitude: 13.0827, // Default Chennai coordinates
+        longitude: 80.2707,
         safety_window_minutes: Number(formData.safetyWindow) || 30,
         min_storage_temp_celsius: formData.minTemp != null ? Number(formData.minTemp) : undefined,
         max_storage_temp_celsius: formData.maxTemp != null ? Number(formData.maxTemp) : undefined,
         availability_time_hours: formData.availabilityHours != null ? Number(formData.availabilityHours) : undefined,
+        quality_score: formData.assessment?.qualityScore,
+        freshness_score: formData.assessment?.qualityScore,
       };
       const { data } = await foodApi.postFood(payload);
       setPostedId(data?.id ?? null);
