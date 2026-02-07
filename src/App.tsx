@@ -4,10 +4,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ModeProvider } from "@/context/ModeContext";
 import LoginPage from "@/pages/Login";
 import OrganisationReport from "@/pages/OrganisationReport";
 import VolunteerMode from "@/pages/VolunteerMode";
 import ResQMealApp from "@/pages/App";
+import VolunteerDashboard from "@/pages/VolunteerDashboard";
+import RestaurantDashboard from "@/pages/RestaurantDashboard";
+import NGODashboard from "@/pages/NGODashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import type { LoginSuccessUser } from "@/pages/Login";
 
 const queryClient = new QueryClient();
@@ -110,9 +115,70 @@ const App = () => {
       );
     }
     
-    // Route restaurant and ngo roles to OrganisationReport (admin/organization mode)
-    const userRole = auth?.user?.role?.toLowerCase();
-    const isOrgAdmin = userRole === 'restaurant' || userRole === 'ngo';
+    // Route users based on selected mode
+    const userMode = auth?.user?.role?.toLowerCase();
+    
+    // Check localStorage for saved mode preference
+    let savedMode = null;
+    try {
+      savedMode = localStorage.getItem('resqmeal_mode_preference');
+    } catch (_) {}
+
+    // Determine which dashboard to show based on mode
+    if (userMode === 'volunteer' || savedMode === 'volunteer') {
+      return (
+        <VolunteerDashboard
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+
+    if (userMode === 'restaurant' || savedMode === 'restaurant') {
+      return (
+        <RestaurantDashboard
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+
+    if (userMode === 'ngo' || savedMode === 'ngo') {
+      return (
+        <NGODashboard
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+
+    if (userMode === 'admin' || savedMode === 'admin') {
+      return (
+        <AdminDashboard
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+
+    // Default: Try OrganisationReport for backwards compatibility with restaurant/ngo roles
+    const isOrgAdmin = userMode === 'restaurant' || userMode === 'ngo';
     
     if (isOrgAdmin && auth?.user) {
       return (
@@ -146,35 +212,37 @@ const App = () => {
         <Toaster />
         <Sonner />
         <LanguageProvider language={language} setLanguage={setLanguage}>
-          {content}
-          {showLoginModal && !showSignInPageFirst && (
-            <div
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
-              role="dialog"
-              aria-modal="true"
-              onClick={() => setShowLoginModal(false)}
-            >
+          <ModeProvider>
+            {content}
+            {showLoginModal && !showSignInPageFirst && (
               <div
-                className="relative w-full max-w-md"
-                onClick={(e) => e.stopPropagation()}
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setShowLoginModal(false)}
               >
-                <LoginPage
-                  darkMode={darkMode}
-                  onSuccess={handleLoginSuccess}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowLoginModal(false)}
-                  className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition ${
-                    darkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-white text-slate-700 hover:bg-slate-100 shadow"
-                  }`}
-                  aria-label="Close"
+                <div
+                  className="relative w-full max-w-md"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  ×
-                </button>
+                  <LoginPage
+                    darkMode={darkMode}
+                    onSuccess={handleLoginSuccess}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginModal(false)}
+                    className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition ${
+                      darkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-white text-slate-700 hover:bg-slate-100 shadow"
+                    }`}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </ModeProvider>
         </LanguageProvider>
       </TooltipProvider>
     </QueryClientProvider>

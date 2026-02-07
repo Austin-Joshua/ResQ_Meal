@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { CheckCircle, Utensils, Users, Leaf, Shield, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useMode, UserMode } from '@/context/ModeContext';
 import { AppLogo } from './AppLogo';
-
-export type UserMode = 'volunteer' | 'restaurant' | 'ngo' | 'admin';
 
 interface ModeSelectionModalProps {
   userName: string;
@@ -34,6 +33,7 @@ export const ModeSelectionModal: React.FC<ModeSelectionModalProps> = ({
   onModeSelected,
 }) => {
   const { t } = useLanguage();
+  const { setMode } = useMode();
   const [step, setStep] = useState<'welcome' | 'mode'>('welcome');
   const [responses, setResponses] = useState<Record<string, 'yes' | 'no'>>({});
   const [selectedMode, setSelectedMode] = useState<UserMode | null>(null);
@@ -117,6 +117,7 @@ export const ModeSelectionModal: React.FC<ModeSelectionModalProps> = ({
 
   const handleModeSelect = (mode: UserMode) => {
     setSelectedMode(mode);
+    setMode(mode); // Save mode to context
     onModeSelected(mode);
   };
 
