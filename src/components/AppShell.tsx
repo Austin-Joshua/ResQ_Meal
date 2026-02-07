@@ -165,10 +165,12 @@ export function AppShell({
               <button
                 type="button"
                 onClick={() => setLanguageMenuOpen((o) => !o)}
-                className="flex items-center justify-center rounded-lg p-2 sm:p-2.5 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                 title="Language"
               >
-                <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
+                <Globe className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">{languageLabels[language]}</span>
+                <ChevronDown className={cn('h-3 w-3 sm:h-4 sm:w-4 transition-transform', languageMenuOpen && 'rotate-180')} />
               </button>
               {languageMenuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border border-blue-800/50 bg-[#1e3a5f] py-1 shadow-lg">

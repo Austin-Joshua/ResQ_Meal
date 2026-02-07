@@ -85,7 +85,7 @@ async function getMyOrganisationFood(req, res) {
       if (!restaurantId) {
         return res.json({ success: true, data: [] });
       }
-      const [rows] = await pool.query(
+      const [rows] = await getPool().query(
         'SELECT * FROM organisation_food WHERE restaurant_id = ? ORDER BY created_at DESC',
         [restaurantId]
       );
@@ -95,7 +95,7 @@ async function getMyOrganisationFood(req, res) {
     if (!ngoId) {
       return res.json({ success: true, data: [] });
     }
-    const [rows] = await pool.query(
+    const [rows] = await getPool().query(
       'SELECT * FROM organisation_food WHERE ngo_id = ? ORDER BY created_at DESC',
       [ngoId]
     );
@@ -112,7 +112,7 @@ async function getMyOrganisationFood(req, res) {
  */
 async function getAvailableOrganisationFood(req, res) {
   try {
-    const [rows] = await pool.query(
+    const [rows] = await getPool().query(
       `SELECT of.*,
          COALESCE(n.organization_name, r.business_name) AS organization_name
        FROM organisation_food of

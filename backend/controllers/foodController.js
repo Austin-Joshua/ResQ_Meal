@@ -85,11 +85,10 @@ class FoodController {
    */
   static async postFood(req, res) {
     try {
-      const connection = await pool.getConnection();
-      try {
-        // Get or create restaurant record
-        let restaurantId = await FoodController.getRestaurantIdForUser(req.user.id);
-        if (!restaurantId) {
+      let restaurantId = await FoodController.getRestaurantIdForUser(req.user.id);
+      if (!restaurantId) {
+        const connection = await pool.getConnection();
+        try {
           const [userRows] = await connection.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
           const businessName = (userRows[0]?.name || 'Donor').trim() || 'Donor';
           const [insertResult] = await connection.query(
@@ -97,35 +96,35 @@ class FoodController {
             [req.user.id, businessName]
           );
           restaurantId = insertResult.insertId;
+        } finally {
+          connection.release();
         }
+      }
+      const {
+        food_name,
+        food_type,
+        quantity_servings,
+        description,
+        latitude,
+        longitude,
+        address,
+        safety_window_minutes = 30,
+        min_storage_temp_celsius = null,
+        max_storage_temp_celsius = null,
+        availability_time_hours = null,
+        photo_url = null,
+      } = req.body;
 
-        const {
-          food_name,
-          food_type,
-          quantity_servings,
-          description,
-          latitude,
-          longitude,
-          address,
-          safety_window_minutes = 30,
-          min_storage_temp_celsius = null,
-          max_storage_temp_celsius = null,
-          availability_time_hours = null,
-          photo_url = null,
-        } = req.body;
+      // Validate
+      if (!food_name || !food_type || !quantity_servings || !address) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
 
-        // Validate required fields
-        if (!food_name || !food_type || !quantity_servings || !address) {
-          console.warn('Validation failed:', { food_name, food_type, quantity_servings, address });
-          return res.status(400).json({ error: 'Missing required fields: food_name, food_type, quantity_servings, address' });
-        }
+      const expiryTime = new Date(Date.now() + safety_window_minutes * 60000);
+      const urgencyScore = FoodController.calculateUrgencyScore(safety_window_minutes, quantity_servings);
 
-        const expiryTime = new Date(Date.now() + safety_window_minutes * 60000);
-        const urgencyScore = FoodController.calculateUrgencyScore(safety_window_minutes, quantity_servings);
-
-        console.log('Inserting food post:', { restaurantId, food_name, food_type, quantity_servings, address });
-
-        // Insert food post
+      const connection = await pool.getConnection();
+      try {
         const [result] = await connection.query(
           `INSERT INTO food_posts (
             restaurant_id, food_name, food_type, quantity_servings, description,
@@ -153,20 +152,18 @@ class FoodController {
           ]
         );
 
-        // Fetch and return the newly created post
         const [newPost] = await connection.query(
           'SELECT * FROM food_posts WHERE id = ?',
           [result.insertId]
         );
 
-        console.log('Food post created successfully:', newPost[0]?.id);
         res.status(201).json(FoodController.formatFoodResponse(newPost[0]));
       } finally {
         connection.release();
       }
     } catch (error) {
       console.error('Error posting food:', error);
-      res.status(500).json({ error: 'Failed to post food', details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error' });
+      res.status(500).json({ error: 'Failed to post food' });
     }
   }
 
