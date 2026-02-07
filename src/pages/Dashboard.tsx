@@ -1815,7 +1815,7 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
   }
 
   // Info view (default): main Elite Mode info page
-
+  return (
     <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-8`}>
       <button
         onClick={onBack}
