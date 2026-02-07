@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ModeSwitcher } from '@/components/ModeSwitcher';
+import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { useMode } from '@/context/ModeContext';
-import { Users, PackageOpen, TrendingUp, MapPin, LogOut, Moon, Sun } from 'lucide-react';
+import { Users, PackageOpen, TrendingUp, MapPin, Home, FileText } from 'lucide-react';
 interface NGODashboardProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
@@ -33,6 +33,13 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
   onLogout,
 }) => {
   const { currentMode } = useMode();
+  const [activePage, setActivePage] = useState('dashboard');
+  
+  const navigationItems: AppShellNavItem[] = [
+    { id: 'dashboard', icon: Home, label: 'Dashboard' },
+    { id: 'browse', icon: PackageOpen, label: 'Browse Food' },
+    { id: 'impact', icon: FileText, label: 'Impact Report' },
+  ];
   const [availableFood, setAvailableFood] = useState<FoodRequest[]>([
     {
       id: 1,
@@ -122,44 +129,21 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-[hsl(var(--background))]' : 'bg-green-50/40'}`}>
-      {/* Top Bar */}
-      <div className={`border-b ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-green-200 bg-white'}`}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h2 className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>ResQ Meal</h2>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg transition ${darkMode ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-            >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <ModeSwitcher darkMode={darkMode} />
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <main className="">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Header with Mode Switcher */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                🟩 NGO/Organization Dashboard
-              </h1>
-              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Browse food, request donations & distribute to beneficiaries
-              </p>
-            </div>
-            <ModeSwitcher darkMode={darkMode} />
-          </div>
+    <AppShell
+      title="NGO/Organization Dashboard"
+      subtitle="Browse food, request donations & distribute to beneficiaries"
+      sidebarItems={navigationItems}
+      activeId={activePage}
+      onNavigate={(id) => setActivePage(id)}
+      darkMode={darkMode}
+      setDarkMode={setDarkMode}
+      language={language}
+      setLanguage={setLanguage}
+      languageLabels={{ en: 'English', ta: 'Tamil', hi: 'Hindi' }}
+      user={user}
+      onLogout={onLogout}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -345,9 +329,8 @@ const NGODashboard: React.FC<NGODashboardProps> = ({
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  );
-};
-
-export default NGODashboard;
+      </AppShell>
+    );
+  };
+  
+  export default NGODashboard;

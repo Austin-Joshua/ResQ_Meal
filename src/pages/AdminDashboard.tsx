@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ModeSwitcher } from '@/components/ModeSwitcher';
+import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { useMode, MODE_METADATA } from '@/context/ModeContext';
-import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle, LogOut, Moon, Sun } from 'lucide-react';
+import { BarChart3, Users, TrendingUp, AlertTriangle, CheckCircle, Home, Settings } from 'lucide-react';
 interface AdminDashboardProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
@@ -40,6 +40,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout,
 }) => {
   const { currentMode, modeHistory } = useMode();
+  const [activePage, setActivePage] = useState('dashboard');
+  
+  const navigationItems: AppShellNavItem[] = [
+    { id: 'dashboard', icon: Home, label: 'Dashboard' },
+    { id: 'analytics', icon: TrendingUp, label: 'Analytics' },
+    { id: 'users', icon: Users, label: 'Users' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
+  ];
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 3245,
     activeVolunteers: 487,
@@ -93,46 +101,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ];
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-[hsl(var(--background))]' : 'bg-purple-50/40'}`}>
-      {/* Top Bar */}
-      <div className={`border-b ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-purple-200 bg-white'}`}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h2 className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>ResQ Meal</h2>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg transition ${darkMode ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-            >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <ModeSwitcher darkMode={darkMode} />
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <main className="">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Header with Mode Switcher */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                🟪 Admin/Management Dashboard
-              </h1>
-              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                System operations, analytics & platform management
-              </p>
-            </div>
-            <ModeSwitcher darkMode={darkMode} />
-          </div>
-
-          {/* System Health Alert */}
+    <AppShell
+      title="Admin Dashboard"
+      subtitle="System analytics, monitoring & management"
+      sidebarItems={navigationItems}
+      activeId={activePage}
+      onNavigate={(id) => setActivePage(id)}
+      darkMode={darkMode}
+      setDarkMode={setDarkMode}
+      language={language}
+      setLanguage={setLanguage}
+      languageLabels={{ en: 'English', ta: 'Tamil', hi: 'Hindi' }}
+      user={user}
+      onLogout={onLogout}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* System Health Alert */}
           <div className={`mb-6 p-4 rounded-lg border-2 flex items-center gap-3 ${
             stats.systemHealth >= 95
               ? darkMode
@@ -464,9 +448,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  );
-};
-
-export default AdminDashboard;
+      </AppShell>
+    );
+  };
+  
+  export default AdminDashboard;
