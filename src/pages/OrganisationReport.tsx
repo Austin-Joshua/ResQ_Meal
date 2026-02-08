@@ -218,20 +218,14 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
     }
     setAddFoodLoading(true);
     setAddFoodMessage(null);
-    // Normalize quality scores to 0-1 range for DECIMAL(3,2) column storage
-    const normalizedQualityScore = addFoodAssessment?.qualityScore 
-      ? addFoodAssessment.qualityScore / 100 
-      : undefined;
     organisationApi.postFood({
       food_name: addFoodForm.food_name.trim(),
       food_type: addFoodForm.food_type,
       quantity_servings: Number(addFoodForm.quantity_servings) || 1,
       description: addFoodForm.description.trim() || undefined,
       address: addFoodForm.address.trim(),
-      latitude: 13.0827, // Default Chennai coordinates
-      longitude: 80.2707,
-      freshness_score: normalizedQualityScore,
-      quality_score: normalizedQualityScore,
+      freshness_score: addFoodAssessment?.qualityScore ?? undefined,
+      quality_score: addFoodAssessment?.qualityScore ?? undefined,
     })
       .then(() => {
         setAddFoodMessage({ type: 'success', text: t('foodAddedSuccess') });
@@ -417,11 +411,10 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
                     <input
                       type="number"
                       min="1"
-                      placeholder={t('quantityPlaceholder') || 'Enter quantity'}
                       value={addFoodForm.quantity_servings}
                       onChange={(e) => setAddFoodForm((f) => ({ ...f, quantity_servings: Number(e.target.value) || 1 }))}
                       className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                        darkMode ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-900'
+                        darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
                       }`}
                     />
                   </div>
@@ -476,20 +469,6 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Welcome Card with Username */}
-          <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border text-left ${
-            darkMode
-              ? 'bg-gradient-to-br from-blue-900/50 to-blue-950/50 border-[#D4AF37]/30 shadow-xl'
-              : 'bg-white border-blue-200 shadow-sm shadow-blue-900/5'
-          }`}>
-            <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
-              {t('welcome')}{user?.name && `, ${user.name}`}!
-            </h2>
-            <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-              {t('missionToday')}
-            </p>
-          </div>
-
           {/* Overall summary */}
         <section className={`rounded-2xl border p-6 ${
           darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'

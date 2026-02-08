@@ -4,8 +4,6 @@ import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
 import { BackendStatus } from '@/components/BackendStatus';
-// Mode selection removed: using fixed quick-login credentials instead
-import { SignupModal } from '@/components/SignupModal';
 
 const REMEMBER_EMAIL_KEY = 'resqmeal_remember_email';
 const REMEMBER_ME_KEY = 'resqmeal_remember_me';
@@ -48,17 +46,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isBackendOffline, setIsBackendOffline] = useState(false);
-  
-  // Quick-login credentials for development/testing
-  const TEST_CREDENTIALS: { label: string; email: string; password: string; role: string }[] = [
-    { label: 'Volunteer', email: 'volunteer@test.local', password: 'volunteer123', role: 'volunteer' },
-    { label: 'Restaurant', email: 'restaurant@test.local', password: 'restaurant123', role: 'restaurant' },
-    { label: 'NGO', email: 'ngo@test.local', password: 'ngo123', role: 'ngo' },
-    { label: 'Admin', email: 'admin@test.local', password: 'admin123', role: 'admin' },
-  ];
-  
-  // Signup state
-  const [showSignup, setShowSignup] = useState(false);
 
   const clearError = () => {
     setError(null);
@@ -104,11 +91,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
     }
   };
 
-  const attemptLogin = async (loginEmail: string, loginPassword: string) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
     setIsBackendOffline(false);
     setLoading(true);
+    
     try {
+      // Quick backend health check before attempting login
       const healthCheck = await checkBackendHealth();
       if (!healthCheck.available) {
         setIsBackendOffline(true);
@@ -119,10 +109,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
         } else {
           setError(`Backend connection issue: ${healthCheck.error}. Check if backend is running on port 5000.`);
         }
+        setLoading(false);
         return;
       }
 
-      const { data } = await authApi.login(loginEmail.trim(), loginPassword);
+      const { data } = await authApi.login(email.trim(), password);
       if (data.success && data.data) {
         const { token, id, name, email: userEmail, role } = data.data;
         try {
@@ -130,9 +121,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
           if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, userEmail);
           else localStorage.removeItem(REMEMBER_EMAIL_KEY);
         } catch (_) {}
-
-        const user: LoginSuccessUser = { id, name, email: userEmail, role };
-        onSuccess(user, token, rememberMe);
+        onSuccess({ id, name, email: userEmail, role }, token, rememberMe);
       } else {
         setError('Invalid response from server.');
       }
@@ -150,58 +139,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await attemptLogin(email, password);
-  };
-
-  // Mode selection modal removed; login will immediately proceed on successful auth
-
-  const handleSignupSuccess = (user: LoginSuccessUser, token: string) => {
-    // On signup success, show a success message and redirect to login
-    setShowSignup(false);
-    // Pre-fill the login form with the new credentials
-    setEmail(user.email);
-    setPassword('');
-    setError(null);
-    // Optionally auto-login or let user login manually
-    // For security, we'll let them login manually
-  };
-
   return (
     <div className={`min-h-screen flex items-center justify-center p-3 sm:p-4 transition-colors duration-300 ${
       darkMode ? 'bg-[hsl(var(--background))]' : 'bg-blue-50/40'
     }`}>
-      {/* Signup Modal */}
-      {showSignup && (
-        <SignupModal
-          darkMode={darkMode}
-          onSignupSuccess={handleSignupSuccess}
-          onCancel={() => setShowSignup(false)}
-        />
-      )}
-
-      {/* Quick-login buttons for development/testing */}
-      <div className="mb-4">
-        <p className={`text-sm mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Quick login:</p>
-        <div className="grid grid-cols-2 gap-2">
-          {TEST_CREDENTIALS.map((c) => (
-            <button
-              key={c.label}
-              type="button"
-              onClick={async () => {
-                setEmail(c.email);
-                setPassword(c.password);
-                await attemptLogin(c.email, c.password);
-              }}
-              className={`py-2 px-3 rounded-lg text-sm font-medium transition border ${darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      
       <div className={`w-full max-w-md p-5 sm:p-6 transition-all duration-300 rounded-2xl border shadow-lg ${
         darkMode
           ? 'bg-gradient-to-br from-blue-900/50 to-blue-950/50 border-[#D4AF37]/30'
@@ -222,6 +163,88 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
           {/* Backend Status Indicator */}
           <div className="mb-4">
             <BackendStatus showDetails={true} />
+          </div>
+
+          {/* Test Credentials Helper */}
+          <div className={`mb-4 p-3 rounded-lg border text-xs ${
+            darkMode
+              ? 'bg-blue-900/20 border-blue-800/30 text-blue-200'
+              : 'bg-blue-50/80 border-blue-200 text-blue-700'
+          }`}>
+            <p className={`font-semibold mb-2 ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>
+              Test Credentials (password: <code className="px-1 py-0.5 rounded bg-[#D4AF37]/50 dark:bg-blue-900/50">password123</code>):
+            </p>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium ${darkMode ? 'text-[#D4AF37]' : 'text-blue-700'}`}>Volunteer:</span>
+                  <code className={`px-1.5 py-0.5 rounded text-[0.7rem] ${darkMode ? 'bg-blue-900/50 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
+                    volunteer@community.com
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('volunteer@community.com');
+                    setPassword('password123');
+                    clearError();
+                  }}
+                  className={`px-2 py-1 rounded text-[0.7rem] font-medium transition ${
+                    darkMode
+                      ? 'bg-[#D4AF37]/50 text-blue-200 hover:bg-[#D4AF37]'
+                      : 'bg-[#D4AF37] text-[#1e3a5f] hover:bg-[#FFD700]'
+                  }`}
+                >
+                  Fill
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium ${darkMode ? 'text-[#D4AF37]' : 'text-blue-700'}`}>Restaurant (Admin):</span>
+                  <code className={`px-1.5 py-0.5 rounded text-[0.7rem] ${darkMode ? 'bg-blue-900/50 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
+                    chef@kitchen.com
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('chef@kitchen.com');
+                    setPassword('password123');
+                    clearError();
+                  }}
+                  className={`px-2 py-1 rounded text-[0.7rem] font-medium transition ${
+                    darkMode
+                      ? 'bg-[#D4AF37]/50 text-blue-200 hover:bg-[#D4AF37]'
+                      : 'bg-[#D4AF37] text-[#1e3a5f] hover:bg-[#FFD700]'
+                  }`}
+                >
+                  Fill
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium ${darkMode ? 'text-[#D4AF37]' : 'text-blue-700'}`}>Organization/NGO:</span>
+                  <code className={`px-1.5 py-0.5 rounded text-[0.7rem] ${darkMode ? 'bg-blue-900/50 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
+                    ngo@savechildren.com
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('ngo@savechildren.com');
+                    setPassword('password123');
+                    clearError();
+                  }}
+                  className={`px-2 py-1 rounded text-[0.7rem] font-medium transition ${
+                    darkMode
+                      ? 'bg-[#D4AF37]/50 text-blue-200 hover:bg-[#D4AF37]'
+                      : 'bg-[#D4AF37] text-[#1e3a5f] hover:bg-[#FFD700]'
+                  }`}
+                >
+                  Fill
+                </button>
+              </div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -370,24 +393,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
               {t('browseSiteWithoutSignIn')}
             </button>
           )}
-
-          <div className={`mt-4 pt-4 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-            <p className={`text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Don't have an account?{' '}
-              <button
-                type="button"
-                onClick={() => setShowSignup(true)}
-                disabled={loading}
-                className={`font-semibold transition ${
-                  darkMode
-                    ? 'text-[#D4AF37] hover:text-[#FFD700] active:scale-95'
-                    : 'text-blue-600 hover:text-blue-700 active:scale-95'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                Sign up here
-              </button>
-            </p>
-          </div>
       </div>
     </div>
   );

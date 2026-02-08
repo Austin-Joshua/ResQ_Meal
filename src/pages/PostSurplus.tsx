@@ -93,24 +93,16 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
     setPosting(true);
     try {
       const quantity = Number(formData.quantity) || 1;
-      // Normalize quality scores to 0-1 range for DECIMAL(3,2) column storage
-      const normalizedQualityScore = formData.assessment?.qualityScore 
-        ? formData.assessment.qualityScore / 100 
-        : undefined;
       const payload = {
         food_name: String(formData.foodName || '').trim(),
         food_type: formData.foodType,
         quantity_servings: quantity < 1 ? 1 : quantity,
         description: formData.description ? String(formData.description).trim() : undefined,
         address: String(formData.address || '').trim(),
-        latitude: 13.0827, // Default Chennai coordinates
-        longitude: 80.2707,
         safety_window_minutes: Number(formData.safetyWindow) || 30,
         min_storage_temp_celsius: formData.minTemp != null ? Number(formData.minTemp) : undefined,
         max_storage_temp_celsius: formData.maxTemp != null ? Number(formData.maxTemp) : undefined,
         availability_time_hours: formData.availabilityHours != null ? Number(formData.availabilityHours) : undefined,
-        quality_score: normalizedQualityScore,
-        freshness_score: normalizedQualityScore,
       };
       const { data } = await foodApi.postFood(payload);
       setPostedId(data?.id ?? null);

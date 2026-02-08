@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const { pool } = require('../server');
 const FoodQualityVerification = require('../services/FoodQualityVerification');
 const axios = require('axios');
 const FormData = require('form-data');

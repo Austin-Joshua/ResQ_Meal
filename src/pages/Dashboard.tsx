@@ -125,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 : 'bg-white border-blue-200 shadow-sm shadow-blue-900/5'
             }`}>
               <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
-                {t('welcome')}{auth?.name && `, ${auth.name}`}!
+                {t('welcome')}
               </h2>
               <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                 {t('missionToday')}
@@ -164,6 +164,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 >
                   <BarChart3 className="w-3 h-3" /> {t('seeImpact')}
                 </button>
+                {onOpenSignIn && (
+                  <button
+                    type="button"
+                    onClick={onOpenSignIn}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
+                      darkMode ? 'bg-slate-600/30 text-slate-300 hover:bg-slate-600/50 border border-slate-500/50' : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200'
+                    }`}
+                    title="Sign in as organisation / admin"
+                  >
+                    <ShieldCheck className="w-3 h-3" /> {t('adminOrg')}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1364,24 +1376,16 @@ interface EliteFoodItem {
 }
 interface EliteRegistration {
   id: string;
-  fullName: string;
-  phoneNumber: string;
-  careHomeName: string;
   address: string;
   foods: EliteFoodItem[];
-  registeredAt: string;
 }
 
 // Elite Mode Page – for elders in care homes who eat marriage/event food and food ordered by kids, not donated surplus
 const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
-  const [eliteView, setEliteView] = useState<'info' | 'register' | 'confirmed'>('info');
-  const [fullName, setFullName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [careHomeName, setCareHomeName] = useState('');
+  const [eliteView, setEliteView] = useState<'info' | 'register'>('info');
   const [homeAddress, setHomeAddress] = useState('');
   const [foods, setFoods] = useState<EliteFoodItem[]>([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
   const [registrations, setRegistrations] = useState<EliteRegistration[]>([]);
-  const [lastRegistration, setLastRegistration] = useState<EliteRegistration | null>(null);
 
   const openMapsForAddress = (address: string) => {
     const encoded = encodeURIComponent(address);
@@ -1399,37 +1403,15 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
   };
 
   const submitRegistration = () => {
-    const trimmedFullName = fullName.trim();
-    const trimmedPhone = phoneNumber.trim();
-    const trimmedCareHome = careHomeName.trim();
     const trimmedAddress = homeAddress.trim();
-
-    if (!trimmedFullName || !trimmedPhone || !trimmedCareHome || !trimmedAddress) {
-      alert('Please fill in all required fields: Full Name, Phone Number, Care Home Name, and Address');
-      return;
-    }
-
+    if (!trimmedAddress) return;
     const foodList = foods.filter((f) => f.name.trim() || f.type.trim() || f.quantity.trim());
-    const newRegistration: EliteRegistration = {
-      id: crypto.randomUUID(),
-      fullName: trimmedFullName,
-      phoneNumber: trimmedPhone,
-      careHomeName: trimmedCareHome,
-      address: trimmedAddress,
-      foods: foodList.length
-        ? foodList
-        : foods.map((f) => ({
-            ...f,
-            name: f.name || '—',
-            type: f.type || '—',
-            quantity: f.quantity || '—',
-          })),
-      registeredAt: new Date().toLocaleString(),
-    };
-
-    setRegistrations((prev) => [...prev, newRegistration]);
-    setLastRegistration(newRegistration);
-    setEliteView('confirmed');
+    setRegistrations((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), address: trimmedAddress, foods: foodList('length') ? foodList : foods.map((f) => ({ ...f, name: f.name || '—', type: f.type || '—', quantity: f.quantity || '—' })) },
+    ]);
+    setHomeAddress('');
+    setFoods([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
   };
 
   const cardCls = darkMode ? 'bg-emerald-900/30 border-emerald-600/25' : 'bg-white border-slate-200 shadow-sm';
@@ -1455,63 +1437,17 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
             {t('eliteRegisterHome')}
           </h2>
           <p className={`mb-6 ${darkMode ? 'text-blue-100' : 'text-slate-600'}`}>
-            Please fill in all your details to register for Elite Mode and start receiving notifications about special foods near your area.
+            {t('eliteRegisterHomeDesc')}
           </p>
 
-          {/* Personal Details Section */}
-          <div className="mb-8 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50">
-            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
-              👤 Your Personal Details
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="block">
-                <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Full Name *
-                </span>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className={`w-full rounded-lg border px-4 py-2.5 ${inputCls}`}
-                />
-              </label>
-              <label className="block">
-                <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Phone Number *
-                </span>
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Enter your phone number"
-                  className={`w-full rounded-lg border px-4 py-2.5 ${inputCls}`}
-                />
-              </label>
-            </div>
-            <label className="block mt-4">
-              <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                Care Home / Organization Name *
-              </span>
-              <input
-                type="text"
-                value={careHomeName}
-                onChange={(e) => setCareHomeName(e.target.value)}
-                placeholder="Enter the care home or organization name"
-                className={`w-full rounded-lg border px-4 py-2.5 ${inputCls}`}
-              />
-            </label>
-          </div>
-
-          {/* Address Section */}
-          <label className="block mb-6">
+          <label className="block mb-4">
             <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-              📍 Your Address *
+              {t('eliteHomeAddress')}
             </span>
             <input
               type="text"
               value={homeAddress}
-              onChange={(e) => setHomeAddress(e.target.value)}
+              onChange={(e) => setHomeAddress(e.target('value'))}
               placeholder={t('eliteHomeAddressPlaceholder')}
               className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
             />
@@ -1538,21 +1474,21 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
                   <input
                     type="text"
                     value={f.name}
-                    onChange={(e) => updateFood(f.id, 'name', e.target.value)}
+                    onChange={(e) => updateFood(f.id, 'name', e.target('value'))}
                     placeholder={t('eliteFoodName')}
                     className={`flex-1 min-w-[120px] rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={f.type}
-                    onChange={(e) => updateFood(f.id, 'type', e.target.value)}
+                    onChange={(e) => updateFood(f.id, 'type', e.target('value'))}
                     placeholder={t('eliteFoodType')}
                     className={`flex-1 min-w-[120px] rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={f.quantity}
-                    onChange={(e) => updateFood(f.id, 'quantity', e.target.value)}
+                    onChange={(e) => updateFood(f.id, 'quantity', e.target('value'))}
                     placeholder={t('eliteQuantity')}
                     className={`w-24 rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
@@ -1621,188 +1557,6 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
     );
   }
 
-  // Confirmation view: show after successful registration
-  if (eliteView === 'confirmed' && lastRegistration) {
-    // Sample matched elite foods based on location/type
-    const matchedEliteFoods = [
-      {
-        id: '1',
-        name: 'Diwali Sweets & Savouries',
-        description: 'Traditional sweets prepared for Diwali celebrations - gulab jamuns, kheer, and savory namkeen assorted boxes',
-        distance: '2.3 km',
-        icon: '🪔',
-      },
-      {
-        id: '2',
-        name: 'Pongal Specialties',
-        description: 'Fresh Pongal with jaggery and cashews, served with pickle and papad - authentic South Indian harvest festival meal',
-        distance: '1.8 km',
-        icon: '🎊',
-      },
-      {
-        id: '3',
-        name: 'Eid Biryani & Kebabs',
-        description: 'Fragrant biryani with marinated meat, kebabs, and cooling raita - prepared for Eid celebrations',
-        distance: '3.1 km',
-        icon: '🍛',
-      },
-      {
-        id: '4',
-        name: 'Wedding Feast Platter',
-        description: 'Multi-course wedding meal prepared by professional caterers - includes appetizers, main course, and desserts',
-        distance: '4.2 km',
-        icon: '💒',
-      },
-    ];
-
-    return (
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-8">
-        <button
-          onClick={() => {
-            setEliteView('info');
-            setFullName('');
-            setPhoneNumber('');
-            setCareHomeName('');
-            setHomeAddress('');
-            setFoods([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
-            setLastRegistration(null);
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
-            darkMode ? 'hover:bg-emerald-800/40 text-slate-200' : 'hover:bg-slate-200 text-slate-700'
-          }`}
-        >
-          ← Back to Elite Mode
-        </button>
-
-        {/* Success Confirmation Card */}
-        <div className={`rounded-2xl p-8 transition-all duration-300 border-2 ${
-          darkMode
-            ? 'bg-gradient-to-br from-emerald-900/50 to-emerald-800/30 border-emerald-500/60 shadow-lg shadow-emerald-500/20'
-            : 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-400/60 shadow-lg shadow-emerald-400/20'
-        }`}>
-          <div className="text-center mb-6">
-            <div className={`text-6xl mb-4 animate-bounce`}>✅</div>
-            <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>
-              Registration Successful!
-            </h2>
-            <p className={`text-lg ${darkMode ? 'text-emerald-100' : 'text-emerald-700'}`}>
-              Your Elite Mode registration has been confirmed
-            </p>
-          </div>
-
-          {/* Registration Summary */}
-          <div className={`rounded-xl p-4 mb-6 ${darkMode ? 'bg-slate-800/40 border-slate-600' : 'bg-white border-slate-200'} border`}>
-            <h3 className={`font-semibold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-              📋 Your Registration Details
-            </h3>
-            <div className="space-y-2 text-sm">
-              <p className={darkMode ? 'text-slate-300' : 'text-slate-700'}>
-                <span className="font-medium">Name:</span> {lastRegistration.fullName}
-              </p>
-              <p className={darkMode ? 'text-slate-300' : 'text-slate-700'}>
-                <span className="font-medium">Phone:</span> {lastRegistration.phoneNumber}
-              </p>
-              <p className={darkMode ? 'text-slate-300' : 'text-slate-700'}>
-                <span className="font-medium">Organization:</span> {lastRegistration.careHomeName}
-              </p>
-              <p className={darkMode ? 'text-slate-300' : 'text-slate-700'}>
-                <span className="font-medium">Address:</span> {lastRegistration.address}
-              </p>
-              <p className={darkMode ? 'text-slate-300' : 'text-slate-700'}>
-                <span className="font-medium">Registered:</span> {lastRegistration.registeredAt}
-              </p>
-            </div>
-          </div>
-
-          {/* Notification Message */}
-          <div className={`rounded-xl p-4 mb-6 border-l-4 ${
-            darkMode
-              ? 'bg-blue-900/30 border-blue-500 border-l-4'
-              : 'bg-blue-50 border-blue-300 border-l-4'
-          }`}>
-            <h3 className={`font-semibold mb-2 flex items-center gap-2 ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-              🔔 How You'll Be Notified
-            </h3>
-            <p className={`text-sm mb-2 ${darkMode ? 'text-blue-100' : 'text-blue-700'}`}>
-              Your address has been successfully added to Elite Mode!
-            </p>
-            <ul className={`text-sm space-y-1 ${darkMode ? 'text-blue-100' : 'text-blue-700'}`}>
-              <li>✓ We'll notify you when special foods (weddings, festivals, celebrations) are prepared near your surroundings</li>
-              <li>✓ You'll receive alerts based on your location: <strong>{lastRegistration.address}</strong></li>
-              <li>✓ Accept the notification, and meals will be delivered to your doorstep</li>
-              <li>✓ Contact: We'll reach you at <strong>{lastRegistration.phoneNumber}</strong></li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Matched Elite Food Examples */}
-        <div className={`rounded-2xl p-8 transition-all duration-300 border ${
-          darkMode
-            ? 'bg-gradient-to-br from-amber-900/30 to-orange-900/30 border-amber-600/25'
-            : 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300/50'
-        }`}>
-          <h3 className={`text-2xl font-bold mb-1 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
-            🎉 Foods You May Receive
-          </h3>
-          <p className={`mb-6 text-sm ${darkMode ? 'text-amber-100' : 'text-amber-700'}`}>
-            Here are examples of special foods that are often made near your area and available for Elite Mode members
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {matchedEliteFoods.map((food) => (
-              <div
-                key={food.id}
-                className={`rounded-xl p-5 border-2 transition transform hover:scale-[1.02] ${
-                  darkMode
-                    ? 'bg-slate-800/40 border-slate-600 hover:border-amber-500/60'
-                    : 'bg-white border-slate-200 hover:border-amber-400/60'
-                }`}
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="text-4xl flex-shrink-0">{food.icon}</span>
-                  <div className="flex-1">
-                    <h4 className={`font-bold text-lg ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
-                      {food.name}
-                    </h4>
-                    <p className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                      📍 {food.distance} away
-                    </p>
-                  </div>
-                </div>
-                <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  {food.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <p className={`text-center text-sm mt-6 ${darkMode ? 'text-amber-100' : 'text-amber-700'}`}>
-            🎯 When any of these foods are available near your area, you'll receive an instant notification!
-          </p>
-        </div>
-
-        {/* Continue Button */}
-        <button
-          onClick={() => {
-            setEliteView('register');
-            setFullName('');
-            setPhoneNumber('');
-            setCareHomeName('');
-            setHomeAddress('');
-            setFoods([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
-            setLastRegistration(null);
-          }}
-          className={`w-full py-3 rounded-xl font-semibold text-lg transition ${
-            darkMode ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-emerald-500 text-white hover:bg-emerald-600'
-          }`}
-        >
-          Register Another Care Home / Organization
-        </button>
-      </div>
-    );
-  }
-
-  // Info view (default): main Elite Mode info page
   return (
     <div className={`w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-8`}>
       <button
