@@ -30,8 +30,11 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       });
       onComplete();
     } catch (err: unknown) {
-      const ax = err as { response?: { data?: { message?: string } } };
-      setError(ax.response?.data?.message || (t('saveFailed') || 'Failed to save. Please try again.'));
+      const ax = err as { response?: { data?: { message?: string; error?: string } } };
+      const msg = ax.response?.data?.message;
+      const detail = ax.response?.data?.error;
+      const fallback = t('saveFailed') || 'Failed to save. Please try again.';
+      setError(detail ? `${msg || 'Failed to update'}. ${detail}` : (msg || fallback));
     } finally {
       setLoading(false);
     }

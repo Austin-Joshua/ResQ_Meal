@@ -185,10 +185,6 @@ const App = () => {
         <LoginPage
           darkMode={darkMode}
           onSuccess={handleLoginSuccess}
-          onBrowseWithoutSignIn={() => {
-            setShowBaseWithoutAuth(true);
-            setLoginKey(Date.now());
-          }}
           onGoToSignUp={() => setShowSignupPage(true)}
           onChangeLanguage={() => setShowLanguageSelector(true)}
         />
@@ -230,6 +226,19 @@ const App = () => {
     setFirstTimeComplete(true);
   };
 
+  const handleRoleUpdated = (token: string, user: LoginSuccessUser) => {
+    const storage = getStorage(true);
+    try {
+      storage.setItem(STORAGE_TOKEN, token);
+      storage.setItem(STORAGE_USER, JSON.stringify(user));
+      const other = storage === localStorage ? sessionStorage : localStorage;
+      other.removeItem(STORAGE_TOKEN);
+      other.removeItem(STORAGE_USER);
+    } catch (_) {}
+    setAuth({ token, user });
+    setLoginKey(Date.now());
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -245,6 +254,7 @@ const App = () => {
                     user={auth.user}
                     darkMode={darkMode}
                     onComplete={handleFirstTimeComplete}
+                    onRoleUpdated={handleRoleUpdated}
                   />
                 )}
               {showLoginModal && !showSignInPageFirst && (

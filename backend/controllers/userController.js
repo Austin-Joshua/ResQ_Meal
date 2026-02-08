@@ -6,6 +6,7 @@
 const pool = require('../config/database');
 const { getPublicFileUrl } = require('../utils/helpers');
 const bcrypt = require('bcryptjs');
+const { generateToken } = require('../utils/jwt');
 
 /**
  * GET /api/user/me
@@ -57,6 +58,13 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
+function isDbConnectionError(err) {
+  const code = err && (err.code || err.errno);
+  return !code || code === 'ECONNREFUSED' || code === 'ER_ACCESS_DENIED_ERROR' ||
+    code === 'ER_BAD_DB_ERROR' || code === 'ENOTFOUND' || code === 'ETIMEDOUT' ||
+    (typeof err.message === 'string' && (err.message.includes('connect') || err.message.includes('Connection')));
+}
+
 /**
  * PUT /api/user/me
  * Update current user profile
@@ -64,9 +72,39 @@ exports.getCurrentUser = async (req, res) => {
 exports.updateCurrentUser = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, phone_number, address, latitude, longitude, current_password, new_password } = req.body;
+    const jwtRole = req.user.role;
+    const { name, phone_number, address, latitude, longitude, current_password, new_password, role } = req.body;
 
-    const connection = await pool.getConnection();
+    let connection;
+    try {
+      connection = await pool.getConnection();
+    } catch (dbErr) {
+      if (process.env.NODE_ENV !== 'production' && isDbConnectionError(dbErr)) {
+        const newRole = role && ['volunteer', 'restaurant', 'ngo'].includes(role) ? role : jwtRole;
+        const data = {
+          id: userId,
+          name: name || 'User',
+          email: `user${userId}@local.dev`,
+          role: newRole,
+          phone_number: phone_number || null,
+          address: address || null,
+          latitude: latitude ?? null,
+          longitude: longitude ?? null,
+          profile_photo: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        if (role && role !== jwtRole) {
+          data.token = generateToken(userId, newRole);
+        }
+        return res.status(200).json({
+          success: true,
+          message: 'User profile updated successfully (dev mode – database unavailable)',
+          data,
+        });
+      }
+      throw dbErr;
+    }
 
     // Get current user
     const [users] = await connection.query('SELECT * FROM users WHERE id = ?', [userId]);
@@ -131,6 +169,11 @@ exports.updateCurrentUser = async (req, res) => {
       params.push(longitude);
     }
 
+    if (role && ['volunteer', 'restaurant', 'ngo'].includes(role)) {
+      updateQuery += ', role = ?';
+      params.push(role);
+    }
+
     if (new_password) {
       const hashedPassword = await bcrypt.hash(new_password, 10);
       updateQuery += ', password = ?';
@@ -156,10 +199,15 @@ exports.updateCurrentUser = async (req, res) => {
       updatedUser.profile_photo_url = getPublicFileUrl(updatedUser.profile_photo);
     }
 
+    const data = { ...updatedUser };
+    if (role && ['volunteer', 'restaurant', 'ngo'].includes(role)) {
+      data.token = generateToken(updatedUser.id, updatedUser.role);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'User profile updated successfully',
-      data: updatedUser,
+      data,
     });
   } catch (error) {
     console.error('Error updating user profile:', error);

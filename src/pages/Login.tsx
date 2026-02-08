@@ -18,7 +18,6 @@ export interface LoginSuccessUser {
 interface LoginPageProps {
   darkMode: boolean;
   onSuccess: (user: LoginSuccessUser, token: string, rememberMe?: boolean) => void;
-  onBrowseWithoutSignIn?: () => void;
   onGoToSignUp?: () => void;
   onChangeLanguage?: () => void;
 }
@@ -40,7 +39,7 @@ function getStoredEmail(): string {
   }
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWithoutSignIn, onGoToSignUp, onChangeLanguage }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp, onChangeLanguage }) => {
   const { t } = useLanguage();
   const [email, setEmail] = useState(() => (getStoredRememberMe() ? getStoredEmail() : ''));
   const [password, setPassword] = useState('');
@@ -299,20 +298,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
               {loading ? t('signingIn') : t('signIn')}
             </button>
           </form>
-
-          {onBrowseWithoutSignIn && (
-            <button
-              type="button"
-              onClick={onBrowseWithoutSignIn}
-              className={`mt-4 w-full py-2.5 rounded-lg text-sm font-semibold transition border-2 touch-manipulation min-h-[44px] ${
-                darkMode
-                  ? 'border-[#D4AF37]/50 text-blue-200 hover:bg-blue-900/30 hover:border-[#D4AF37] active:scale-[0.98]'
-                  : 'border-[#D4AF37] text-blue-700 hover:bg-blue-50 active:scale-[0.98]'
-              }`}
-            >
-              {t('browseSiteWithoutSignIn')}
-            </button>
-          )}
 
           {onGoToSignUp && (
             <p className={`mt-4 text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>

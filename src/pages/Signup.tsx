@@ -82,8 +82,11 @@ const SignupPage: React.FC<SignupPageProps> = ({ darkMode, onSuccess, onBackToSi
         setError(t('registrationFailed') || 'Registration failed. Please try again.');
       }
     } catch (err: unknown) {
-      const ax = err as { response?: { data?: { message?: string } } };
-      setError(ax.response?.data?.message || t('registrationFailed') || 'Registration failed. Please try again.');
+      const ax = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
+      const msg = ax.response?.data?.message;
+      const detail = ax.response?.data?.error;
+      const fallback = t('registrationFailed') || 'Registration failed. Please try again.';
+      setError(detail ? `${msg || 'Registration failed'}. ${detail}` : (msg || fallback));
     } finally {
       setLoading(false);
     }
