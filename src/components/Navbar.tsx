@@ -18,7 +18,7 @@ import {
   LogOut,
   Menu,
   X,
-  HeartHandshake,
+  Zap,
   Users,
   FileText,
   Info,
@@ -29,7 +29,7 @@ import { AppLogo } from '@/components/AppLogo';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Donor', href: '/dashboard', icon: HeartHandshake },
+  { label: 'Freshness Checker', href: '/dashboard', icon: Zap },
   { label: 'NGO', href: '/dashboard', icon: Users },
   { label: 'Report', href: '/impact', icon: FileText },
   { label: 'About Us', href: '/about', icon: Info },

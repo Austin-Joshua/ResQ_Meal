@@ -1,5 +1,6 @@
 const { pool } = require('../server');
 const FoodQualityVerification = require('../services/FoodQualityVerification');
+const { broadcast } = require('../socket');
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
@@ -156,8 +157,9 @@ class FoodController {
           'SELECT * FROM food_posts WHERE id = ?',
           [result.insertId]
         );
-
-        res.status(201).json(FoodController.formatFoodResponse(newPost[0]));
+        const formatted = FoodController.formatFoodResponse(newPost[0]);
+        broadcast('food_posted', formatted);
+        res.status(201).json(formatted);
       } finally {
         connection.release();
       }

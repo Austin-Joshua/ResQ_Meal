@@ -1,32 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middlewares/auth');
+const userController = require('../controllers/userController');
 
 /**
  * GET /api/users/me
  * Get logged-in user profile
  */
-router.get('/me', authenticateToken, (req, res) => {
-  // TODO: Fetch user profile from database
-  res.json({ message: 'Get user profile endpoint' });
-});
+router.get('/me', authenticateToken, userController.getCurrentUser);
 
 /**
  * PUT /api/users/me
  * Update logged-in user profile
- * 
- * Request:
- * {
- *   name: string,
- *   phone_number: string,
- *   latitude: number,
- *   longitude: number,
- *   profile_photo: string (file path)
- * }
+ * Request: { name?, phone_number?, address?, latitude?, longitude?, current_password?, new_password? }
  */
-router.put('/me', authenticateToken, (req, res) => {
-  // TODO: Update user profile
-  res.json({ message: 'Update user profile endpoint' });
-});
+router.put('/me', authenticateToken, userController.updateCurrentUser);
 
 module.exports = router;

@@ -79,11 +79,19 @@ export const foodApi = {
   },
 };
 
-// Match APIs (NGO)
+// Match APIs (NGO / Restaurant)
 export const matchApi = {
-  getNGOMatches: () => api.get('/match/ngo'),
-  acceptMatch: (matchId: string) => api.post(`/match/accept`, { matchId }),
-  rejectMatch: (matchId: string) => api.post(`/match/reject`, { matchId }),
+  getNGOMatches: () => api.get('/matches/for-ngo/all'),
+  getRestaurantMatches: () => api.get('/matches/for-restaurant/all'),
+  getRecommended: (foodPostId: number, top?: number) =>
+    api.get(`/matches/recommended/${foodPostId}`, { params: top != null ? { top } : undefined }),
+  getMatch: (id: string) => api.get(`/matches/${id}`),
+  createMatch: (foodPostId: number) => api.post('/matches', { food_post_id: foodPostId }),
+  acceptMatch: (matchId: string) => api.put(`/matches/${matchId}/status`, { status: 'ACCEPTED' }),
+  rejectMatch: (_matchId: string) => Promise.resolve({ data: {} }), // Backend has no REJECTED status; UI can hide or use as no-op
+  updateMatchStatus: (matchId: string, status: 'ACCEPTED' | 'PICKED_UP' | 'DELIVERED', volunteer_id?: number, delivery_proof_photo?: string) =>
+    api.put(`/matches/${matchId}/status`, { status, volunteer_id, delivery_proof_photo }),
+  assignVolunteer: (matchId: string, volunteerId: number) => api.put(`/matches/${matchId}/assign-volunteer`, { volunteer_id: volunteerId }),
 };
 
 // Organisation food (NGO adds food → reflected on volunteer page)
@@ -114,14 +122,36 @@ export const deliveryApi = {
 
 // Impact APIs
 export const impactApi = {
-  getImpact: () => api.get('/impact'),
-  getPublicStats: () => api.get('/impact/public'),
+  getImpact: () => api.get('/impact/ngo').catch(() => api.get('/impact/restaurant')),
+  getNGOImpact: () => api.get('/impact/ngo'),
+  getRestaurantImpact: () => api.get('/impact/restaurant'),
+  getGlobalImpact: () => api.get('/impact/global'),
+  getPublicStats: () => api.get('/impact/global'),
 };
+
+// Notification APIs (real-time + persisted)
+export const notificationApi = {
+  getList: (params?: { unread_only?: boolean; limit?: number }) =>
+    api.get<{ data: NotificationItem[]; unreadCount: number }>('/notifications', { params }),
+  markRead: (id: number) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/read-all'),
+};
+
+export interface NotificationItem {
+  id: number;
+  type: string;
+  title: string;
+  message: string | null;
+  link: string | null;
+  ref_id: number | null;
+  read_at: string | null;
+  created_at: string;
+}
 
 // User APIs
 export const userApi = {
-  getMe: () => api.get('/user/me'),
-  updateMe: (data: any) => api.put('/user/me', data),
+  getMe: () => api.get('/users/me'),
+  updateMe: (data: any) => api.put('/users/me', data),
   uploadProfilePhoto: (file: File) => {
     const formData = new FormData();
     formData.append('photo', file);

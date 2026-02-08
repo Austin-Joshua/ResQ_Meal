@@ -4,7 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
+import { ModeProvider } from "@/context/ModeContext";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import { FirstTimeOnboarding } from "@/components/FirstTimeOnboarding";
+import LanguageSelectorPage from "@/pages/LanguageSelector";
 import LoginPage from "@/pages/Login";
+import SignupPage from "@/pages/Signup";
 import OrganisationReport from "@/pages/OrganisationReport";
 import VolunteerMode from "@/pages/VolunteerMode";
 import ResQMealApp from "@/pages/App";
@@ -12,8 +19,46 @@ import type { LoginSuccessUser } from "@/pages/Login";
 
 const queryClient = new QueryClient();
 
+function OnboardingGate({
+  auth,
+  darkMode,
+}: {
+  auth: { token: string; user: LoginSuccessUser } | null;
+  darkMode: boolean;
+}) {
+  const { shouldShow } = useOnboarding();
+  if (!auth?.user || !shouldShow) return null;
+  return (
+    <OnboardingModal
+      open
+      onClose={() => {}}
+      role={auth.user.role ?? "volunteer"}
+      darkMode={darkMode}
+    />
+  );
+}
+
 const STORAGE_TOKEN = "resqmeal_token";
 const STORAGE_USER = "resqmeal_user";
+const FIRST_TIME_DONE_PREFIX = "resqmeal_first_time_done_";
+
+function getFirstTimeDoneKey(userId: number): string {
+  return `${FIRST_TIME_DONE_PREFIX}${userId}`;
+}
+
+function getFirstTimeDone(userId: number): boolean {
+  try {
+    return localStorage.getItem(getFirstTimeDoneKey(userId)) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function setFirstTimeDone(userId: number): void {
+  try {
+    localStorage.setItem(getFirstTimeDoneKey(userId), "true");
+  } catch {}
+}
 
 function getStorage(rememberMe: boolean): Storage {
   return rememberMe ? localStorage : sessionStorage;
@@ -39,7 +84,13 @@ function readAuth(): { token: string; user: LoginSuccessUser } | null {
 const App = () => {
   const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupPage, setShowSignupPage] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(true);
   const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(false);
+  const [firstTimeComplete, setFirstTimeComplete] = useState(() => {
+    const a = readAuth();
+    return a?.user?.id != null ? getFirstTimeDone(a.user.id) : false;
+  });
   /** Changes on each login so Dashboard can refresh "Did you know?" tip */
   const [loginKey, setLoginKey] = useState(() => Date.now());
   const [darkMode, setDarkMode] = useState(() => {
@@ -58,6 +109,12 @@ const App = () => {
       return "en";
     }
   });
+
+  useEffect(() => {
+    if (auth?.user?.id != null) {
+      setFirstTimeComplete(getFirstTimeDone(auth.user.id));
+    }
+  }, [auth?.user?.id]);
 
   useEffect(() => {
     try {
@@ -82,7 +139,9 @@ const App = () => {
     } catch (_) {}
     setAuth({ token, user });
     setShowLoginModal(false);
+    setShowSignupPage(false);
     setLoginKey(Date.now());
+    setFirstTimeComplete(getFirstTimeDone(user.id));
   };
 
   const handleLogout = () => {
@@ -94,10 +153,34 @@ const App = () => {
   };
 
   const showSignInPageFirst = !auth && !showBaseWithoutAuth;
+  const showFirstTimeOnboarding = auth?.user && !firstTimeComplete;
+
+  const handleLanguageSelect = (lang: "en" | "ta" | "hi") => {
+    setLanguage(lang);
+    setShowLanguageSelector(false);
+  };
 
   // Route users based on role: restaurant/ngo → OrganisationReport (admin mode), volunteer → Dashboard
   const content = (() => {
     if (showSignInPageFirst) {
+      if (showLanguageSelector) {
+        return (
+          <LanguageSelectorPage
+            darkMode={darkMode}
+            onSelect={handleLanguageSelect}
+          />
+        );
+      }
+      if (showSignupPage) {
+        return (
+          <SignupPage
+            darkMode={darkMode}
+            onSuccess={handleLoginSuccess}
+            onBackToSignIn={() => setShowSignupPage(false)}
+            onChangeLanguage={() => setShowLanguageSelector(true)}
+          />
+        );
+      }
       return (
         <LoginPage
           darkMode={darkMode}
@@ -106,6 +189,8 @@ const App = () => {
             setShowBaseWithoutAuth(true);
             setLoginKey(Date.now());
           }}
+          onGoToSignUp={() => setShowSignupPage(true)}
+          onChangeLanguage={() => setShowLanguageSelector(true)}
         />
       );
     }
@@ -140,42 +225,61 @@ const App = () => {
     );
   })();
 
+  const handleFirstTimeComplete = () => {
+    if (auth?.user?.id) setFirstTimeDone(auth.user.id);
+    setFirstTimeComplete(true);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <LanguageProvider language={language} setLanguage={setLanguage}>
-          {content}
-          {showLoginModal && !showSignInPageFirst && (
-            <div
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
-              role="dialog"
-              aria-modal="true"
-              onClick={() => setShowLoginModal(false)}
-            >
-              <div
-                className="relative w-full max-w-md"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <LoginPage
-                  darkMode={darkMode}
-                  onSuccess={handleLoginSuccess}
-                />
-                <button
-                  type="button"
+        <OnboardingProvider>
+          <ModeProvider>
+            <LanguageProvider language={language} setLanguage={setLanguage}>
+              <NotificationProvider hasAuth={!!auth}>
+                {content}
+                {showFirstTimeOnboarding && auth?.user && (
+                  <FirstTimeOnboarding
+                    user={auth.user}
+                    darkMode={darkMode}
+                    onComplete={handleFirstTimeComplete}
+                  />
+                )}
+              {showLoginModal && !showSignInPageFirst && (
+                <div
+                  className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+                  role="dialog"
+                  aria-modal="true"
                   onClick={() => setShowLoginModal(false)}
-                  className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition ${
-                    darkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-white text-slate-700 hover:bg-slate-100 shadow"
-                  }`}
-                  aria-label="Close"
                 >
-                  ×
-                </button>
-              </div>
-            </div>
-          )}
-        </LanguageProvider>
+                  <div
+                    className="relative w-full max-w-md"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <LoginPage
+                      darkMode={darkMode}
+                      onSuccess={handleLoginSuccess}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginModal(false)}
+                      className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition ${
+                        darkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-white text-slate-700 hover:bg-slate-100 shadow"
+                      }`}
+                      aria-label="Close"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+                <OnboardingGate auth={auth} darkMode={darkMode} />
+              </NotificationProvider>
+            </LanguageProvider>
+          </ModeProvider>
+        </OnboardingProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

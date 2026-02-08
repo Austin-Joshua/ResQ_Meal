@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, HeartHandshake, FileText, Info, Thermometer, User, Crown, LogOut, ShieldCheck, Navigation, Plus, Trash2, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Menu, X, Settings as SettingsIcon, Moon, Sun, Globe, ArrowRight, TrendingUp, Users, MapPin, Clock, Shield, BarChart3, Home, Send, Target, Zap, Leaf, Truck, Bell, Heart, ChevronDown, FileText, Info, Thermometer, User, Crown, LogOut, Navigation, Plus, Trash2, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AppShell } from '@/components/AppShell';
 import { AvailableFoodCarousel } from '@/components/AvailableFoodCarousel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import PostSurplusPage from './PostSurplus';
+import FreshFoodChecker from '@/components/FreshFoodChecker';
 import { AppLogo } from '@/components/AppLogo';
 import { useLanguage } from '@/context/LanguageContext';
 import { NATIVE_LANGUAGE_LABELS } from '@/lib/utils';
+import { organisationApi } from '@/services/api';
 
 type CardPucId = 'activity' | 'help' | 'weeklyTrend';
 
@@ -49,7 +50,7 @@ function pickRandomTip() {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = null, loginKey = 0, onOpenSignIn, onLogout, darkMode, setDarkMode, language, setLanguage }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'post' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
+  const [activePage, setActivePage] = useState<'dashboard' | 'freshness' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [cardPucOpen, setCardPucOpen] = useState<CardPucId | null>(null);
@@ -63,7 +64,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
   }, [loginKey]);
 
   const features = [
-    { id: 'post', icon: '📤', label: 'Post Food', color: 'from-blue-600 to-blue-700' },
+    { id: 'freshness', icon: '🔬', label: t('freshnessChecker'), color: 'from-emerald-600 to-emerald-700' },
     { id: 'matches', icon: '🎯', label: 'Matches', color: 'from-yellow-500 to-yellow-600' },
     { id: 'impact', icon: '🌍', label: 'Impact', color: 'from-blue-600 to-blue-700' },
   ];
@@ -71,7 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
 
   const navigationItems = [
     { id: 'dashboard', icon: Home, label: t('dashboard') },
-    { id: 'post', icon: HeartHandshake, label: t('donor') },
+    { id: 'freshness', icon: Zap, label: t('freshnessChecker') },
     { id: 'matches', icon: Users, label: t('ngo') },
     { id: 'elite', icon: Crown, label: t('eliteMode') },
     { id: 'impact', icon: FileText, label: t('report') },
@@ -125,7 +126,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 : 'bg-white border-blue-200 shadow-sm shadow-blue-900/5'
             }`}>
               <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
-                {t('welcome')}
+                {auth?.name ? t('welcomeBackWithName').replace('{{name}}', auth.name) : t('welcome')}
               </h2>
               <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                 {t('missionToday')}
@@ -140,14 +141,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 {t('quickActions')}
               </h3>
               <div className="flex flex-wrap gap-2 justify-start">
-                <button
-                  onClick={() => setActivePage('post')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
-                    darkMode ? 'bg-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/50' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                  }`}
-                >
-                  <Send className="w-3 h-3" /> {t('postFoodNow')}
-                </button>
                 <button
                   onClick={() => setActivePage('matches')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
@@ -164,18 +157,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 >
                   <BarChart3 className="w-3 h-3" /> {t('seeImpact')}
                 </button>
-                {onOpenSignIn && (
-                  <button
-                    type="button"
-                    onClick={onOpenSignIn}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
-                      darkMode ? 'bg-slate-600/30 text-slate-300 hover:bg-slate-600/50 border border-slate-500/50' : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200'
-                    }`}
-                    title="Sign in as organisation / admin"
-                  >
-                    <ShieldCheck className="w-3 h-3" /> {t('adminOrg')}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -568,9 +549,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
           />
         )}
 
-        {/* Post Surplus Page */}
-        {activePage === 'post' && (
-          <PostSurplusPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} />
+        {/* Freshness Food Checker (standalone) */}
+        {activePage === 'freshness' && (
+          <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
+            <button
+              type="button"
+              onClick={() => setActivePage('dashboard')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
+                darkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              {t('backToDashboard')}
+            </button>
+            <FreshFoodChecker darkMode={darkMode} />
+          </div>
         )}
 
         {/* Matches Page */}
@@ -1161,7 +1153,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
                   {match.foodName}
                 </h3>
                 <p className={`text-xs sm:text-sm font-semibold mb-1 ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                  Organization: {match.ngo}
+                  {t('organization')}: {match.ngo}
                 </p>
                 <div className="flex items-center gap-1.5">
                   <FileText className={`w-3 h-3 shrink-0 ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} />
@@ -1176,7 +1168,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
                     ? darkMode ? 'bg-blue-500/30 text-blue-200' : 'bg-blue-100 text-blue-700'
                     : darkMode ? 'bg-emerald-500/30 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                  {match.status}
+                  {match.status === 'MATCHED' ? t('matchedStatus') : match.status === 'ACCEPTED' ? t('acceptedStatus') : match.status === 'PICKED_UP' ? t('pickedUpStatus') : match.status === 'DELIVERED' ? t('deliveredStatus') : match.status}
                 </span>
               </div>
             </div>
@@ -1186,21 +1178,21 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
               <div>
                 <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
                   <MapPin className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${darkMode ? 'text-red-400' : 'text-red-500'}`} />
-                  <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Distance</p>
+                  <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>{t('distance')}</p>
                 </div>
                 <p className={`text-sm sm:text-base font-bold ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>{match.distance}</p>
               </div>
               <div>
                 <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
                   <span className="text-base sm:text-lg">🍽️</span>
-                  <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>meals</p>
+                  <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>{t('meals')}</p>
                 </div>
                 <p className={`text-sm sm:text-base font-bold ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>{match.meals}</p>
               </div>
               <div>
                 <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
                   <span className="text-base sm:text-lg">💰</span>
-                  <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Donation Value</p>
+                  <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>{t('donationValue')}</p>
                 </div>
                 <p className={`text-sm sm:text-base font-bold truncate ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>{match.donation}</p>
               </div>
@@ -1212,7 +1204,7 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
                 <div>
                   <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
                     <Thermometer className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} />
-                    <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>Storage Temperature</p>
+                    <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-slate-600'}`}>{t('storageTemperature')}</p>
                   </div>
                   <p className={`text-sm sm:text-base font-bold ${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
                     {match.minTemp}°C - {match.maxTemp}°C
@@ -1223,10 +1215,10 @@ const MatchesPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> =
                 <div>
                   <div className="flex items-center gap-1 sm:gap-1.5 mb-1">
                     <Clock className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${darkMode ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                    <p className={`text-xs ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}>Available For</p>
+                    <p className={`text-xs ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}>{t('availableFor')}</p>
                   </div>
                   <p className={`text-sm sm:text-base font-bold ${darkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>
-                    {match.availabilityHours} hours
+                    {match.availabilityHours} {t('hours')}
                   </p>
                 </div>
               )}
@@ -1382,10 +1374,49 @@ interface EliteRegistration {
 
 // Elite Mode Page – for elders in care homes who eat marriage/event food and food ordered by kids, not donated surplus
 const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = ({ darkMode, onBack, t }) => {
-  const [eliteView, setEliteView] = useState<'info' | 'register'>('info');
+  const [eliteView, setEliteView] = useState<'info' | 'register' | 'browse'>('info');
   const [homeAddress, setHomeAddress] = useState('');
+  const [establishmentType, setEstablishmentType] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [residentCount, setResidentCount] = useState('');
+  const [preferredWedding, setPreferredWedding] = useState(true);
+  const [preferredFestival, setPreferredFestival] = useState(true);
+  const [preferredCelebration, setPreferredCelebration] = useState(true);
+  const [dietaryNotes, setDietaryNotes] = useState('');
   const [foods, setFoods] = useState<EliteFoodItem[]>([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
   const [registrations, setRegistrations] = useState<EliteRegistration[]>([]);
+  const [eliteFoodsList, setEliteFoodsList] = useState<Array<{ id: number; food_name: string; food_type: string; quantity_servings: number; address?: string; latitude?: number; longitude?: number; description?: string }>>([]);
+  const [eliteFoodsLoading, setEliteFoodsLoading] = useState(false);
+  const [selectedEliteFood, setSelectedEliteFood] = useState<typeof eliteFoodsList[0] | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  useEffect(() => {
+    if (eliteView !== 'browse') return;
+    setEliteFoodsLoading(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => setUserCoords(null)
+      );
+    }
+    organisationApi.getAvailableFood()
+      .then((res) => {
+        const data = Array.isArray(res.data?.data) ? res.data.data : [];
+        setEliteFoodsList(data);
+      })
+      .catch(() => setEliteFoodsList([]))
+      .finally(() => setEliteFoodsLoading(false));
+  }, [eliteView]);
 
   const openMapsForAddress = (address: string) => {
     const encoded = encodeURIComponent(address);
@@ -1408,9 +1439,14 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
     const foodList = foods.filter((f) => f.name.trim() || f.type.trim() || f.quantity.trim());
     setRegistrations((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), address: trimmedAddress, foods: foodList('length') ? foodList : foods.map((f) => ({ ...f, name: f.name || '—', type: f.type || '—', quantity: f.quantity || '—' })) },
+      { id: crypto.randomUUID(), address: trimmedAddress, foods: foodList.length ? foodList : foods.map((f) => ({ ...f, name: f.name || '—', type: f.type || '—', quantity: f.quantity || '—' })) },
     ]);
     setHomeAddress('');
+    setEstablishmentType('');
+    setContactName('');
+    setContactPhone('');
+    setResidentCount('');
+    setDietaryNotes('');
     setFoods([{ id: crypto.randomUUID(), name: '', type: '', quantity: '' }]);
   };
 
@@ -1447,8 +1483,95 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
             <input
               type="text"
               value={homeAddress}
-              onChange={(e) => setHomeAddress(e.target('value'))}
+              onChange={(e) => setHomeAddress(e.target.value)}
               placeholder={t('eliteHomeAddressPlaceholder')}
+              className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+            />
+          </label>
+
+          <label className="block mb-4">
+            <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+              {t('eliteEstablishmentType')}
+            </span>
+            <input
+              type="text"
+              value={establishmentType}
+              onChange={(e) => setEstablishmentType(e.target.value)}
+              placeholder={t('eliteEstablishmentTypePlaceholder')}
+              className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+            />
+          </label>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <label className="block">
+              <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                {t('eliteContactName')}
+              </span>
+              <input
+                type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder={t('eliteContactNamePlaceholder')}
+                className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+              />
+            </label>
+            <label className="block">
+              <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                {t('eliteContactPhone')}
+              </span>
+              <input
+                type="text"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder={t('eliteContactPhonePlaceholder')}
+                className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
+              />
+            </label>
+          </div>
+
+          <label className="block mb-4">
+            <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+              {t('eliteResidentCount')}
+            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={residentCount}
+              onChange={(e) => setResidentCount(e.target.value)}
+              placeholder={t('eliteResidentCountPlaceholder')}
+              className={`w-full max-w-[140px] rounded-xl border px-4 py-3 ${inputCls}`}
+            />
+          </label>
+
+          <div className="mb-4">
+            <span className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+              {t('elitePreferredFoodTypes')}
+            </span>
+            <div className="flex flex-wrap gap-4">
+              <label className={`flex items-center gap-2 cursor-pointer ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                <input type="checkbox" checked={preferredWedding} onChange={(e) => setPreferredWedding(e.target.checked)} className="rounded border-slate-400" />
+                {t('elitePreferredWedding')}
+              </label>
+              <label className={`flex items-center gap-2 cursor-pointer ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                <input type="checkbox" checked={preferredFestival} onChange={(e) => setPreferredFestival(e.target.checked)} className="rounded border-slate-400" />
+                {t('elitePreferredFestival')}
+              </label>
+              <label className={`flex items-center gap-2 cursor-pointer ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                <input type="checkbox" checked={preferredCelebration} onChange={(e) => setPreferredCelebration(e.target.checked)} className="rounded border-slate-400" />
+                {t('elitePreferredCelebration')}
+              </label>
+            </div>
+          </div>
+
+          <label className="block mb-6">
+            <span className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+              {t('eliteDietaryNotes')}
+            </span>
+            <input
+              type="text"
+              value={dietaryNotes}
+              onChange={(e) => setDietaryNotes(e.target.value)}
+              placeholder={t('eliteDietaryNotesPlaceholder')}
               className={`w-full rounded-xl border px-4 py-3 ${inputCls}`}
             />
           </label>
@@ -1474,21 +1597,21 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
                   <input
                     type="text"
                     value={f.name}
-                    onChange={(e) => updateFood(f.id, 'name', e.target('value'))}
+                    onChange={(e) => updateFood(f.id, 'name', e.target.value)}
                     placeholder={t('eliteFoodName')}
                     className={`flex-1 min-w-[120px] rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={f.type}
-                    onChange={(e) => updateFood(f.id, 'type', e.target('value'))}
+                    onChange={(e) => updateFood(f.id, 'type', e.target.value)}
                     placeholder={t('eliteFoodType')}
                     className={`flex-1 min-w-[120px] rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={f.quantity}
-                    onChange={(e) => updateFood(f.id, 'quantity', e.target('value'))}
+                    onChange={(e) => updateFood(f.id, 'quantity', e.target.value)}
                     placeholder={t('eliteQuantity')}
                     className={`w-24 rounded-lg border px-3 py-2 text-sm ${inputCls}`}
                   />
@@ -1553,6 +1676,101 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
             </ul>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // Browse view: available special event food (wedding, festival, celebration) with distance and Get directions
+  if (eliteView === 'browse') {
+    return (
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn space-y-8">
+        <button
+          onClick={() => setEliteView('info')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-semibold ${
+            darkMode ? 'hover:bg-emerald-800/40 text-slate-200' : 'hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          {t('eliteBackToElite')}
+        </button>
+        <div className={`rounded-2xl p-6 transition-all duration-300 border ${cardCls}`}>
+          <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-amber-300' : 'text-amber-800'}`}>
+            {t('eliteBrowseTitle')}
+          </h2>
+          <p className={`mb-6 ${darkMode ? 'text-blue-100' : 'text-slate-600'}`}>
+            {t('eliteBrowseDesc')}
+          </p>
+          {eliteFoodsLoading ? (
+            <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Loading...</p>
+          ) : eliteFoodsList.length === 0 ? (
+            <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('eliteNoEliteFoodsYet')}</p>
+          ) : (
+            <ul className="space-y-4">
+              {eliteFoodsList.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEliteFood(item)}
+                    className={`w-full text-left rounded-xl p-4 border transition hover:ring-2 hover:ring-amber-500/50 ${
+                      darkMode ? 'bg-slate-800/40 border-slate-600' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.food_name}</p>
+                    <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      {(item.food_type || 'food').replace(/^./, (c) => c.toUpperCase())} · {item.quantity_servings} servings
+                    </p>
+                    {item.address && (
+                      <p className={`text-xs mt-2 flex items-center gap-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                        <MapPin className="w-3 h-3 shrink-0" /> {item.address}
+                      </p>
+                    )}
+                    {userCoords && item.latitude != null && item.longitude != null && (
+                      <p className={`text-sm mt-2 font-medium ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        {t('eliteDistanceAway').replace('{{km}}', getDistanceKm(userCoords.lat, userCoords.lng, Number(item.latitude), Number(item.longitude)).toFixed(1))}
+                      </p>
+                    )}
+                    <span className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                      <Navigation className="w-4 h-4" /> {t('eliteGetDirections')}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <Dialog open={!!selectedEliteFood} onOpenChange={(open) => !open && setSelectedEliteFood(null)}>
+          <DialogContent className={`max-w-md ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+            <DialogHeader>
+              <DialogTitle>{selectedEliteFood?.food_name ?? '—'}</DialogTitle>
+            </DialogHeader>
+            {selectedEliteFood && (
+              <div className="space-y-4">
+                <p className={darkMode ? 'text-slate-300' : 'text-slate-600'}>
+                  {(selectedEliteFood.food_type || 'food').replace(/^./, (c) => c.toUpperCase())} · {selectedEliteFood.quantity_servings} servings
+                </p>
+                {userCoords && selectedEliteFood.latitude != null && selectedEliteFood.longitude != null && (
+                  <p className={`text-sm font-medium ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                    {t('eliteDistanceAway').replace('{{km}}', getDistanceKm(userCoords.lat, userCoords.lng, Number(selectedEliteFood.latitude), Number(selectedEliteFood.longitude)).toFixed(1))}
+                  </p>
+                )}
+                {selectedEliteFood.address && (
+                  <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedEliteFood.address}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedEliteFood.address) openMapsForAddress(selectedEliteFood.address);
+                    setSelectedEliteFood(null);
+                  }}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                    darkMode ? 'bg-amber-600 text-white hover:bg-amber-500' : 'bg-amber-500 text-white hover:bg-amber-600'
+                  }`}
+                >
+                  <MapPin className="w-4 h-4" /> {t('eliteViewOnMap')}
+                </button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -1680,22 +1898,33 @@ const EliteModePage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }>
         </ul>
       </div>
 
-      {/* Get involved + Register button */}
+      {/* Get involved + Browse + Register */}
       <div className={`rounded-2xl p-6 transition-all duration-300 border ${
         darkMode ? 'bg-emerald-900/25 border-emerald-600/30' : 'bg-amber-50 border-amber-200 shadow-sm'
       }`}>
         <p className={`font-semibold mb-4 ${darkMode ? 'text-amber-200' : 'text-amber-800'}`}>
           {t('getInvolvedElite')}
         </p>
-        <button
-          type="button"
-          onClick={() => setEliteView('register')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${
-            darkMode ? 'bg-amber-600 text-white hover:bg-amber-500' : 'bg-amber-500 text-white hover:bg-amber-600'
-          }`}
-        >
-          <Plus className="w-4 h-4" /> {t('eliteRegister')}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setEliteView('browse')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${
+              darkMode ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+            }`}
+          >
+            <Heart className="w-4 h-4" /> {t('eliteBrowseTitle')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEliteView('register')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${
+              darkMode ? 'bg-amber-600 text-white hover:bg-amber-500' : 'bg-amber-500 text-white hover:bg-amber-600'
+            }`}
+          >
+            <Plus className="w-4 h-4" /> {t('eliteRegister')}
+          </button>
+        </div>
       </div>
     </div>
   );

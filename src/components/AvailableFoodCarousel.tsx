@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Thermometer, Clock, MapPin, UtensilsCrossed, ShoppingBag, Navigation } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Thermometer, Clock, MapPin, UtensilsCrossed, ShoppingBag, Navigation, List, Map } from 'lucide-react';
 import { foodApi } from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FoodMapView } from '@/components/FoodMapView';
 
 export interface AvailableFoodItem {
   id: number;
@@ -9,7 +10,7 @@ export interface AvailableFoodItem {
   food_type: string;
   quantity_servings: number;
   description?: string;
-  location?: { address?: string };
+  location?: { address?: string; latitude?: number; longitude?: number };
   photo_url?: string | null;
   safety_window_minutes?: number;
   min_storage_temp_celsius?: number | null;
@@ -93,6 +94,7 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
   const [search, setSearch] = useState('');
   const [selectedFood, setSelectedFood] = useState<AvailableFoodItem | null>(null);
   const [claimSuccess, setClaimSuccess] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const openMapsWithDirections = (address: string) => {
@@ -310,11 +312,37 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
       <div className={`px-4 py-3 border-b ${
         darkMode ? 'border-slate-600/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50'
       }`}>
-        <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 ${
-          darkMode ? 'text-amber-400' : 'text-slate-600'
-        }`}>
-          {title}
-        </h3>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className={`text-sm font-bold uppercase tracking-wider ${
+            darkMode ? 'text-amber-400' : 'text-slate-600'
+          }`}>
+            {title}
+          </h3>
+          <div className={`flex rounded-lg border ${darkMode ? 'border-slate-600' : 'border-slate-200'}`}>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-l-md transition ${
+                viewMode === 'list'
+                  ? darkMode ? 'bg-[#D4AF37] text-[#1e3a5f]' : 'bg-slate-200 text-slate-800'
+                  : darkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100'
+              }`}
+            >
+              <List className="h-3.5 w-3.5" /> List
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('map')}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-r-md transition ${
+                viewMode === 'map'
+                  ? darkMode ? 'bg-[#D4AF37] text-[#1e3a5f]' : 'bg-slate-200 text-slate-800'
+                  : darkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100'
+              }`}
+            >
+              <Map className="h-3.5 w-3.5" /> Map
+            </button>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <div className={`flex rounded-full border overflow-x-auto no-scrollbar ${
             darkMode ? 'border-slate-600 bg-slate-800/50' : 'border-slate-200 bg-slate-100'
@@ -378,9 +406,25 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
         </div>
       </div>
 
-      {/* Carousel content */}
+      {/* Carousel or Map content */}
       <div className="p-6 pb-8">
-        {loading ? (
+        {viewMode === 'map' ? (
+          loading ? (
+            <div className="flex items-center justify-center py-16 text-slate-500">Loading...</div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">
+              <UtensilsCrossed className="w-12 h-12 mb-3 opacity-50" />
+              <p>No available food for this filter.</p>
+            </div>
+          ) : (
+            <FoodMapView
+              items={filteredItems}
+              darkMode={darkMode}
+              onSelectItem={(item) => setSelectedFood(item)}
+            />
+          )
+        ) : (
+        loading ? (
           <div className="flex items-center justify-center py-16 text-slate-500">Loading...</div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">
@@ -544,6 +588,7 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
               {centerIndex + 1} of {filteredItems.length}
             </p>
           </>
+        )
         )}
       </div>
 

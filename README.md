@@ -8,6 +8,15 @@ A web platform connecting restaurants and food establishments with NGOs and volu
 - **Backend**: Node.js + Express
 - **Database**: MySQL
 
+## Real-time & Notifications
+
+- **Socket.io**: Backend runs Socket.io on the same port as the API. The frontend connects with the JWT when logged in and receives real-time events: `food_posted`, `match_created`, `match_status_updated`, and `notification`.
+- **Notifications**: In-app notification bell (header) shows unread count and list. Notifications are persisted in the database. To create the table, run:
+  ```bash
+  mysql -u root -p resqmeal_db < backend/config/notifications-migration.sql
+  ```
+  If the table does not exist, the API returns an empty list and real-time events still work.
+
 ## Quick Start
 
 ### ✅ Check Backend Status First

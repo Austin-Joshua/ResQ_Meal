@@ -1,8 +1,11 @@
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const mysql = require('mysql2/promise');
+const { initSocket, getIO } = require('./socket');
+const { initNotificationService } = require('./services/notificationService');
 
 const app = express();
 
@@ -72,6 +75,7 @@ const impactRoutes = require('./routes/impactRoutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const organisationRoutes = require('./routes/organisationRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
@@ -81,6 +85,7 @@ app.use('/api/ngos', ngoRoutes);
 app.use('/api/impact', impactRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/organisation', organisationRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ==================== HEALTH CHECK ====================
 app.get('/api/health', (req, res) => {
@@ -125,10 +130,14 @@ async function startServer() {
     process.exit(1);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const httpServer = http.createServer(app);
+  initSocket(httpServer);
+  initNotificationService(getIO);
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`\n✅ ResQ Meal API running on http://localhost:${PORT}`);
     console.log(`📡 CORS enabled for: ${allowedOrigins.join(', ')}`);
-    console.log(`🌐 Development mode: All localhost origins allowed\n`);
+    console.log(`🔌 Socket.io enabled for real-time updates\n`);
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin, Zap, X, FileText, Settings as SettingsIcon } from 'lucide-react';
+import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin, Zap, X, FileText, Settings as SettingsIcon, HeartHandshake } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { organisationApi } from '@/services/api';
@@ -245,10 +245,10 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
     setAddFoodStep('form');
   };
 
-  // Sidebar navigation items
+  // Sidebar navigation items (Donating = post surplus food flow)
   const sidebarItems = [
     { id: 'report' as ActivePage, icon: FileText, label: t('adminOrgReport') },
-    { id: 'postFood' as ActivePage, icon: Plus, label: t('postFood') },
+    { id: 'postFood' as ActivePage, icon: HeartHandshake, label: t('donating') },
     { id: 'settings' as ActivePage, icon: SettingsIcon, label: t('settings') },
   ];
 
@@ -329,8 +329,8 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
             darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              <Plus className="w-6 h-6" />
-              {t('postFood')}
+              <HeartHandshake className="w-6 h-6" />
+              {t('donating')}
             </h2>
             <p className={`text-sm mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               {t('addFoodDonorsDesc')} Freshness check is required before posting.
@@ -469,6 +469,20 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Welcome card – same style as volunteer dashboard */}
+          <div className={`rounded-2xl p-6 md:p-8 transition-all duration-300 border text-left ${
+            darkMode
+              ? 'bg-gradient-to-br from-blue-900/50 to-blue-950/50 border-[#D4AF37]/30 shadow-xl'
+              : 'bg-white border-blue-200 shadow-sm shadow-blue-900/5'
+          }`}>
+            <h2 className={`text-4xl md:text-5xl font-bold mb-3 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
+              {user?.name ? t('welcomeBackWithName').replace('{{name}}', user.name) : t('welcome')}
+            </h2>
+            <p className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+              {t('missionToday')}
+            </p>
+          </div>
+
           {/* Overall summary */}
         <section className={`rounded-2xl border p-6 ${
           darkMode ? 'bg-blue-900/30 border-blue-600/25' : 'bg-white border-slate-200 shadow-sm'

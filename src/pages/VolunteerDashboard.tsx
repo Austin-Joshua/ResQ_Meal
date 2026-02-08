@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import {
   Home,
@@ -118,6 +119,7 @@ const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
   user,
   onLogout,
 }) => {
+  const { t } = useLanguage();
   const [activePage, setActivePage] = useState<PageId>('dashboard');
   const [selectedImpactCard, setSelectedImpactCard] = useState<MyDelivery | null>(null);
   const [freshnessResult, setFreshnessResult] = useState<FoodFreshnessResult | null>(null);
@@ -568,10 +570,10 @@ const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
               darkMode ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-600/50' : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
             }`}>
               <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Welcome back, {user.name}
+                {t('welcomeBackWithName').replace('{{name}}', user.name)}
               </h2>
               <p className={`text-lg mt-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                You're making a difference. Keep delivering impact!
+                {t('makingADifference')}
               </p>
             </div>
 

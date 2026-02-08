@@ -1,5 +1,7 @@
 const pool = require('../config/database');
 const geolib = require('geolib');
+const { emitToUser } = require('../socket');
+const { addNotification } = require('../services/notificationService');
 
 class MatchingController {
   
@@ -129,8 +131,24 @@ class MatchingController {
           'SELECT * FROM matches WHERE id = ?',
           [result.insertId]
         );
-
-        res.status(201).json(MatchingController.formatMatchResponse(newMatch[0]));
+        const matchRow = newMatch[0];
+        const formatted = MatchingController.formatMatchResponse(matchRow);
+        const [restaurantUser] = await connection.query(
+          'SELECT r.user_id FROM food_posts fp JOIN restaurants r ON r.id = fp.restaurant_id WHERE fp.id = ?',
+          [food_post_id]
+        );
+        const restaurantUserId = restaurantUser[0]?.user_id;
+        if (restaurantUserId) {
+          await addNotification(restaurantUserId, {
+            type: 'match_created',
+            title: 'New match request',
+            message: `An NGO requested your surplus food (${foodPost.food_name}).`,
+            link: `#matches`,
+            ref_id: matchRow.id,
+          });
+          emitToUser(restaurantUserId, 'match_created', formatted);
+        }
+        res.status(201).json(formatted);
       } finally {
         connection.release();
       }
@@ -323,7 +341,32 @@ class MatchingController {
         );
 
         const [updated] = await connection.query('SELECT * FROM matches WHERE id = ?', [id]);
-        res.json(MatchingController.formatMatchResponse(updated[0]));
+        const formatted = MatchingController.formatMatchResponse(updated[0]);
+        const [restaurantUser] = await connection.query(
+          'SELECT r.user_id FROM food_posts fp JOIN restaurants r ON r.id = fp.restaurant_id WHERE fp.id = ?',
+          [match.food_post_id]
+        );
+        const [ngoUser] = await connection.query(
+          'SELECT user_id FROM ngos WHERE id = ?',
+          [match.ngo_id]
+        );
+        const restaurantUserId = restaurantUser[0]?.user_id;
+        const ngoUserId = ngoUser[0]?.user_id;
+        const statusTitles = {
+          ACCEPTED: { title: 'Match accepted', message: 'An NGO accepted the match. Food can be picked up.' },
+          PICKED_UP: { title: 'Food picked up', message: 'Volunteer has picked up the food.' },
+          DELIVERED: { title: 'Delivery completed', message: 'Food was delivered successfully.' },
+        };
+        const msg = statusTitles[status] || { title: 'Match updated', message: `Status: ${status}` };
+        if (restaurantUserId) {
+          await addNotification(restaurantUserId, { type: 'match_status_updated', ...msg, link: '#matches', ref_id: parseInt(id, 10) });
+          emitToUser(restaurantUserId, 'match_status_updated', formatted);
+        }
+        if (ngoUserId) {
+          await addNotification(ngoUserId, { type: 'match_status_updated', ...msg, link: '#matches', ref_id: parseInt(id, 10) });
+          emitToUser(ngoUserId, 'match_status_updated', formatted);
+        }
+        res.json(formatted);
       } finally {
         connection.release();
       }

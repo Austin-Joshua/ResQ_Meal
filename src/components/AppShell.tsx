@@ -7,6 +7,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, X, Sun, Moon, Globe, ChevronDown, User, Settings, LogOut, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export interface AppShellNavItem {
   id: string;
@@ -205,6 +206,9 @@ export function AppShell({
             >
               {darkMode ? <Sun className="h-5 w-5 sm:h-6 sm:w-6" /> : <Moon className="h-5 w-5 sm:h-6 sm:w-6" />}
             </button>
+
+            {/* Notifications (when logged in) */}
+            {user && <NotificationBell />}
 
             {/* Profile or Sign in */}
             <div className="relative" ref={profileRef}>

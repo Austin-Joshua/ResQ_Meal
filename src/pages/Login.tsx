@@ -19,6 +19,8 @@ interface LoginPageProps {
   darkMode: boolean;
   onSuccess: (user: LoginSuccessUser, token: string, rememberMe?: boolean) => void;
   onBrowseWithoutSignIn?: () => void;
+  onGoToSignUp?: () => void;
+  onChangeLanguage?: () => void;
 }
 
 function getStoredRememberMe(): boolean {
@@ -38,7 +40,7 @@ function getStoredEmail(): string {
   }
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWithoutSignIn }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWithoutSignIn, onGoToSignUp, onChangeLanguage }) => {
   const { t } = useLanguage();
   const [email, setEmail] = useState(() => (getStoredRememberMe() ? getStoredEmail() : ''));
   const [password, setPassword] = useState('');
@@ -163,88 +165,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
           {/* Backend Status Indicator */}
           <div className="mb-4">
             <BackendStatus showDetails={true} />
-          </div>
-
-          {/* Test Credentials Helper */}
-          <div className={`mb-4 p-3 rounded-lg border text-xs ${
-            darkMode
-              ? 'bg-blue-900/20 border-blue-800/30 text-blue-200'
-              : 'bg-blue-50/80 border-blue-200 text-blue-700'
-          }`}>
-            <p className={`font-semibold mb-2 ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>
-              Test Credentials (password: <code className="px-1 py-0.5 rounded bg-[#D4AF37]/50 dark:bg-blue-900/50">password123</code>):
-            </p>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`font-medium ${darkMode ? 'text-[#D4AF37]' : 'text-blue-700'}`}>Volunteer:</span>
-                  <code className={`px-1.5 py-0.5 rounded text-[0.7rem] ${darkMode ? 'bg-blue-900/50 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
-                    volunteer@community.com
-                  </code>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('volunteer@community.com');
-                    setPassword('password123');
-                    clearError();
-                  }}
-                  className={`px-2 py-1 rounded text-[0.7rem] font-medium transition ${
-                    darkMode
-                      ? 'bg-[#D4AF37]/50 text-blue-200 hover:bg-[#D4AF37]'
-                      : 'bg-[#D4AF37] text-[#1e3a5f] hover:bg-[#FFD700]'
-                  }`}
-                >
-                  Fill
-                </button>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`font-medium ${darkMode ? 'text-[#D4AF37]' : 'text-blue-700'}`}>Restaurant (Admin):</span>
-                  <code className={`px-1.5 py-0.5 rounded text-[0.7rem] ${darkMode ? 'bg-blue-900/50 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
-                    chef@kitchen.com
-                  </code>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('chef@kitchen.com');
-                    setPassword('password123');
-                    clearError();
-                  }}
-                  className={`px-2 py-1 rounded text-[0.7rem] font-medium transition ${
-                    darkMode
-                      ? 'bg-[#D4AF37]/50 text-blue-200 hover:bg-[#D4AF37]'
-                      : 'bg-[#D4AF37] text-[#1e3a5f] hover:bg-[#FFD700]'
-                  }`}
-                >
-                  Fill
-                </button>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`font-medium ${darkMode ? 'text-[#D4AF37]' : 'text-blue-700'}`}>Organization/NGO:</span>
-                  <code className={`px-1.5 py-0.5 rounded text-[0.7rem] ${darkMode ? 'bg-blue-900/50 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
-                    ngo@savechildren.com
-                  </code>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('ngo@savechildren.com');
-                    setPassword('password123');
-                    clearError();
-                  }}
-                  className={`px-2 py-1 rounded text-[0.7rem] font-medium transition ${
-                    darkMode
-                      ? 'bg-[#D4AF37]/50 text-blue-200 hover:bg-[#D4AF37]'
-                      : 'bg-[#D4AF37] text-[#1e3a5f] hover:bg-[#FFD700]'
-                  }`}
-                >
-                  Fill
-                </button>
-              </div>
-            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -392,6 +312,31 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onBrowseWith
             >
               {t('browseSiteWithoutSignIn')}
             </button>
+          )}
+
+          {onGoToSignUp && (
+            <p className={`mt-4 text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              {t('dontHaveAccount') || "Don't have an account?"}{' '}
+              <button
+                type="button"
+                onClick={onGoToSignUp}
+                className={`font-semibold underline ${darkMode ? 'text-[#D4AF37]' : 'text-blue-600'}`}
+              >
+                {t('signUp') || 'Sign up'}
+              </button>
+            </p>
+          )}
+
+          {onChangeLanguage && (
+            <p className={`mt-3 text-center text-sm ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+              <button
+                type="button"
+                onClick={onChangeLanguage}
+                className="underline hover:no-underline"
+              >
+                {t('changeLanguage')}
+              </button>
+            </p>
           )}
       </div>
     </div>
