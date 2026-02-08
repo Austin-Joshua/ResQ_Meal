@@ -12,6 +12,16 @@ import { organisationApi } from '@/services/api';
 
 type CardPucId = 'activity' | 'help' | 'weeklyTrend';
 
+const PAGE_ID_TO_PATH: Record<string, string> = {
+  dashboard: '/Dashboard',
+  freshness: '/Freshness',
+  matches: '/NGO',
+  elite: '/Elite',
+  impact: '/Report',
+  about: '/About',
+  settings: '/Settings',
+};
+
 interface DashboardProps {
   onSettingsClick: () => void;
   auth?: { name: string; email: string; role: string } | null;
@@ -22,6 +32,10 @@ interface DashboardProps {
   setDarkMode: (mode: boolean) => void;
   language: 'en' | 'ta' | 'hi';
   setLanguage: (lang: 'en' | 'ta' | 'hi') => void;
+  /** Current page from URL path (dashboard, freshness, matches, elite, impact, about, settings) */
+  currentPageFromPath?: string;
+  /** When using URL routes, navigate to path when sidebar item is clicked */
+  onNavigateToPath?: (path: string) => void;
 }
 
 /** "Did you know?" facts – one is picked at random each time the user logs in */
@@ -49,8 +63,22 @@ function pickRandomTip() {
   return DID_YOU_KNOW_TIPS[Math.floor(Math.random() * DID_YOU_KNOW_TIPS.length)];
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = null, loginKey = 0, onOpenSignIn, onLogout, darkMode, setDarkMode, language, setLanguage }) => {
-  const [activePage, setActivePage] = useState<'dashboard' | 'freshness' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>('dashboard');
+export const Dashboard: React.FC<DashboardProps> = ({
+  onSettingsClick,
+  auth = null,
+  loginKey = 0,
+  onOpenSignIn,
+  onLogout,
+  darkMode,
+  setDarkMode,
+  language,
+  setLanguage,
+  currentPageFromPath,
+  onNavigateToPath,
+}) => {
+  const [activePage, setActivePage] = useState<'dashboard' | 'freshness' | 'matches' | 'impact' | 'feature' | 'about' | 'elite' | 'settings' | 'mealsSaved' | 'foodDiverted' | 'co2Prevented' | 'waterSaved'>(
+    (currentPageFromPath as typeof activePage) || 'dashboard'
+  );
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [cardPucOpen, setCardPucOpen] = useState<CardPucId | null>(null);
@@ -62,6 +90,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
   useEffect(() => {
     setDidYouKnowTip(pickRandomTip());
   }, [loginKey]);
+
+  useEffect(() => {
+    if (currentPageFromPath && ['dashboard', 'freshness', 'matches', 'impact', 'about', 'elite', 'settings'].includes(currentPageFromPath)) {
+      setActivePage(currentPageFromPath as typeof activePage);
+    }
+  }, [currentPageFromPath]);
+
+  const goToDashboard = () => {
+    if (onNavigateToPath) onNavigateToPath(PAGE_ID_TO_PATH.dashboard);
+    else setActivePage('dashboard');
+    setSelectedFeature(null);
+  };
+  const goToImpact = () => {
+    if (onNavigateToPath) onNavigateToPath(PAGE_ID_TO_PATH.impact);
+    else setActivePage('impact');
+  };
 
   const features = [
     { id: 'freshness', icon: '🔬', label: t('freshnessChecker'), color: 'from-emerald-600 to-emerald-700' },
@@ -96,15 +140,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
       title="ResQ Meal"
       logo={<AppLogo size="header" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px]" />}
       onLogoClick={() => {
-        setActivePage('dashboard');
+        if (onNavigateToPath) onNavigateToPath('/Dashboard');
+        else setActivePage('dashboard');
         setSelectedFeature(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
       sidebarItems={navigationItems}
       activeId={activePage}
       onNavigate={(id) => {
-        if (id === 'settings') onSettingsClick();
-        else { setActivePage(id as typeof activePage); setSelectedFeature(null); }
+        if (id === 'settings') {
+          onSettingsClick();
+          if (onNavigateToPath) onNavigateToPath(PAGE_ID_TO_PATH.settings);
+        } else {
+          if (onNavigateToPath && PAGE_ID_TO_PATH[id]) onNavigateToPath(PAGE_ID_TO_PATH[id]);
+          else setActivePage(id as typeof activePage);
+          setSelectedFeature(null);
+        }
       }}
       darkMode={darkMode}
       setDarkMode={setDarkMode}
@@ -142,7 +193,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
               </h3>
               <div className="flex flex-wrap gap-2 justify-start">
                 <button
-                  onClick={() => setActivePage('matches')}
+                  onClick={() => onNavigateToPath ? onNavigateToPath(PAGE_ID_TO_PATH.matches) : setActivePage('matches')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
                     darkMode ? 'bg-amber-600/30 text-amber-300 hover:bg-amber-600/50' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                   }`}
@@ -150,7 +201,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                   <Target className="w-3 h-3" /> {t('viewMatches')}
                 </button>
                 <button
-                  onClick={() => setActivePage('impact')}
+                  onClick={() => onNavigateToPath ? onNavigateToPath(PAGE_ID_TO_PATH.impact) : setActivePage('impact')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition ${
                     darkMode ? 'bg-teal-600/30 text-teal-300 hover:bg-teal-600/50' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'
                   }`}
@@ -261,7 +312,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
                 <button
                   key={feature.id}
                   type="button"
-                  onClick={() => setActivePage(feature.id as any)}
+                  onClick={() => onNavigateToPath && PAGE_ID_TO_PATH[feature.id] ? onNavigateToPath(PAGE_ID_TO_PATH[feature.id]) : setActivePage(feature.id as any)}
                   className={`group relative rounded-2xl p-6 sm:p-8 transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer overflow-hidden border text-left touch-manipulation min-h-[140px] sm:min-h-[160px] ${
                     darkMode
                       ? 'shadow-xl border-[#D4AF37]/25 bg-gradient-to-br from-blue-900/50 to-blue-950/60'
@@ -543,7 +594,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
           <FeatureDetailsPage 
             feature={selectedFeature} 
             darkMode={darkMode} 
-            onBack={() => setActivePage('dashboard')}
+            onBack={goToDashboard}
             menuFeatures={menuFeatures}
             t={t}
           />
@@ -554,7 +605,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
           <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
             <button
               type="button"
-              onClick={() => setActivePage('dashboard')}
+              onClick={goToDashboard}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
                 darkMode ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-200 text-slate-700'
               }`}
@@ -567,14 +618,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
 
         {/* Matches Page */}
         {activePage === 'matches' && (
-          <MatchesPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
+          <MatchesPage darkMode={darkMode} onBack={goToDashboard} t={t} />
         )}
 
         {/* Impact Page */}
         {activePage === 'impact' && (
           <ImpactPage
             darkMode={darkMode}
-            onBack={() => setActivePage('dashboard')}
+            onBack={goToDashboard}
             onStatClick={(statId) => setActivePage(statId)}
             t={t}
           />
@@ -582,19 +633,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
 
         {/* About Us Page */}
         {activePage === 'about' && (
-          <AboutPage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
+          <AboutPage darkMode={darkMode} onBack={goToDashboard} t={t} />
         )}
 
         {/* Elite Mode Page */}
         {activePage === 'elite' && (
-          <EliteModePage darkMode={darkMode} onBack={() => setActivePage('dashboard')} t={t} />
+          <EliteModePage darkMode={darkMode} onBack={goToDashboard} t={t} />
         )}
 
         {/* Stat Detail Pages */}
         {activePage === 'mealsSaved' && (
           <StatDetailPage
             darkMode={darkMode}
-            onBack={() => setActivePage('impact')}
+            onBack={goToImpact}
             stat={{
               id: 'mealsSaved',
               icon: '🍽️',
@@ -609,7 +660,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
         {activePage === 'foodDiverted' && (
           <StatDetailPage
             darkMode={darkMode}
-            onBack={() => setActivePage('impact')}
+            onBack={goToImpact}
             stat={{
               id: 'foodDiverted',
               icon: '⚖️',
@@ -624,7 +675,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
         {activePage === 'co2Prevented' && (
           <StatDetailPage
             darkMode={darkMode}
-            onBack={() => setActivePage('impact')}
+            onBack={goToImpact}
             stat={{
               id: 'co2Prevented',
               icon: '💨',
@@ -639,7 +690,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSettingsClick, auth = nu
         {activePage === 'waterSaved' && (
           <StatDetailPage
             darkMode={darkMode}
-            onBack={() => setActivePage('impact')}
+            onBack={goToImpact}
             stat={{
               id: 'waterSaved',
               icon: '💧',

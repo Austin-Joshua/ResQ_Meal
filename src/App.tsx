@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -81,12 +82,24 @@ function readAuth(): { token: string; user: LoginSuccessUser } | null {
   }
 }
 
+const ROUTES = {
+  HOME: "/",
+  SIGNUP: "/Signup",
+  DASHBOARD: "/Dashboard",
+  FRESHNESS: "/Freshness",
+  NGO: "/NGO",
+  ELITE: "/Elite",
+  REPORT: "/Report",
+  ABOUT: "/About",
+  SETTINGS: "/Settings",
+} as const;
+
 const App = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignupPage, setShowSignupPage] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(true);
-  const [showBaseWithoutAuth, setShowBaseWithoutAuth] = useState(false);
   const [firstTimeComplete, setFirstTimeComplete] = useState(() => {
     const a = readAuth();
     return a?.user?.id != null ? getFirstTimeDone(a.user.id) : false;
@@ -139,9 +152,9 @@ const App = () => {
     } catch (_) {}
     setAuth({ token, user });
     setShowLoginModal(false);
-    setShowSignupPage(false);
     setLoginKey(Date.now());
     setFirstTimeComplete(getFirstTimeDone(user.id));
+    navigate(ROUTES.DASHBOARD);
   };
 
   const handleLogout = () => {
@@ -152,17 +165,40 @@ const App = () => {
     setAuth(null);
   };
 
-  const showSignInPageFirst = !auth && !showBaseWithoutAuth;
   const showFirstTimeOnboarding = auth?.user && !firstTimeComplete;
+  const pathname = location.pathname;
+  const isPublicPath = pathname === ROUTES.HOME || pathname === ROUTES.SIGNUP;
+  const isAppPath = [ROUTES.DASHBOARD, ROUTES.FRESHNESS, ROUTES.NGO, ROUTES.ELITE, ROUTES.REPORT, ROUTES.ABOUT, ROUTES.SETTINGS].includes(pathname);
+  const userRole = auth?.user?.role?.toLowerCase();
+  const isOrgAdmin = userRole === 'restaurant' || userRole === 'ngo';
 
   const handleLanguageSelect = (lang: "en" | "ta" | "hi") => {
     setLanguage(lang);
     setShowLanguageSelector(false);
   };
 
-  // Route users based on role: restaurant/ngo → OrganisationReport (admin mode), volunteer → Dashboard
   const content = (() => {
-    if (showSignInPageFirst) {
+    if (!auth && isAppPath) {
+      return <Navigate to={ROUTES.HOME} replace />;
+    }
+    if (auth && pathname === ROUTES.SIGNUP) {
+      return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+    if (auth && pathname === ROUTES.HOME) {
+      return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+
+    if (!auth) {
+      if (pathname === ROUTES.SIGNUP) {
+        return (
+          <SignupPage
+            darkMode={darkMode}
+            onSuccess={handleLoginSuccess}
+            onBackToSignIn={() => navigate(ROUTES.HOME)}
+            onChangeLanguage={() => setShowLanguageSelector(true)}
+          />
+        );
+      }
       if (showLanguageSelector) {
         return (
           <LanguageSelectorPage
@@ -171,30 +207,16 @@ const App = () => {
           />
         );
       }
-      if (showSignupPage) {
-        return (
-          <SignupPage
-            darkMode={darkMode}
-            onSuccess={handleLoginSuccess}
-            onBackToSignIn={() => setShowSignupPage(false)}
-            onChangeLanguage={() => setShowLanguageSelector(true)}
-          />
-        );
-      }
       return (
         <LoginPage
           darkMode={darkMode}
           onSuccess={handleLoginSuccess}
-          onGoToSignUp={() => setShowSignupPage(true)}
+          onGoToSignUp={() => navigate(ROUTES.SIGNUP)}
           onChangeLanguage={() => setShowLanguageSelector(true)}
         />
       );
     }
-    
-    // Route restaurant and ngo roles to OrganisationReport (admin/organization mode)
-    const userRole = auth?.user?.role?.toLowerCase();
-    const isOrgAdmin = userRole === 'restaurant' || userRole === 'ngo';
-    
+
     if (isOrgAdmin && auth?.user) {
       return (
         <OrganisationReport
@@ -207,18 +229,22 @@ const App = () => {
         />
       );
     }
-    
-    // Volunteer and unauthenticated users see Dashboard with hamburger menu
-    return (
-      <ResQMealApp
-        auth={auth?.user ?? null}
-        loginKey={loginKey}
-        onOpenSignIn={() => setShowLoginModal(true)}
-        onLogout={auth?.user ? handleLogout : undefined}
-        language={language}
-        setLanguage={setLanguage}
-      />
-    );
+
+    if (isAppPath) {
+      return (
+        <ResQMealApp
+          auth={auth?.user ?? null}
+          loginKey={loginKey}
+          onOpenSignIn={() => setShowLoginModal(true)}
+          onLogout={auth?.user ? handleLogout : undefined}
+          language={language}
+          setLanguage={setLanguage}
+          currentPath={pathname}
+          routes={ROUTES}
+        />
+      );
+    }
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
   })();
 
   const handleFirstTimeComplete = () => {

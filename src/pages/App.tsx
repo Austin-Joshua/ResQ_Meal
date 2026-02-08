@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import SettingsPage from './SettingsPage';
 import { useLanguage } from '@/context/LanguageContext';
@@ -10,6 +11,26 @@ export interface BaseAuthUser {
   role: string;
 }
 
+const PATH_TO_PAGE: Record<string, string> = {
+  '/Dashboard': 'dashboard',
+  '/Freshness': 'freshness',
+  '/NGO': 'matches',
+  '/Elite': 'elite',
+  '/Report': 'impact',
+  '/About': 'about',
+  '/Settings': 'settings',
+};
+
+const PAGE_TO_PATH: Record<string, string> = {
+  dashboard: '/Dashboard',
+  freshness: '/Freshness',
+  matches: '/NGO',
+  elite: '/Elite',
+  impact: '/Report',
+  about: '/About',
+  settings: '/Settings',
+};
+
 interface ResQMealAppProps {
   auth?: BaseAuthUser | null;
   loginKey?: number;
@@ -17,11 +38,34 @@ interface ResQMealAppProps {
   onLogout?: () => void;
   language?: 'en' | 'ta' | 'hi';
   setLanguage?: (lang: 'en' | 'ta' | 'hi') => void;
+  currentPath?: string;
+  routes?: { DASHBOARD: string; SETTINGS: string; [key: string]: string };
 }
 
-export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey = 0, onOpenSignIn, onLogout, language: propLanguage = 'en', setLanguage: propSetLanguage }) => {
+const ROUTES_DEFAULT: { DASHBOARD: string; SETTINGS: string } = {
+  DASHBOARD: '/Dashboard',
+  SETTINGS: '/Settings',
+};
+
+export const ResQMealApp: React.FC<ResQMealAppProps> = ({
+  auth = null,
+  loginKey = 0,
+  onOpenSignIn,
+  onLogout,
+  language: propLanguage = 'en',
+  setLanguage: propSetLanguage,
+  currentPath = '/Dashboard',
+  routes = ROUTES_DEFAULT,
+}) => {
   const { t } = useLanguage();
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
+  const navigate = useNavigate();
+  const appPage = PATH_TO_PAGE[currentPath] || 'dashboard';
+  const isSettings = appPage === 'settings';
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>(isSettings ? 'settings' : 'dashboard');
+
+  useEffect(() => {
+    setCurrentPage(isSettings ? 'settings' : 'dashboard');
+  }, [isSettings]);
   const [darkMode, setDarkMode] = useState(() => {
     try {
       const saved = localStorage.getItem('darkMode');
@@ -46,13 +90,21 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey 
     }
   }, [darkMode]);
 
+  const handleSettingsClick = () => {
+    navigate(routes.SETTINGS || '/Settings');
+  };
+
+  const handleBackToDashboard = () => {
+    navigate(routes.DASHBOARD || '/Dashboard');
+  };
+
   return (
     <div className={`min-h-screen w-full max-w-full transition-colors duration-300 ${
       darkMode ? 'bg-gradient-to-br from-emerald-950 via-blue-950 to-slate-900' : 'bg-white'
     }`}>
       {currentPage === 'dashboard' && (
-        <Dashboard 
-          onSettingsClick={() => setCurrentPage('settings')}
+        <Dashboard
+          onSettingsClick={handleSettingsClick}
           auth={auth}
           loginKey={loginKey}
           onOpenSignIn={onOpenSignIn}
@@ -61,12 +113,14 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({ auth = null, loginKey 
           setDarkMode={setDarkMode}
           language={language}
           setLanguage={setLanguage}
+          currentPageFromPath={appPage}
+          onNavigateToPath={(path) => navigate(path)}
         />
       )}
       {currentPage === 'settings' && (
         <div>
           <button
-            onClick={() => setCurrentPage('dashboard')}
+            onClick={handleBackToDashboard}
             className={`fixed top-4 left-4 z-50 px-4 py-2 rounded-lg font-semibold transition ${
               darkMode
                 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900'
