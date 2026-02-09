@@ -18,6 +18,10 @@ const PAGE_ID_TO_PATH: Record<string, string> = {
   matches: '/NGO',
   elite: '/Elite',
   impact: '/Report',
+  mealsSaved: '/Report/meals-saved',
+  foodDiverted: '/Report/food-diverted',
+  co2Prevented: '/Report/co2-prevented',
+  waterSaved: '/Report/water-saved',
   about: '/About',
   settings: '/Settings',
 };
@@ -92,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [loginKey]);
 
   useEffect(() => {
-    if (currentPageFromPath && ['dashboard', 'freshness', 'matches', 'impact', 'about', 'elite', 'settings'].includes(currentPageFromPath)) {
+    if (currentPageFromPath && ['dashboard', 'freshness', 'matches', 'impact', 'about', 'elite', 'settings', 'mealsSaved', 'foodDiverted', 'co2Prevented', 'waterSaved'].includes(currentPageFromPath)) {
       setActivePage(currentPageFromPath as typeof activePage);
     }
   }, [currentPageFromPath]);
@@ -105,6 +109,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const goToImpact = () => {
     if (onNavigateToPath) onNavigateToPath(PAGE_ID_TO_PATH.impact);
     else setActivePage('impact');
+  };
+  
+  const goToStatDetail = (statId: string) => {
+    if (onNavigateToPath) {
+      onNavigateToPath(PAGE_ID_TO_PATH[statId] || PAGE_ID_TO_PATH.impact);
+    } else {
+      setActivePage(statId as any);
+    }
   };
 
   const features = [
@@ -356,13 +368,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   type="button"
                   onClick={() => {
                     setSelectedStat(stat.id);
-                    setActivePage(stat.id as any);
+                    if (onNavigateToPath) {
+                      onNavigateToPath(PAGE_ID_TO_PATH[stat.id] || '/Report');
+                    } else {
+                      setActivePage(stat.id as any);
+                    }
                   }}
-                  className={`rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-300 border cursor-pointer transform hover:scale-105 active:scale-95 text-left touch-manipulation min-h-[100px] sm:min-h-[120px] ${
+                  className={`group rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-300 border cursor-pointer transform hover:scale-105 active:scale-95 text-left touch-manipulation min-h-[100px] sm:min-h-[120px] ${
                     darkMode
-                      ? `bg-gradient-to-br ${stat.color} border-[#D4AF37]/30 shadow-lg hover:shadow-xl`
-                      : `bg-gradient-to-br ${stat.color} border-slate-300/50 shadow-md hover:shadow-lg`
+                      ? `bg-gradient-to-br ${stat.color} border-[#D4AF37]/30 shadow-lg hover:shadow-xl hover:border-[#D4AF37]`
+                      : `bg-gradient-to-br ${stat.color} border-slate-300/50 shadow-md hover:shadow-lg hover:border-blue-400`
                   }`}
+                  aria-label={`View detailed report for ${stat.label}`}
                 >
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
@@ -372,8 +389,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className={`text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2 ${darkMode ? 'text-yellow-300' : 'text-slate-900'}`}>
                         {stat.value}
                       </p>
+                      <p className={`text-[10px] sm:text-xs mt-2 opacity-0 group-hover:opacity-70 transition-opacity ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                        Click to view detailed report →
+                      </p>
                     </div>
-                    <span className="text-2xl sm:text-3xl md:text-4xl opacity-50 shrink-0" aria-hidden>{stat.icon}</span>
+                    <span className="text-2xl sm:text-3xl md:text-4xl opacity-50 group-hover:opacity-70 transition-opacity shrink-0" aria-hidden>{stat.icon}</span>
                   </div>
                 </button>
               ))}
@@ -626,7 +646,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <ImpactPage
             darkMode={darkMode}
             onBack={goToDashboard}
-            onStatClick={(statId) => setActivePage(statId)}
+            onStatClick={(statId) => goToStatDetail(statId)}
             t={t}
           />
         )}
@@ -654,6 +674,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               color: 'from-blue-500/30 to-blue-600/30',
             }}
             t={t}
+            onNavigateToPath={onNavigateToPath}
           />
         )}
 
@@ -669,6 +690,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               color: 'from-blue-500/30 to-blue-600/30',
             }}
             t={t}
+            onNavigateToPath={onNavigateToPath}
           />
         )}
 
@@ -684,6 +706,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               color: 'from-yellow-500/30 to-yellow-600/30',
             }}
             t={t}
+            onNavigateToPath={onNavigateToPath}
           />
         )}
 
@@ -699,6 +722,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               color: 'from-cyan-500/30 to-cyan-600/30',
             }}
             t={t}
+            onNavigateToPath={onNavigateToPath}
           />
         )}
       <style>{`
@@ -2137,12 +2161,12 @@ const AboutPage: React.FC<{ darkMode: boolean; onBack: () => void; t: any }> = (
 const ProgressFill: React.FC<{ percentage: number; className: string }> = ({ percentage, className }) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (ref.current) ref.current('style').width = `${percentage}%`;
+    if (ref.current) ref.current.style.width = `${percentage}%`;
   }, [percentage]);
   return <div ref={ref} className={className} />;
 };
 
-const StatDetailPage: React.FC<{ darkMode: boolean; onBack: () => void; stat: { id: string; icon: string; label: string; value: string; color: string }; t: any }> = ({ darkMode, onBack, stat, t }) => {
+const StatDetailPage: React.FC<{ darkMode: boolean; onBack: () => void; stat: { id: string; icon: string; label: string; value: string; color: string }; t: any; onNavigateToPath?: (path: string) => void }> = ({ darkMode, onBack, stat, t, onNavigateToPath }) => {
   const [detailedView, setDetailedView] = useState<{ type: 'category' | 'period' | 'insights' | 'trend' | null; data?: any }>({ type: null });
 
   // Mock data for each stat type

@@ -9,7 +9,6 @@ import { NotificationProvider } from "@/context/NotificationContext";
 import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
 import { ModeProvider } from "@/context/ModeContext";
 import { OnboardingModal } from "@/components/OnboardingModal";
-import { FirstTimeOnboarding } from "@/components/FirstTimeOnboarding";
 import LanguageSelectorPage from "@/pages/LanguageSelector";
 import LoginPage from "@/pages/Login";
 import SignupPage from "@/pages/Signup";
@@ -90,6 +89,10 @@ const ROUTES = {
   NGO: "/NGO",
   ELITE: "/Elite",
   REPORT: "/Report",
+  REPORT_MEALS_SAVED: "/Report/meals-saved",
+  REPORT_FOOD_DIVERTED: "/Report/food-diverted",
+  REPORT_CO2_PREVENTED: "/Report/co2-prevented",
+  REPORT_WATER_SAVED: "/Report/water-saved",
   ABOUT: "/About",
   SETTINGS: "/Settings",
 } as const;
@@ -168,7 +171,19 @@ const App = () => {
   const showFirstTimeOnboarding = auth?.user && !firstTimeComplete;
   const pathname = location.pathname;
   const isPublicPath = pathname === ROUTES.HOME || pathname === ROUTES.SIGNUP;
-  const isAppPath = [ROUTES.DASHBOARD, ROUTES.FRESHNESS, ROUTES.NGO, ROUTES.ELITE, ROUTES.REPORT, ROUTES.ABOUT, ROUTES.SETTINGS].includes(pathname);
+  const isAppPath = [
+    ROUTES.DASHBOARD, 
+    ROUTES.FRESHNESS, 
+    ROUTES.NGO, 
+    ROUTES.ELITE, 
+    ROUTES.REPORT, 
+    ROUTES.REPORT_MEALS_SAVED,
+    ROUTES.REPORT_FOOD_DIVERTED,
+    ROUTES.REPORT_CO2_PREVENTED,
+    ROUTES.REPORT_WATER_SAVED,
+    ROUTES.ABOUT, 
+    ROUTES.SETTINGS
+  ].includes(pathname) || pathname.startsWith('/Report/');
   const userRole = auth?.user?.role?.toLowerCase();
   const isOrgAdmin = userRole === 'restaurant' || userRole === 'ngo';
 
@@ -275,15 +290,7 @@ const App = () => {
             <LanguageProvider language={language} setLanguage={setLanguage}>
               <NotificationProvider hasAuth={!!auth}>
                 {content}
-                {showFirstTimeOnboarding && auth?.user && (
-                  <FirstTimeOnboarding
-                    user={auth.user}
-                    darkMode={darkMode}
-                    onComplete={handleFirstTimeComplete}
-                    onRoleUpdated={handleRoleUpdated}
-                  />
-                )}
-              {showLoginModal && !showSignInPageFirst && (
+              {showLoginModal && (
                 <div
                   className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
                   role="dialog"

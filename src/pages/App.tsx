@@ -17,6 +17,10 @@ const PATH_TO_PAGE: Record<string, string> = {
   '/NGO': 'matches',
   '/Elite': 'elite',
   '/Report': 'impact',
+  '/Report/meals-saved': 'mealsSaved',
+  '/Report/food-diverted': 'foodDiverted',
+  '/Report/co2-prevented': 'co2Prevented',
+  '/Report/water-saved': 'waterSaved',
   '/About': 'about',
   '/Settings': 'settings',
 };
@@ -27,6 +31,10 @@ const PAGE_TO_PATH: Record<string, string> = {
   matches: '/NGO',
   elite: '/Elite',
   impact: '/Report',
+  mealsSaved: '/Report/meals-saved',
+  foodDiverted: '/Report/food-diverted',
+  co2Prevented: '/Report/co2-prevented',
+  waterSaved: '/Report/water-saved',
   about: '/About',
   settings: '/Settings',
 };
