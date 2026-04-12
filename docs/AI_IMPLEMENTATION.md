@@ -61,7 +61,7 @@ AI is implemented as a **decision-support layer**, not as automation replacing h
 
 **Current status in ResQ Meal**
 
-- **Today:** Deterministic scoring in `MatchingEngine.js` (no ML). Each NGO is scored by:
+- **Today:** Deterministic scoring in `MatchingService` (Java; no ML). Each NGO is scored by:
   - **Distance** (40%) – closer is better
   - **Freshness** (30%) – time until expiry vs safety window
   - **Capacity** (20%) – available capacity vs required servings
@@ -85,8 +85,8 @@ AI is implemented as a **decision-support layer**, not as automation replacing h
 **Current status in ResQ Meal**
 
 - **Today:**
-  - **Rule-based:** `MatchingEngine.calculateFreshnessScore()` uses expiry time and safety window to score posts; time-sensitive surplus is ranked higher in matching.
-  - **Optional ML:** `FoodQualityVerification.js` can call external ML services for **image-based** freshness (e.g. fruit-veg-freshness, TFLite, FreshVision) and **environment-based** freshness (Food-Freshness-Analyzer: temperature, humidity, storage time). When configured, the backend uses these for quality/freshness assessment and the UI shows ML-derived freshness.
+  - **Rule-based:** Urgency and expiry logic in the food/matching services uses expiry time and safety window; time-sensitive surplus is ranked higher in matching.
+  - **Optional ML:** `FoodQualityService` (Spring) can call external ML services for **image-based** and **environment-based** freshness when `FRESHNESS_AI_URL`, `FRESHNESS_ENV_AI_URL`, etc. are set. When configured, the API uses these for quality/freshness assessment and the UI shows ML-derived freshness.
 - See `README.md` (Freshness detector & ML models) and `docs/FRESHNESS_REFERENCES.md` for setup (e.g. `node scripts/setup-freshness-models.js`, env URLs).
 
 ---
@@ -112,13 +112,13 @@ AI is implemented as a **decision-support layer**, not as automation replacing h
 | Aspect | Detail |
 |--------|--------|
 | **Where AI lives** | Separate ML services (Python), e.g. under `ml-services/`. |
-| **Communication** | Backend (Node/Express) calls ML via **REST APIs** (e.g. `/evaluate`, `/evaluate-environment`). |
+| **Communication** | Spring Boot calls ML sidecars via **REST** (e.g. `/evaluate`, `/evaluate-environment`). |
 | **Why this matters** | Does not break the existing system; easy to scale and to replace or upgrade models. |
 
 **Relevant code**
 
-- **Matching (rule-based):** `backend/services/MatchingEngine.js`, `backend/controllers/MatchingController.js`
-- **Freshness (rules + optional ML):** `backend/services/FoodQualityVerification.js`, `ml-services/*` (see README and `docs/FRESHNESS_REFERENCES.md`)
+- **Matching (rule-based):** `server/src/main/java/.../MatchingService.java`, `MatchController.java`
+- **Freshness (rules + optional ML):** `FoodQualityService.java`, `ml-services/*` (see README and `docs/FRESHNESS_REFERENCES.md`)
 
 ---
 

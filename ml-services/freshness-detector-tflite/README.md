@@ -30,6 +30,6 @@ Use a different port (e.g. 8002) if other freshness services use 8000/8001.
   - `item_type`: `"apple"` | `"banana"` | `"bitter_gourd"` | `"capsicum"` | `"orange"` | `"tomato"`
   - `freshness_index`: 0–100 (for UI).
 
-## ResQ Meal backend
+## ResQ Meal API (Spring Boot)
 
-Set `FRESHNESS_TFLITE_URL=http://localhost:8002` in the Node backend `.env` to use this model for **photo-based** freshness checks (alternative or fallback to fruit-veg-freshness-ai).
+Set `FRESHNESS_TFLITE_URL=http://localhost:8002` in `server` environment or `application.properties` to use this model for **photo-based** freshness checks (alternative or fallback to fruit-veg-freshness-ai).

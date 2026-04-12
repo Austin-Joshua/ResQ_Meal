@@ -7,7 +7,7 @@ ResQ Meal supports multiple optional backends for food freshness and quality ass
 **[serverless-genai-food-analyzer-app](https://github.com/aws-samples/serverless-genai-food-analyzer-app)** — Personalized nutritional app using **Amazon Bedrock** (Claude 3 Haiku/Sonnet) and AWS CDK.
 
 - **Relevant for ResQ Meal**: **Recipe image ingredients** — uses Claude 3 Sonnet on Bedrock with **vision** to extract food ingredients from images (`list_images_base64` → list of ingredients). System prompt: *"You have perfect vision and pay great attention to ingredients in each picture, you are very good at detecting food ingredients on images"*.
-- **ResQ Meal integration**: When `AWS_REGION` (and optionally `BEDROCK_FRESHNESS_MODEL_ID`) is set, the backend can call Bedrock with the same kind of vision request to assess food freshness from a single image and return a structured assessment (classification, freshness_index). No need to deploy the full CDK stack; we use the same idea (Claude vision + prompt) inside our Node backend.
+- **ResQ Meal integration**: When `AWS_REGION` (and optionally `BEDROCK_FRESHNESS_MODEL_ID`) is set, the Spring service can call Bedrock with the same kind of vision request to assess food freshness from a single image and return a structured assessment (classification, freshness_index). No need to deploy the full CDK stack; we use the same idea (Claude vision + prompt) in the Java API when wired.
 - **Full app features**: Barcode scanning (Open Food Facts), product summary (Claude Haiku), recipe generator from fridge photos (Claude Sonnet for ingredients + recipes), step-by-step recipe (streaming). Backend: Cognito, Lambda URL, DynamoDB, S3, Bedrock.
 
 ## Other Integrated Repos
@@ -19,7 +19,7 @@ ResQ Meal supports multiple optional backends for food freshness and quality ass
 - **freshvision** (devdezzies) — EfficientNetB0, apple/banana/orange fresh vs rotten.
 - **Food-Image-Recognition** (MaharshSuryawala) — Inception-v3 on Food-101 (101 classes), image → food class + nutrition (protein, fat, carbs, etc.).
 
-See `backend/.env.example` and `ml-services/*/README.md` for setup of each backend.
+See `server/.env.example` / `application.properties` and `ml-services/*/README.md` for setup of each ML service.
 
 ---
 

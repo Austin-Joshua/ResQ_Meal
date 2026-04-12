@@ -32,6 +32,6 @@ Use a different port (e.g. 8003) if other freshness services use 8000–8002.
   - `classification`: `"fresh"` | `"rotten"` | `"mixed"`
   - `freshness_index`: 0–100 (for UI).
 
-## ResQ Meal backend
+## ResQ Meal API (Spring Boot)
 
-Set `FRESHNESS_ROBOFLOW_URL=http://localhost:8003` in the Node backend `.env` to use this service for **photo-based** freshness checks (object detection over the whole image).
+Set `FRESHNESS_ROBOFLOW_URL=http://localhost:8003` in `server` environment or `application.properties` to use this service for **photo-based** freshness checks (object detection over the whole image).

@@ -1,6 +1,6 @@
 /**
  * Backend connection status indicator
- * Shows real-time backend connection status
+ * Shows real-time API connection status
  */
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
@@ -18,7 +18,7 @@ export function BackendStatus({ className, showDetails = false }: BackendStatusP
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
         const baseUrl = API_BASE_URL.replace('/api', '');
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -79,7 +79,7 @@ export function BackendStatus({ className, showDetails = false }: BackendStatusP
       {status === 'online' && <CheckCircle2 className="w-4 h-4" />}
       {status === 'offline' && <XCircle className="w-4 h-4" />}
       <span>
-        {status === 'checking' && 'Checking backend...'}
+        {status === 'checking' && 'Checking API...'}
         {status === 'online' && 'Backend connected'}
         {status === 'offline' && `Backend offline${error ? `: ${error}` : ''}`}
       </span>

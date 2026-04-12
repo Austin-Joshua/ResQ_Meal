@@ -55,7 +55,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
 
   const checkBackendHealth = async (): Promise<{ available: boolean; error?: string }> => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
       const baseUrl = API_BASE_URL.replace('/api', '');
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
@@ -104,11 +104,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
       if (!healthCheck.available) {
         setIsBackendOffline(true);
         if (healthCheck.error === 'CORS') {
-          setError('CORS error: Backend is running but blocking requests. Check CORS configuration in backend/server.js');
+          setError('CORS error: API is running but blocking requests. Check Spring CORS in server WebConfig.');
         } else if (healthCheck.error === 'NETWORK') {
-          setError('Backend server is not running. Please start it with: cd backend && npm run dev');
+          setError('API server is not running. Start it with: npm run dev:all or cd server && mvnw spring-boot:run');
         } else {
-          setError(`Backend connection issue: ${healthCheck.error}. Check if backend is running on port 5000.`);
+          setError(`Backend connection issue: ${healthCheck.error}. Check if the Spring Boot API is running (default port 8080) and Vite proxy is configured.`);
         }
         setLoading(false);
         return;
@@ -130,7 +130,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
       const ax = err as { response?: { data?: { message?: string } }; code?: string; message?: string };
       if (!ax.response && (ax.code === 'ERR_NETWORK' || ax.code === 'ECONNREFUSED' || (ax as Error).message?.includes('Network') || (ax as Error).message?.includes('Failed to fetch'))) {
         setIsBackendOffline(true);
-        setError('Cannot connect to backend server. Please ensure it is running.');
+        setError('Cannot connect to the API. Ensure Spring Boot is running (port 8080) or use npm run dev:all.');
       } else {
         const msg = ax.response?.data?.message;
         setError(msg || 'Invalid email or password. Please try again.');
@@ -184,22 +184,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
                   <div className={`ml-6 text-xs space-y-1.5 ${darkMode ? 'text-red-300/80' : 'text-red-600'}`}>
                     <p className="font-semibold">Troubleshooting:</p>
                     <div className="space-y-1 ml-2">
-                      <p><strong>1. Check if backend is running:</strong></p>
+                      <p><strong>1. Check if the API is running:</strong></p>
                       <ul className="list-disc list-inside ml-2 space-y-0.5">
-                        <li>Open terminal: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>cd backend && npm run dev</code></li>
-                        <li>Or from root: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>npm run dev:all</code></li>
+                        <li>From root: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>npm run dev:all</code></li>
+                        <li>Or: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>cd server && mvnw spring-boot:run</code></li>
                       </ul>
                       <p className="mt-1"><strong>2. Check port availability:</strong></p>
                       <ul className="list-disc list-inside ml-2 space-y-0.5">
-                        <li>Run: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>cd backend && npm run check-port</code></li>
-                        <li>If port 5000 is busy, change <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>PORT</code> in <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>backend/.env</code></li>
+                        <li>Ensure <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>8080</code> (HTTP) and <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>9090</code> (Socket.IO) are free</li>
+                        <li>If port 8080 is busy, set <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>PORT</code> in <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>server/.env</code> or <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>server/src/main/resources/application.properties</code></li>
                       </ul>
                       <p className="mt-1"><strong>3. Verify CORS:</strong></p>
                       <ul className="list-disc list-inside ml-2 space-y-0.5">
                         <li>Backend should allow: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>http://localhost:5173</code></li>
-                        <li>Check <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>backend/server.js</code> CORS configuration</li>
+                        <li>Check Spring CORS in <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>server/.../WebConfig.java</code></li>
                       </ul>
-                      <p className="mt-1">Expected: Backend running on <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>http://localhost:5000</code></p>
+                      <p className="mt-1">Expected: API at <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>http://localhost:8080</code> (or proxied as <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>/api</code> from Vite)</p>
                     </div>
                   </div>
                 )}

@@ -1,121 +1,48 @@
-# 🚀 Quick Start - Backend Connection Guide
+# Backend (Spring Boot) – connection guide
 
-## ✅ Current Status Check
+## Start API + frontend
 
-**Port 5000 is AVAILABLE** ✅  
-**Backend is NOT RUNNING** ❌
-
-## 🔧 To Start Backend and Connect Properly:
-
-### Option 1: Start Both Frontend & Backend Together (Recommended)
 ```bash
 npm run dev:all
 ```
-This automatically starts:
-- ✅ Backend on `http://localhost:5000`
-- ✅ Frontend on `http://localhost:5173`
-- ✅ Proper CORS configuration
-- ✅ Connection verified
 
-### Option 2: Start Backend Separately
+- Spring Boot: **http://localhost:8080**
+- Socket.IO: **http://localhost:9090**
+- Vite: **http://localhost:5173** (proxies `/api` and `/uploads` → 8080)
 
-**Terminal 1 - Backend:**
+## Start API only
+
 ```bash
-cd backend
-npm run dev
+cd server
+./mvnw spring-boot:run
 ```
 
-**Terminal 2 - Frontend:**
-```bash
-npm run dev
-```
+## Verify
 
-## 🔍 Verify Backend Connection
+- Open **http://localhost:8080/api/health** — expect `{"status":"ok",...}`
+- From the Vite app, `/api/health` is proxied to the same backend.
 
-### Check if backend is running:
-```bash
-cd backend
-npm run verify
-```
+## Configuration
 
-### Check port availability:
-```bash
-cd backend
-npm run check-port
-```
+- See **`server/.env.example`** and **`server/src/main/resources/application.properties`**
+- MySQL: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- JWT: `JWT_SECRET`
+- HTTP port: `PORT` (default 8080)
+- Socket.IO: `SOCKETIO_PORT` (default 9090)
 
-### Manual test:
-Open browser: `http://localhost:5000/api/health`
-Should return: `{"status":"ok","timestamp":"..."}`
+## Frontend env
 
-## ⚙️ Configuration Check
+- Default API base: **`/api`** (same origin or Vite proxy)
+- Optional: `VITE_SOCKET_URL` if Socket.IO is not on `hostname:9090`
 
-### Backend Configuration (`backend/.env`):
-```env
-PORT=5000
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=resqmeal_db
-DB_USER=root
-DB_PASSWORD=your_password
-NODE_ENV=development
-```
+## Troubleshooting
 
-### Frontend Configuration (`.env` or `vite.config.ts`):
-- API URL: `http://localhost:5000/api` (default)
-- Or set: `VITE_API_URL=http://localhost:5000/api`
+- **Port 8080 busy:** set `PORT` in the environment or change `server.port` in `application.properties`.
+- **DB errors:** ensure MySQL is running and credentials match; run SQL under **`database/`**.
+- **CORS:** Spring allows localhost origins in dev (see `WebConfig`).
 
-## 🔐 CORS Configuration
+## Test users (after `database/seed.sql`)
 
-Backend (`backend/server.js`) is configured to allow:
-- ✅ `http://localhost:5173` (Vite default)
-- ✅ `http://localhost:5174` (alternative)
-- ✅ `http://localhost:3000`
-- ✅ `http://localhost:8080`
-- ✅ All localhost origins in development mode
-
-## 🐛 Troubleshooting
-
-### If backend won't start:
-
-1. **Port 5000 is busy:**
-   ```bash
-   # Windows
-   netstat -ano | findstr :5000
-   
-   # Mac/Linux
-   lsof -ti:5000
-   ```
-   Then change `PORT=5001` in `backend/.env`
-
-2. **Database connection error:**
-   - Ensure MySQL is running
-   - Check `backend/.env` database credentials
-   - Run: `cd backend && npm run db:setup`
-
-3. **CORS errors:**
-   - Backend automatically allows localhost in development
-   - Check browser console for specific CORS errors
-   - Verify frontend URL matches allowed origins
-
-## ✅ Success Indicators
-
-When backend is running correctly, you should see:
-```
-✅ ResQ Meal API running on http://localhost:5000
-📡 CORS enabled for: http://localhost:5173, ...
-🌐 Development mode: All localhost origins allowed
-```
-
-The login page will show:
-- ✅ "Backend connected" status indicator
-- ✅ No error messages
-- ✅ Login form ready to use
-
-## 🎯 Next Steps
-
-1. Start backend: `npm run dev:all`
-2. Wait for "Backend connected" on login page
-3. Use test credentials:
-   - Volunteer: `volunteer@community.com` / `password123`
-   - Organization: `ngo@savechildren.com` / `password123`
+- `volunteer@community.com` / `password123`
+- `ngo@savechildren.com` / `password123`
+- `chef@kitchen.com` / `password123`

@@ -1,85 +1,64 @@
-# ResQ Meal - Quick Start Guide
+# ResQ Meal - Quick Start
 
-## 🚀 Start the Application
+## Start the application
 
-### Option 1: Start Both Frontend & Backend Together (Recommended)
+### Option 1: Frontend + Spring Boot (recommended)
+
 ```bash
 npm run dev:all
 ```
-This starts:
-- Backend API on `http://localhost:5000`
-- Frontend app on `http://localhost:5173`
 
-### Option 2: Start Separately
+- API: **http://localhost:8080** (`/api`, `/uploads`; Vite proxies from 5173)
+- Socket.IO: **http://localhost:9090** (set `VITE_SOCKET_URL` if needed)
+- Frontend: **http://localhost:5173**
 
-**Terminal 1 - Backend:**
+### Option 2: Separate terminals
+
+**Terminal 1 – API:**
+
 ```bash
-cd backend
+cd server
+./mvnw spring-boot:run
+```
+
+**Terminal 2 – UI:**
+
+```bash
 npm run dev
 ```
 
-**Terminal 2 - Frontend:**
-```bash
-npm run dev
-```
+## Test login (after DB seed)
 
-## 🔐 Test Login Credentials
+**Password for all:** `password123`
 
-**Password for all accounts:** `password123`
+| Mode        | Email                    |
+|------------|--------------------------|
+| Volunteer  | `volunteer@community.com` |
+| NGO        | `ngo@savechildren.com`   |
+| Restaurant | `chef@kitchen.com`       |
 
-### Volunteer Mode
-- **Email:** `volunteer@community.com`
-- **Password:** `password123`
-- **Role:** Volunteer
+## Verify API
 
-### Organization/Admin Mode (NGO)
-- **Email:** `ngo@savechildren.com`
-- **Password:** `password123`
-- **Role:** NGO/Organization Admin
+- Logs should show Tomcat on **8080** and Socket.IO on **9090**.
+- Health: **http://localhost:8080/api/health** (or `/api/health` via Vite on 5173)
 
-### Restaurant Mode (Also Organization)
-- **Email:** `chef@kitchen.com`
-- **Password:** `password123`
-- **Role:** Restaurant
+## Database (first time)
 
-## ✅ Verify Backend is Running
-
-The backend should show:
-```
-ResQ Meal API running on http://localhost:5000
-```
-
-If you see connection errors in the login page, make sure:
-1. Backend is running on port 5000
-2. Database is configured in `backend/.env`
-3. Database is seeded (run `backend/config/seed.sql`)
-
-## 📝 Database Setup (First Time)
-
-1. Create MySQL database:
 ```bash
 mysql -u root -p
 CREATE DATABASE resqmeal_db;
 ```
 
-2. Run migrations:
 ```bash
-mysql -u root -p resqmeal_db < backend/config/database.sql
-mysql -u root -p resqmeal_db < backend/config/seed.sql
+mysql -u root -p resqmeal_db < database/database.sql
+mysql -u root -p resqmeal_db < database/seed.sql
+mysql -u root -p resqmeal_db < database/notifications-migration.sql
 ```
 
-3. Configure `backend/.env`:
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=resqmeal_db
-```
+Configure MySQL credentials via environment variables or `server/src/main/resources/application.properties` (see `server/.env.example`).
 
-## 🎯 Login Flow
+## Login flow
 
-1. Start backend: `npm run dev:all` or `cd backend && npm run dev`
-2. Open frontend: `http://localhost:5173` (or it opens automatically)
-3. Use test credentials above
-4. Both volunteer and organization modes will work!
+1. Start stack: `npm run dev:all`
+2. Open **http://localhost:5173**
+3. Sign in with test users above

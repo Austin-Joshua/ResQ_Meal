@@ -33,4 +33,4 @@ Use a different port (e.g. 8005) if other services use 8000–8004.
 
 ## ResQ Meal
 
-Use this service to **classify food type** and **get nutrition** from a photo when posting surplus (e.g. auto-fill `food_type` or show nutrition on the post). Set `FOOD_IMAGE_RECOGNITION_URL=http://localhost:8005` in the backend and call it from your post-surplus or food-detail flow.
+Use this service to **classify food type** and **get nutrition** from a photo when posting surplus (e.g. auto-fill `food_type` or show nutrition on the post). Set `FOOD_IMAGE_RECOGNITION_URL=http://localhost:8005` in Spring configuration (`server`) and call it from your post-surplus or food-detail flow.

@@ -30,6 +30,6 @@ Use a different port (e.g. 8004) if other freshness services use 8000–8003.
   - `confidence`: 0–1
   - `freshness_index`: 0–100 (for UI).
 
-## ResQ Meal backend
+## ResQ Meal API (Spring Boot)
 
-Set `FRESHNESS_FRESHVISION_URL=http://localhost:8004` in the Node backend `.env` to use this model for **photo-based** freshness checks (best for single-fruit images: apple, banana, orange).
+Set `FRESHNESS_FRESHVISION_URL=http://localhost:8004` in `server` environment or `application.properties` to use this model for **photo-based** freshness checks (best for single-fruit images: apple, banana, orange).

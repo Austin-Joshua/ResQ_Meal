@@ -32,6 +32,6 @@ Use a different port (e.g. 8001) if [fruit-veg-freshness](https://github.com/cap
   - `classification`: `"fresh"` | `"stale"` | `"spoiled"`
   - `freshness_index`: 0–100 (for UI)
 
-## ResQ Meal backend
+## ResQ Meal API (Spring Boot)
 
-Set `FRESHNESS_ENV_AI_URL=http://localhost:8001` in the Node backend `.env` to use this for **environment-based** checks (e.g. when user provides storage conditions instead of or in addition to a photo).
+Set `FRESHNESS_ENV_AI_URL=http://localhost:8001` in `server` environment or `application.properties` to use this for **environment-based** checks (e.g. when user provides storage conditions instead of or in addition to a photo).

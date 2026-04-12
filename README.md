@@ -5,49 +5,45 @@ A web platform connecting restaurants and food establishments with NGOs and volu
 ## Tech Stack
 
 - **Frontend**: React + TypeScript + Tailwind CSS + Vite
-- **Backend**: Node.js + Express
+- **Backend**: Java 17 + Spring Boot 3 (REST API, JDBC, Spring Security + JWT)
+- **Real-time**: Socket.IO (Java netty-socketio; default port **9090** alongside HTTP **8080**)
 - **Database**: MySQL
 
 ## Real-time & Notifications
 
-- **Socket.io**: Backend runs Socket.io on the same port as the API. The frontend connects with the JWT when logged in and receives real-time events: `food_posted`, `match_created`, `match_status_updated`, and `notification`.
-- **Notifications**: In-app notification bell (header) shows unread count and list. Notifications are persisted in the database. To create the table, run:
+- **Socket.IO**: The Spring app runs Socket.IO on port **9090** by default. The frontend connects with the JWT when logged in and receives events such as `food_posted`, `match_created`, `match_status_updated`, and `notification`. Set `VITE_SOCKET_URL` at build time if your deployment uses a different URL.
+- **Notifications**: In-app notification bell shows unread count and list. Notifications are persisted in MySQL. Create the table with:
   ```bash
-  mysql -u root -p resqmeal_db < backend/config/notifications-migration.sql
+  mysql -u root -p resqmeal_db < database/notifications-migration.sql
   ```
   If the table does not exist, the API returns an empty list and real-time events still work.
 
 ## Quick Start
 
-### ✅ Check Backend Status First
+### Prerequisites
 
-Before starting, verify backend connection:
-```bash
-cd backend
-npm run verify
-```
+- Node.js (for the Vite frontend)
+- Java 17 + Maven (or use the included `server/mvnw` wrapper)
+- MySQL
 
-### 🚀 Run Frontend and Backend Together (Recommended)
+### Run frontend and API together (recommended)
 
-From the project root, after configuring `backend/.env` and seeding the database:
+1. Copy `server/.env.example` to `server/.env` (or set env vars) with `DB_*`, `JWT_SECRET`, etc.
+2. Create and seed the database (see [Database setup](#database-setup)).
+3. From the project root:
 
 ```bash
 npm install
-cd backend && npm install && cd ..
 npm run dev:all
 ```
 
 This starts:
-- ✅ Backend API on `http://localhost:5000`
-- ✅ Frontend app on `http://localhost:5173`
-- ✅ Automatic CORS configuration
-- ✅ Connection verification
 
-Open `http://localhost:5173` and check the login page for "Backend connected" status indicator.
+- Spring Boot API on **http://localhost:8080**
+- Socket.IO on **http://localhost:9090**
+- Vite dev server on **http://localhost:5173** (proxies `/api` and `/uploads` to port 8080)
 
-### App logo (frontend and backend)
-
-Add your app logo so it appears in the header, login page, and browser tab. Place a file named **`logo.png`** (or `logo.jpg`) in the **`public/`** folder. Recommended: square, 256×256 or 512×512 px. The app uses the path `/logo.png` everywhere; the same path works for the frontend and for backend links (e.g. emails). See `public/LOGO_README.txt` for details. Until you add the file, the UI shows an “Add logo” placeholder.
+Open **http://localhost:5173** and use the login page status indicator to confirm the API is reachable.
 
 ### Frontend only
 
@@ -56,179 +52,128 @@ npm install
 npm run dev
 ```
 
-### Backend only
+### API only
 
 ```bash
-cd backend
-npm install
-# Configure .env with database credentials
-npm run dev
+cd server
+./mvnw spring-boot:run
 ```
 
-## Project Structure
+(On Windows, `mvnw.cmd` is used when you run `mvnw` from npm scripts.)
+
+### Production JAR (full-stack static + API)
+
+```bash
+npm run build
+npm run build:fullstack
+java -jar server/target/resqmeal-server-1.0.0.jar
+```
+
+### App logo
+
+Place **`logo.png`** (or `logo.jpg`) in **`public/`**. The app uses `/logo.png` everywhere. See `public/LOGO_README.txt`.
+
+## Project structure
 
 ```
-resqmeal-nourishing-communities/
-├── src/                    # Frontend source code
-│   ├── pages/             # Page components (App, Dashboard)
-│   ├── components/        # Reusable UI components
-│   ├── context/           # React context (LanguageContext)
-│   ├── services/          # API integration
-│   ├── lib/               # Utility functions
-│   └── assets/            # Images, logos
-├── backend/               # Backend API
-│   ├── routes/           # API routes
-│   ├── controllers/       # Business logic
-│   ├── config/           # Database schema & seed data
-│   └── middlewares/       # Auth middleware
-├── public/               # Static assets
-└── package.json          # Dependencies
+├── src/                 # React frontend
+├── server/              # Spring Boot (Maven): API, security, Socket.IO
+├── database/            # MySQL schema, seed, notifications migration
+├── ml-services/         # Optional Python ML sidecars (freshness, classification)
+├── public/              # Static assets
+└── package.json         # Frontend scripts; `dev:backend` runs Spring in server/
 ```
 
 ## Features
 
 - **One-Click Surplus Posting**: Restaurants post excess food instantly
-- **Smart Matching Engine**: Automatic NGO matching based on location, capacity, and demand
+- **Smart Matching Engine**: NGO matching by location, capacity, and demand
 - **Food Safety Validation**: Countdown timers and quality verification
-- **Live Impact Tracking**: Real-time metrics on meals saved and CO₂ impact
-- **Dark Mode & Multilingual**: Support for English, Tamil, and Hindi with dark mode
-- **Responsive Design**: Works seamlessly on mobile and desktop
+- **Live Impact Tracking**: Metrics on meals saved and CO₂ impact
+- **Dark Mode & Multilingual**: English, Tamil, Hindi
+- **Responsive Design**: Mobile and desktop
 
 ## AI in ResQ Meal
 
-ResQ Meal uses AI as a decision-support layer: **smart matching** (ranked donor–NGO pairs by distance, freshness, capacity, food type), **perishability-aware priority** (time-to-expiry and optional ML freshness from image/env), and optional **demand prediction** and **learning from feedback** (designed, not yet trained). See **[docs/AI_IMPLEMENTATION.md](docs/AI_IMPLEMENTATION.md)** for how AI is implemented and how it differs from a regular donation platform.
+AI is used as decision-support: smart matching, perishability-aware priority, optional ML freshness, demand prediction, and feedback. See **[docs/AI_IMPLEMENTATION.md](docs/AI_IMPLEMENTATION.md)**.
 
 ## Development
 
-### Running Frontend
+### Frontend
+
 ```bash
 npm run dev
 ```
-Server runs on `http://localhost:5173`
 
-### Running Backend
+Runs on `http://localhost:5173`.
+
+### Backend
+
 ```bash
-cd backend
-npm start
+cd server && ./mvnw spring-boot:run
 ```
-API runs on `http://localhost:5000`
 
-## Environment Setup
+API base path: **`/api`** on port **8080** (see `server/src/main/resources/application.properties`).
 
-Create `.env` in the backend directory:
-```
-NODE_ENV=development
-PORT=5000
-FRONTEND_URL=http://localhost:5173
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=resqmeal_db
-DB_USER=root
-DB_PASSWORD=your_password
-JWT_SECRET=your_secret_key
+## Environment (Spring)
+
+Use **`server/.env.example`** as a reference. Spring reads `DB_*`, `JWT_SECRET`, `PORT`, `SOCKETIO_PORT`, optional ML URLs (`FRESHNESS_AI_URL`, `FRESHNESS_ENV_AI_URL`, `FOOD_IMAGE_RECOGNITION_URL`), etc., via environment variables or `application.properties`.
+
+## Database setup
+
+1. Create database: `CREATE DATABASE resqmeal_db;`
+2. Apply schema and seed:
+
+```bash
+mysql -u root -p resqmeal_db < database/database.sql
+mysql -u root -p resqmeal_db < database/seed.sql
+mysql -u root -p resqmeal_db < database/notifications-migration.sql
 ```
 
 ## Test login credentials
 
-After running the database seed (`backend/config/seed.sql`), you can sign in with any of these accounts. **Password for all: `password123`**
+After **`database/seed.sql`**, password for all: **`password123`**
 
-| Role       | Email                     | Use case                          |
-|-----------|---------------------------|-----------------------------------|
-| Volunteer | `volunteer@community.com` | Base website (Dashboard, etc.)   |
-| Restaurant| `chef@kitchen.com`        | Organisation report view          |
-| Restaurant| `baker@artisan.com`       | Organisation report view          |
-| NGO       | `ngo@savechildren.com`    | Organisation report view          |
+| Role       | Email                     |
+|-----------|---------------------------|
+| Volunteer | `volunteer@community.com` |
+| Restaurant| `chef@kitchen.com`        |
+| Restaurant| `baker@artisan.com`       |
+| NGO       | `ngo@savechildren.com`    |
 
-If login fails with "Invalid email or password":
-1. Use the password exactly: **`password123`** (all lowercase, no spaces).
-2. Ensure the backend is running and the database has been seeded. If you already ran the old seed, update test user passwords in MySQL:  
-   `UPDATE users SET password = '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm' WHERE email IN ('chef@kitchen.com','ngo@savechildren.com','volunteer@community.com','baker@artisan.com');`  
-   Or re-run the full seed (after dropping/recreating the DB or clearing the `users` table) with `backend/config/seed.sql`.
+If login fails, ensure the DB is seeded and the API can reach MySQL.
 
 ## Freshness detector & ML models
 
-The **Fresh Food Checker** (photo or environment-based) works without any ML setup: if no ML URLs are set in `backend/.env`, the backend returns **mock** assessments. To use **trained models** from the links in `docs/FRESHNESS_REFERENCES.md`:
+Without ML URLs, the API returns **mock** freshness assessments. For real models, see **`docs/FRESHNESS_REFERENCES.md`** and each **`ml-services/*/README.md`**.
 
-### One-command model setup (image-based)
-
-From the repo root, download pre-trained models from the official GitHub repos:
+### One-command model download (image-based)
 
 ```bash
 node scripts/setup-freshness-models.js
 ```
 
-This clones (shallow) and copies:
+### Wire ML services to Spring
 
-- **[fruit-veg-freshness-ai](https://github.com/captraj/fruit-veg-freshness-ai)** → `ml-services/fruit-veg-freshness/rottenvsfresh98pval.h5`
-- **[Freshness-Detector](https://github.com/Kayuemkhan/Freshness-Detector)** (TFLite) → `ml-services/freshness-detector-tflite/model.tflite`
-- **[freshvision](https://github.com/devdezzies/freshvision)** → `ml-services/freshvision/models/effnetb0_freshvisionv0_10_epochs.pt`
+Set environment variables (or entries in `server/src/main/resources/application.properties`) such as:
 
-### Environment-based model (trains on startup)
-
-**Food-Freshness-Analyzer** ([Parabellum768](https://github.com/Parabellum768/Food-Freshness-Analyzer)) does **not** need a downloaded file: it **trains** a RandomForest on synthetic environmental data when the service starts. Use it for temperature/humidity/storage-time checks:
-
-```bash
-cd ml-services/food-freshness-analyzer
-python -m venv .venv
-.venv\Scripts\activate   # Windows
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8001
-```
-
-### Wire the backend to ML services
-
-In `backend/.env` set the URL(s) for the service(s) you run:
-
-| Service | Env variable | Example |
-|--------|----------------|---------|
+| Service | Variable | Example |
+|--------|----------|---------|
 | fruit-veg-freshness (image) | `FRESHNESS_AI_URL` | `http://localhost:8000` |
-| Freshness-Detector TFLite (image) | `FRESHNESS_TFLITE_URL` | `http://localhost:8002` |
-| FreshVision (image) | `FRESHNESS_FRESHVISION_URL` | `http://localhost:8004` |
-| Food-Freshness-Analyzer (environment) | `FRESHNESS_ENV_AI_URL` | `http://localhost:8001` |
+| Food-Freshness-Analyzer (env) | `FRESHNESS_ENV_AI_URL` | `http://localhost:8001` |
+| Food image classification | `FOOD_IMAGE_RECOGNITION_URL` | `http://localhost:8005` |
 
-The backend tries image-based services in order (Bedrock → TFLite → Roboflow → FreshVision → fruit-veg-freshness); the first that is configured and responding is used. Environment-based checks use `FRESHNESS_ENV_AI_URL` only.
+### AI HTTP endpoints (same as before)
 
-### AI API (demand prediction, feedback, recommended matches)
+- `GET /api/ai/demand-prediction`, `POST /api/ai/feedback`, `GET /api/ai/health`
+- `GET /api/matches/recommended/:food_post_id`
 
-- **GET /api/ai/demand-prediction** (auth) — Predicted demand per NGO from historical matches/deliveries (last 30 days).
-- **POST /api/ai/feedback** (auth) — Record match outcome for learning: `{ match_id, outcome: "accepted"|"rejected"|"delivered", delay_minutes?, notes? }`.
-- **GET /api/ai/health** — Which AI features are enabled (freshness URLs, etc.).
-- **GET /api/matches/recommended/:food_post_id** (auth) — Ranked NGO recommendations for a food post (distance, capacity, food type, demand boost from past behaviour). Query: `?top=5` (default 5, max 20).
-
-See `docs/AI_IMPLEMENTATION.md` for how these fit the four AI layers (demand prediction, smart matching, perishability, learning from feedback).
-
-## UI Design System
+## UI design system
 
 - **Primary (light)**: ResQ green (HSL 145 63% 49%)
-- **Primary (dark)**: Google AI Studio green **#34a853** (HSL 135 53% 43%) — used for primary, accent, ring, sidebar in dark mode
+- **Primary (dark)**: #34a853
 - **Secondary**: Slate Blue (#334155)
 - **Accent (light)**: Soft Amber (#F59E0B)
-- **Success**: Sage Green (#16A34A)
-- **Background**: White (#FFFFFF); dark: `hsl(210 22% 10%)`
-- **Dark mode utilities**: `.studio-green-bg`, `.studio-green-border`, `.studio-green-text` use #34a853
-
-## Freshness detector & ML
-
-The food freshness detector (via image upload or environmental parameters) is designed to integrate with external Machine Learning microservices. By default, the system uses mock data for freshness assessments.
-
-To enable real ML-driven freshness detection:
-
-1.  **Select an ML service**: The `ml-services/` directory contains various Python FastAPI wrappers for ML models (e.g., `fruit-veg-freshness`). Choose one to set up.
-2.  **Obtain the trained model**: Most ML services require a pre-trained model file (e.g., `.h5` or `.tflite`). These files are *not* included in this repository due to their size. Follow the instructions in the specific `ml-services/<service-name>/README.md` to clone the upstream model repository and copy the necessary model files.
-3.  **Install Python dependencies**: For your chosen ML service, create a Python virtual environment and install the dependencies specified in its `requirements.txt`.
-4.  **Run the ML service**: Start the FastAPI application for the chosen service. For example, for `fruit-veg-freshness`:
-    ```bash
-    cd ml-services/fruit-veg-freshness
-    # (activate virtualenv)
-    uvicorn main:app --host 0.0.0.0 --port 8000
-    ```
-5.  **Configure backend**: In your `backend/.env` file, set the appropriate URL for the running ML service. For `fruit-veg-freshness`, you would add:
-    ```
-    FRESHNESS_AI_URL=http://localhost:8000
-    ```
-    (Ensure the port matches what your ML service is running on).
-
-After these steps, the backend's `FoodQualityVerification` service will call your running ML service for actual freshness predictions instead of using mock data.
 
 ## License
 

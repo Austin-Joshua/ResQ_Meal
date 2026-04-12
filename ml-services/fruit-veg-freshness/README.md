@@ -39,6 +39,6 @@ ResQ Meal integration for [fruit-veg-freshness-ai](https://github.com/captraj/fr
 - `FRESHNESS_MODEL_PATH` — Path to the `.h5` model file (default: `rottenvsfresh98pval.h5` in this directory).
 - `THRESHOLD_FRESH`, `THRESHOLD_MEDIUM` — Classification thresholds (see `evaluate.py`).
 
-## ResQ Meal backend
+## ResQ Meal API (Spring Boot)
 
-Set `FRESHNESS_AI_URL=http://localhost:8000` in the Node backend `.env` so the Food Quality Verification service calls this API when assessing food photos.
+Set `FRESHNESS_AI_URL=http://localhost:8000` in `server` environment or `application.properties` so `FoodQualityService` calls this API when assessing food photos.
