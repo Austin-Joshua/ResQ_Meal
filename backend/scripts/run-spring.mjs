@@ -38,11 +38,14 @@ loadDotEnv(envPath);
 
 const isWin = process.platform === "win32";
 const mvnw = isWin ? "mvnw.cmd" : "./mvnw";
+/** Keep Maven’s own JVM small so dev machines with tight page files can still launch the app JVM. */
+/** One JVM (fork=false): give Maven enough headroom for Spring Boot + Tomcat + Netty Socket.IO */
+const mavenOpts = [process.env.MAVEN_OPTS, "-Xshare:off -Xms128m -Xmx768m"].filter(Boolean).join(" ").trim();
 const child = spawn(mvnw, ["spring-boot:run"], {
   cwd: backendRoot,
   stdio: "inherit",
   shell: isWin,
-  env: process.env,
+  env: { ...process.env, MAVEN_OPTS: mavenOpts },
 });
 
 child.on("exit", (code) => process.exit(code ?? 0));

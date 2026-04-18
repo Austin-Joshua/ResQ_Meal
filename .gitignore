@@ -24,6 +24,10 @@ backend/target/
 *~
 .DS_Store
 
+# JVM crash dumps (local dev)
+hs_err_pid*.log
+replay_pid*.log
+
 # Logs
 logs/
 *.log

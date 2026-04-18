@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Mail, LogIn, AlertCircle, Loader2 } from 'lucide-react';
+import { getHealthCheckUrl } from '@/lib/apiConfig';
 import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
@@ -55,12 +56,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
 
   const checkBackendHealth = async (): Promise<{ available: boolean; error?: string }> => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-      const baseUrl = API_BASE_URL.replace('/api', '');
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
       
-      const response = await fetch(`${baseUrl}/api/health`, {
+      const response = await fetch(getHealthCheckUrl(), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
@@ -163,7 +162,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
 
           {/* Backend Status Indicator */}
           <div className="mb-4">
-            <BackendStatus showDetails={true} />
+            <BackendStatus showDetails={false} />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -181,27 +180,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
                   <span className="flex-1 font-medium">{error}</span>
                 </div>
                 {isBackendOffline && (
-                  <div className={`ml-6 text-xs space-y-1.5 ${darkMode ? 'text-red-300/80' : 'text-red-600'}`}>
-                    <p className="font-semibold">Troubleshooting:</p>
-                    <div className="space-y-1 ml-2">
-                      <p><strong>1. Check if the API is running:</strong></p>
-                      <ul className="list-disc list-inside ml-2 space-y-0.5">
-                        <li>From root: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>npm run dev:all</code></li>
-                        <li>Or: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>cd server && mvnw spring-boot:run</code></li>
-                      </ul>
-                      <p className="mt-1"><strong>2. Check port availability:</strong></p>
-                      <ul className="list-disc list-inside ml-2 space-y-0.5">
-                        <li>Ensure <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>8080</code> (HTTP) and <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>9090</code> (Socket.IO) are free</li>
-                        <li>If port 8080 is busy, set <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>PORT</code> in <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>backend/.env</code> or <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>backend/src/main/resources/application.properties</code></li>
-                      </ul>
-                      <p className="mt-1"><strong>3. Verify CORS:</strong></p>
-                      <ul className="list-disc list-inside ml-2 space-y-0.5">
-                        <li>Backend should allow: <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>http://localhost:5173</code></li>
-                        <li>Check Spring CORS in <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>backend/.../WebConfig.java</code></li>
-                      </ul>
-                      <p className="mt-1">Expected: API at <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>http://localhost:8080</code> (or proxied as <code className={`px-1 py-0.5 rounded text-[0.65rem] ${darkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>/api</code> from Vite)</p>
-                    </div>
-                  </div>
+                  <p className={`ml-6 text-xs ${darkMode ? 'text-red-300/80' : 'text-red-600'}`}>
+                    Check that the API is running and try again.
+                  </p>
                 )}
               </div>
             )}

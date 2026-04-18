@@ -93,8 +93,8 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({
       } else {
         document.documentElement.classList.remove('dark');
       }
-    } catch (e) {
-      console.error('Error updating dark mode:', e);
+    } catch {
+      /* ignore localStorage / DOM failures */
     }
   }, [darkMode]);
 

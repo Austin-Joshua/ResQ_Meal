@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ordered {
+
+  public static final int ORDER = 120;
 
   private final JwtUtil jwtUtil;
   private final SecurityMonitoringProperties securityMonitoringProperties;
@@ -28,6 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       JwtUtil jwtUtil, SecurityMonitoringProperties securityMonitoringProperties) {
     this.jwtUtil = jwtUtil;
     this.securityMonitoringProperties = securityMonitoringProperties;
+  }
+
+  @Override
+  public int getOrder() {
+    return ORDER;
   }
 
   @Override

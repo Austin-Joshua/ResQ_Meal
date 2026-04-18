@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,7 +19,9 @@ import java.io.IOException;
  * After JWT: blocks banned users, detects unauthorized admin access, and records each API request
  * for audit and rule evaluation.
  */
-public class SecurityMonitoringFilter extends OncePerRequestFilter {
+public class SecurityMonitoringFilter extends OncePerRequestFilter implements Ordered {
+
+  public static final int ORDER = 130;
 
   private final SecurityMonitoringService securityMonitoringService;
   private final BlockedEntityRegistry blockedEntityRegistry;
@@ -28,6 +31,11 @@ public class SecurityMonitoringFilter extends OncePerRequestFilter {
       BlockedEntityRegistry blockedEntityRegistry) {
     this.securityMonitoringService = securityMonitoringService;
     this.blockedEntityRegistry = blockedEntityRegistry;
+  }
+
+  @Override
+  public int getOrder() {
+    return ORDER;
   }
 
   @Override

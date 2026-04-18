@@ -12,7 +12,14 @@ public class WebConfig implements WebMvcConfigurer {
   public void addCorsMappings(@NonNull CorsRegistry registry) {
     registry
         .addMapping("/**")
-        .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+        .allowedOriginPatterns(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            // Vite “Network” URL and LAN testing when VITE_API_URL points at this machine
+            "http://192.168.*:*",
+            "http://10.*:*",
+            "http://172.31.*:*",
+            "http://172.29.*:*")
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         .allowedHeaders("*")
         .allowCredentials(true);

@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { getHealthCheckUrl } from '@/lib/apiConfig';
 import { cn } from '@/lib/utils';
 
 interface BackendStatusProps {
@@ -18,12 +19,10 @@ export function BackendStatus({ className, showDetails = false }: BackendStatusP
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-        const baseUrl = API_BASE_URL.replace('/api', '');
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-        const response = await fetch(`${baseUrl}/api/health`, {
+        const response = await fetch(getHealthCheckUrl(), {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
@@ -37,7 +36,7 @@ export function BackendStatus({ className, showDetails = false }: BackendStatusP
           setError(null);
         } else {
           setStatus('offline');
-          setError(`HTTP ${response.status}`);
+          setError(null);
         }
       } catch (err: any) {
         setStatus('offline');
@@ -81,7 +80,7 @@ export function BackendStatus({ className, showDetails = false }: BackendStatusP
       <span>
         {status === 'checking' && 'Checking API...'}
         {status === 'online' && 'Backend connected'}
-        {status === 'offline' && `Backend offline${error ? `: ${error}` : ''}`}
+        {status === 'offline' && (error ? `Backend offline (${error})` : 'Backend offline')}
       </span>
     </div>
   );

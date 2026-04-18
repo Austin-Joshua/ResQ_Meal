@@ -153,8 +153,8 @@ const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
 
       directionsRenderer.setDirections(result);
       setDirections(result);
-    } catch (error) {
-      console.error('Error fetching directions:', error);
+    } catch {
+      /* directions unavailable */
     }
   };
 

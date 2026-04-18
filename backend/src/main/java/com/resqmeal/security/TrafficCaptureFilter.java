@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +25,9 @@ import java.util.Map;
  * Wraps API requests for body capture and schedules asynchronous ML threat analysis after the
  * response (non-blocking for the user request).
  */
-public class TrafficCaptureFilter extends OncePerRequestFilter {
+public class TrafficCaptureFilter extends OncePerRequestFilter implements Ordered {
+
+  public static final int ORDER = 110;
 
   private final TrafficSecurityProperties props;
   private final TrafficThreatAnalysisService trafficThreatAnalysisService;
@@ -33,6 +36,11 @@ public class TrafficCaptureFilter extends OncePerRequestFilter {
       TrafficSecurityProperties props, TrafficThreatAnalysisService trafficThreatAnalysisService) {
     this.props = props;
     this.trafficThreatAnalysisService = trafficThreatAnalysisService;
+  }
+
+  @Override
+  public int getOrder() {
+    return ORDER;
   }
 
   @Override

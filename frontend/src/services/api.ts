@@ -1,10 +1,9 @@
 import axios from 'axios';
 
-/** Same-origin `/api` when using the Spring Boot app or Vite dev proxy; override with VITE_API_URL if needed. */
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import { getApiBasePath } from '@/lib/apiConfig';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBasePath(),
   headers: {
     'Content-Type': 'application/json',
   },

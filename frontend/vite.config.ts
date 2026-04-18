@@ -14,8 +14,19 @@ export default defineConfig({
       overlay: false,
     },
     proxy: {
+      /** REST + uploads → Spring Boot HTTP */
       "/api": { target: "http://localhost:8080", changeOrigin: true },
       "/uploads": { target: "http://localhost:8080", changeOrigin: true },
+      /**
+       * Socket.IO → netty-socketio (9090) so the SPA can use same-origin in dev
+       * (`io(window.location.origin)` from `getSocketUrl()`).
+       */
+      "/socket.io": {
+        target: "http://localhost:9090",
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+      },
     },
   },
   plugins: [react()],

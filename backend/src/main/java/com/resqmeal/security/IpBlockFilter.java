@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -15,12 +16,20 @@ import java.io.IOException;
  * Runs before JWT: rejects requests from blocked IPs early so login and public routes are also
  * protected.
  */
-public class IpBlockFilter extends OncePerRequestFilter {
+public class IpBlockFilter extends OncePerRequestFilter implements Ordered {
+
+  /** Lower value runs earlier in the chain (before JWT and traffic capture). */
+  public static final int ORDER = 100;
 
   private final BlockedEntityRegistry blockedEntityRegistry;
 
   public IpBlockFilter(BlockedEntityRegistry blockedEntityRegistry) {
     this.blockedEntityRegistry = blockedEntityRegistry;
+  }
+
+  @Override
+  public int getOrder() {
+    return ORDER;
   }
 
   @Override

@@ -1,6 +1,9 @@
 package com.resqmeal.service;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class BlockedEntityRegistry {
+
+  private static final Logger log = LoggerFactory.getLogger(BlockedEntityRegistry.class);
 
   private final JdbcTemplate jdbc;
 
@@ -22,19 +27,26 @@ public class BlockedEntityRegistry {
 
   @PostConstruct
   public void loadFromDatabase() {
-    for (Map<String, Object> row :
-        jdbc.queryForList("SELECT user_id, ip_address FROM blocked_entities")) {
-      Object uid = row.get("user_id");
-      if (uid != null) {
-        try {
-          blockedUserIds.add(Long.parseLong(uid.toString().trim()));
-        } catch (NumberFormatException ignored) {
+    try {
+      for (Map<String, Object> row :
+          jdbc.queryForList("SELECT user_id, ip_address FROM blocked_entities")) {
+        Object uid = row.get("user_id");
+        if (uid != null) {
+          try {
+            blockedUserIds.add(Long.parseLong(uid.toString().trim()));
+          } catch (NumberFormatException ignored) {
+          }
+        }
+        Object ip = row.get("ip_address");
+        if (ip != null && !ip.toString().isBlank()) {
+          blockedIps.add(ip.toString().trim());
         }
       }
-      Object ip = row.get("ip_address");
-      if (ip != null && !ip.toString().isBlank()) {
-        blockedIps.add(ip.toString().trim());
-      }
+    } catch (DataAccessException e) {
+      log.warn(
+          "Could not load blocked_entities (MySQL down or wrong DB_PASSWORD in backend/.env). "
+              + "IP/user blocks start empty until DB is available: {}",
+          e.getMostSpecificCause().getMessage());
     }
   }
 

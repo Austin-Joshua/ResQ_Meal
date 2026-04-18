@@ -76,10 +76,10 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .addFilterBefore(ipBlockFilter, JwtAuthenticationFilter.class)
-        .addFilterAfter(trafficCaptureFilter, IpBlockFilter.class)
+        .addFilterBefore(ipBlockFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(trafficCaptureFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterAfter(securityMonitoringFilter, JwtAuthenticationFilter.class);
+        .addFilterAfter(securityMonitoringFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
 
