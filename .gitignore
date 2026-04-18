@@ -11,9 +11,10 @@ yarn.lock
 
 # Build outputs
 dist/
+frontend/dist/
 build/
 out/
-server/target/
+backend/target/
 
 # IDE
 .vscode/
@@ -41,9 +42,18 @@ coverage/
 # Uploads
 uploads/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+
 # ML model setup temp clone
 .freshness-models-tmp/
 # Downloaded ML weights (run scripts/setup-freshness-models.js to fetch)
-ml-services/fruit-veg-freshness/*.h5
-ml-services/freshness-detector-tflite/model.tflite
-ml-services/freshvision/models/
+ml/fruit-veg-freshness/*.h5
+ml/freshness-detector-tflite/model.tflite
+ml/freshvision/models/

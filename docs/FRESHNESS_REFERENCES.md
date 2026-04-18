@@ -19,7 +19,7 @@ ResQ Meal supports multiple optional backends for food freshness and quality ass
 - **freshvision** (devdezzies) — EfficientNetB0, apple/banana/orange fresh vs rotten.
 - **Food-Image-Recognition** (MaharshSuryawala) — Inception-v3 on Food-101 (101 classes), image → food class + nutrition (protein, fat, carbs, etc.).
 
-See `server/.env.example` / `application.properties` and `ml-services/*/README.md` for setup of each ML service.
+See `backend/.env.example` / `application.properties` and `ml/*/README.md` for setup of each ML service.
 
 ---
 

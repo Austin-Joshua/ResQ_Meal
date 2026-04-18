@@ -6,6 +6,7 @@
  *
  * Uses: fruit-veg-freshness-ai, Freshness-Detector (TFLite), freshvision.
  * Run from repo root: node scripts/setup-freshness-models.js
+ * ML assets live under ml/
  */
 
 import fs from 'fs';
@@ -16,7 +17,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ROOT = path.resolve(__dirname, '..');
-const ML = path.join(ROOT, 'ml-services');
+const ML = path.join(ROOT, 'ml');
 const TMP = path.join(ROOT, '.freshness-models-tmp');
 
 const CONFIGS = [
@@ -97,8 +98,8 @@ function main() {
 
   if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
   console.log('Done. Next steps:');
-  console.log('  1. Start one or more ML services (see ml-services/*/README.md).');
-  console.log('  2. In server env or application.properties set URL(s), e.g. FRESHNESS_AI_URL=http://localhost:8000');
+  console.log('  1. Start one or more ML services (see ml/*/README.md).');
+  console.log('  2. In backend env or application.properties set URL(s), e.g. FRESHNESS_AI_URL=http://localhost:8000');
   console.log('  3. Environment-based checks: run food-freshness-analyzer and set FRESHNESS_ENV_AI_URL=http://localhost:8001');
 }
 

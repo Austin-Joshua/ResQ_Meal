@@ -17,7 +17,7 @@ npm run dev:all
 **Terminal 1 – API:**
 
 ```bash
-cd server
+cd backend
 ./mvnw spring-boot:run
 ```
 
@@ -55,7 +55,7 @@ mysql -u root -p resqmeal_db < database/seed.sql
 mysql -u root -p resqmeal_db < database/notifications-migration.sql
 ```
 
-Configure MySQL credentials via environment variables or `server/src/main/resources/application.properties` (see `server/.env.example`).
+Configure MySQL credentials via environment variables or `backend/src/main/resources/application.properties` (see `backend/.env.example`).
 
 ## Login flow
 

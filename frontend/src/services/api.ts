@@ -1,0 +1,213 @@
+import axios from 'axios';
+
+/** Same-origin `/api` when using the Spring Boot app or Vite dev proxy; override with VITE_API_URL if needed. */
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Read token from same storage as app (localStorage then sessionStorage)
+function getAuthToken(): string | null {
+  return localStorage.getItem('resqmeal_token') || sessionStorage.getItem('resqmeal_token') || null;
+}
+
+// Request interceptor to add auth token
+api.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor: on 401 (invalid/expired token) clear auth and redirect; on 403 do not (user stays on page)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const isAuthRequest = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
+    if (!isAuthRequest && status === 401) {
+      localStorage.removeItem('resqmeal_token');
+      localStorage.removeItem('resqmeal_user');
+      sessionStorage.removeItem('resqmeal_token');
+      sessionStorage.removeItem('resqmeal_user');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth APIs (passwords hashed on backend with bcrypt; JWT returned)
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post<{ success: boolean; data: { id: number; name: string; email: string; role: string; token: string } }>('/auth/login', { email, password }),
+  register: (data: { name: string; email: string; password: string; role: 'restaurant' | 'ngo' | 'volunteer'; phone_number?: string; address?: string }) =>
+    api.post('/auth/register', data),
+  logout: () => api.post('/auth/logout'),
+};
+
+// Food APIs (Restaurant)
+export const foodApi = {
+  postFood: (data: any) => api.post('/food', data),
+  getMyPosts: () => api.get('/food/my-posts'),
+  /** Get available food for NGOs (POSTED/MATCHED/ACCEPTED/PICKED_UP, not expired). Query: latitude?, longitude?, radius_km?, food_type?, min_urgency?, max_urgency?, limit? */
+  getAvailableFood: (params?: Record<string, string | number>) =>
+    api.get('/food/available/all', { params }),
+  updateFood: (id: string, data: any) => api.put(`/food/${id}`, data),
+  deleteFood: (id: string) => api.delete(`/food/${id}`),
+  /** Upload image for freshness check (uses fruit-veg-freshness-ai when backend is configured). */
+  assessFreshness: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/food/assess-freshness', formData);
+  },
+  /** Check freshness by storage conditions (temperature, humidity, time) - Food-Freshness-Analyzer. */
+  assessFreshnessByEnvironment: (data: {
+    temperature: number;
+    humidity: number;
+    time_stored_hours: number;
+    gas?: number;
+  }) => api.post('/food/assess-freshness-by-environment', data),
+  /** Classify food from image and get nutrition (Food-Image-Recognition, Food-101). */
+  classifyImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/food/classify-image', formData);
+  },
+};
+
+// Match APIs (NGO / Restaurant)
+export const matchApi = {
+  getNGOMatches: () => api.get('/matches/for-ngo/all'),
+  getRestaurantMatches: () => api.get('/matches/for-restaurant/all'),
+  getRecommended: (foodPostId: number, top?: number) =>
+    api.get(`/matches/recommended/${foodPostId}`, { params: top != null ? { top } : undefined }),
+  getMatch: (id: string) => api.get(`/matches/${id}`),
+  createMatch: (foodPostId: number) => api.post('/matches', { food_post_id: foodPostId }),
+  acceptMatch: (matchId: string) => api.put(`/matches/${matchId}/status`, { status: 'ACCEPTED' }),
+  rejectMatch: (_matchId: string) => Promise.resolve({ data: {} }), // Backend has no REJECTED status; UI can hide or use as no-op
+  updateMatchStatus: (matchId: string, status: 'ACCEPTED' | 'PICKED_UP' | 'DELIVERED', volunteer_id?: number, delivery_proof_photo?: string) =>
+    api.put(`/matches/${matchId}/status`, { status, volunteer_id, delivery_proof_photo }),
+  assignVolunteer: (matchId: string, volunteerId: number) => api.put(`/matches/${matchId}/assign-volunteer`, { volunteer_id: volunteerId }),
+};
+
+// Organisation food (NGO adds food → reflected on volunteer page)
+export const organisationApi = {
+  postFood: (data: {
+    food_name: string;
+    food_type?: string;
+    quantity_servings?: number;
+    description?: string;
+    address: string;
+    latitude?: number;
+    longitude?: number;
+    freshness_score?: number | null;
+    quality_score?: number | null;
+  }) => api.post('/organisation/food', data),
+  getMyFood: () => api.get('/organisation/food'),
+  getAvailableFood: () => api.get('/organisation/food/available'),
+};
+
+// Delivery APIs (Volunteer)
+export const deliveryApi = {
+  getVolunteerDeliveries: () => api.get('/delivery/volunteer'),
+  completeDelivery: (deliveryId: string, proofPhoto: string) =>
+    api.post('/delivery/complete', { deliveryId, proofPhoto }),
+  updateDeliveryStatus: (deliveryId: string, status: string) =>
+    api.put(`/delivery/${deliveryId}/status`, { status }),
+};
+
+// Impact APIs
+export const impactApi = {
+  getImpact: () => api.get('/impact/ngo').catch(() => api.get('/impact/restaurant')),
+  getNGOImpact: () => api.get('/impact/ngo'),
+  getRestaurantImpact: () => api.get('/impact/restaurant'),
+  getGlobalImpact: () => api.get('/impact/global'),
+  getPublicStats: () => api.get('/impact/global'),
+};
+
+// Notification APIs (real-time + persisted)
+export const notificationApi = {
+  getList: (params?: { unread_only?: boolean; limit?: number }) =>
+    api.get<{ data: NotificationItem[]; unreadCount: number }>('/notifications', { params }),
+  markRead: (id: number) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/read-all'),
+};
+
+export interface NotificationItem {
+  id: number;
+  type: string;
+  title: string;
+  message: string | null;
+  link: string | null;
+  ref_id: number | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+// User APIs
+export const userApi = {
+  getMe: () => api.get('/users/me'),
+  updateMe: (data: any) => api.put('/users/me', data),
+  uploadProfilePhoto: (file: File) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    return api.post('/upload/profile-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
+/** Security admin APIs (requires ROLE_ADMIN; configure ADMIN_USER_IDS on server). */
+export const adminSecurityApi = {
+  getLogs: (limit = 100) =>
+    api.get<{ success: boolean; data: SecurityLogRow[] }>('/admin/logs', { params: { limit } }),
+  getCriticalLogs: (limit = 100) =>
+    api.get<{ success: boolean; data: SecurityLogRow[] }>('/admin/critical-logs', {
+      params: { limit },
+    }),
+  getBlocked: () =>
+    api.get<{ success: boolean; data: BlockedEntityRow[] }>('/admin/blocked-users'),
+  getThreatMlEvents: (limit = 100) =>
+    api.get<{ success: boolean; data: ThreatMlEventRow[] }>('/admin/threat-ml-events', {
+      params: { limit },
+    }),
+};
+
+export interface SecurityLogRow {
+  id: number;
+  user_id: string | null;
+  ip_address: string;
+  action: string;
+  status: string;
+  is_critical: boolean;
+  details: string | null;
+  created_at: string;
+}
+
+export interface BlockedEntityRow {
+  id: number;
+  user_id: string | null;
+  ip_address: string | null;
+  reason: string | null;
+  blocked_at: string;
+}
+
+export interface ThreatMlEventRow {
+  id: number;
+  user_id: string | null;
+  ip_address: string;
+  http_method: string;
+  path: string;
+  label: string;
+  confidence: number;
+  attack_families: string | null;
+  details: string | null;
+  created_at: string;
+}
+
+export default api;

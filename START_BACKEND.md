@@ -12,10 +12,16 @@ npm run dev:all
 
 ## Start API only
 
+**Loads `backend/.env` automatically (recommended):** from repo root, `npm run dev:backend`.
+
+Or manually:
+
 ```bash
-cd server
+cd backend
 ./mvnw spring-boot:run
 ```
+
+(On Windows, `node backend/scripts/run-spring.mjs` from the repo root runs `mvnw.cmd` with env from `backend/.env`.)
 
 ## Verify
 
@@ -24,7 +30,7 @@ cd server
 
 ## Configuration
 
-- See **`server/.env.example`** and **`server/src/main/resources/application.properties`**
+- See **`backend/.env.example`** and **`backend/src/main/resources/application.properties`**
 - MySQL: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 - JWT: `JWT_SECRET`
 - HTTP port: `PORT` (default 8080)

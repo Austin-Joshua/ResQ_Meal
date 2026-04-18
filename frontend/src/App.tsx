@@ -1,0 +1,348 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LanguageProvider } from "@/context/LanguageContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
+import { ModeProvider } from "@/context/ModeContext";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import LanguageSelectorPage from "@/pages/LanguageSelector";
+import LoginPage from "@/pages/Login";
+import SignupPage from "@/pages/Signup";
+import OrganisationReport from "@/pages/OrganisationReport";
+import VolunteerMode from "@/pages/VolunteerMode";
+import SecurityMonitoringPage from "@/pages/SecurityMonitoringPage";
+import ResQMealApp from "@/pages/App";
+import type { LoginSuccessUser } from "@/pages/Login";
+
+const queryClient = new QueryClient();
+
+function OnboardingGate({
+  auth,
+  darkMode,
+}: {
+  auth: { token: string; user: LoginSuccessUser } | null;
+  darkMode: boolean;
+}) {
+  const { shouldShow } = useOnboarding();
+  if (!auth?.user || !shouldShow) return null;
+  return (
+    <OnboardingModal
+      open
+      onClose={() => {}}
+      role={auth.user.role ?? "volunteer"}
+      darkMode={darkMode}
+    />
+  );
+}
+
+const STORAGE_TOKEN = "resqmeal_token";
+const STORAGE_USER = "resqmeal_user";
+const FIRST_TIME_DONE_PREFIX = "resqmeal_first_time_done_";
+
+function getFirstTimeDoneKey(userId: number): string {
+  return `${FIRST_TIME_DONE_PREFIX}${userId}`;
+}
+
+function getFirstTimeDone(userId: number): boolean {
+  try {
+    return localStorage.getItem(getFirstTimeDoneKey(userId)) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function setFirstTimeDone(userId: number): void {
+  try {
+    localStorage.setItem(getFirstTimeDoneKey(userId), "true");
+  } catch {}
+}
+
+function getStorage(rememberMe: boolean): Storage {
+  return rememberMe ? localStorage : sessionStorage;
+}
+
+function readAuth(): { token: string; user: LoginSuccessUser } | null {
+  try {
+    // Prefer localStorage (remember me), then sessionStorage (session only)
+    for (const storage of [localStorage, sessionStorage]) {
+      const token = storage.getItem(STORAGE_TOKEN);
+      const userStr = storage.getItem(STORAGE_USER);
+      if (token && userStr) {
+        const user = JSON.parse(userStr) as LoginSuccessUser;
+        return { token, user };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const ROUTES = {
+  HOME: "/",
+  SIGNUP: "/Signup",
+  DASHBOARD: "/Dashboard",
+  FRESHNESS: "/Freshness",
+  NGO: "/NGO",
+  ELITE: "/Elite",
+  REPORT: "/Report",
+  REPORT_MEALS_SAVED: "/Report/meals-saved",
+  REPORT_FOOD_DIVERTED: "/Report/food-diverted",
+  REPORT_CO2_PREVENTED: "/Report/co2-prevented",
+  REPORT_WATER_SAVED: "/Report/water-saved",
+  ABOUT: "/About",
+  SETTINGS: "/Settings",
+  ADMIN: "/Admin",
+} as const;
+
+const App = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [auth, setAuth] = useState<{ token: string; user: LoginSuccessUser } | null>(readAuth);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(true);
+  const [firstTimeComplete, setFirstTimeComplete] = useState(() => {
+    const a = readAuth();
+    return a?.user?.id != null ? getFirstTimeDone(a.user.id) : false;
+  });
+  /** Changes on each login so Dashboard can refresh "Did you know?" tip */
+  const [loginKey, setLoginKey] = useState(() => Date.now());
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem("darkMode");
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
+  const [language, setLanguage] = useState<"en" | "ta" | "hi">(() => {
+    try {
+      const saved = localStorage.getItem("resqmeal_lang") as "en" | "ta" | "hi" | null;
+      return saved && ["en", "ta", "hi"].includes(saved) ? saved : "en";
+    } catch {
+      return "en";
+    }
+  });
+
+  useEffect(() => {
+    if (auth?.user?.id != null) {
+      setFirstTimeComplete(getFirstTimeDone(auth.user.id));
+    }
+  }, [auth?.user?.id]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("darkMode", JSON.stringify(darkMode));
+      document.documentElement.classList.toggle("dark", darkMode);
+    } catch {}
+  }, [darkMode]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("resqmeal_lang", language);
+    } catch {}
+  }, [language]);
+
+  const handleLoginSuccess = (user: LoginSuccessUser, token: string, rememberMe = true) => {
+    const storage = getStorage(rememberMe);
+    try {
+      storage.setItem(STORAGE_TOKEN, token);
+      storage.setItem(STORAGE_USER, JSON.stringify(user));
+      const other = rememberMe ? sessionStorage : localStorage;
+      other.removeItem(STORAGE_TOKEN);
+      other.removeItem(STORAGE_USER);
+    } catch (_) {}
+    setAuth({ token, user });
+    setShowLoginModal(false);
+    setLoginKey(Date.now());
+    setFirstTimeComplete(getFirstTimeDone(user.id));
+    navigate(ROUTES.DASHBOARD);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_USER);
+    sessionStorage.removeItem(STORAGE_TOKEN);
+    sessionStorage.removeItem(STORAGE_USER);
+    setAuth(null);
+  };
+
+  const showFirstTimeOnboarding = auth?.user && !firstTimeComplete;
+  const pathname = location.pathname;
+  const isPublicPath = pathname === ROUTES.HOME || pathname === ROUTES.SIGNUP;
+  const isAppPath = [
+    ROUTES.DASHBOARD, 
+    ROUTES.FRESHNESS, 
+    ROUTES.NGO, 
+    ROUTES.ELITE, 
+    ROUTES.REPORT, 
+    ROUTES.REPORT_MEALS_SAVED,
+    ROUTES.REPORT_FOOD_DIVERTED,
+    ROUTES.REPORT_CO2_PREVENTED,
+    ROUTES.REPORT_WATER_SAVED,
+    ROUTES.ABOUT, 
+    ROUTES.SETTINGS,
+    ROUTES.ADMIN,
+  ].includes(pathname) || pathname.startsWith('/Report/');
+  const userRole = auth?.user?.role?.toLowerCase();
+  const isOrgAdmin = userRole === 'restaurant' || userRole === 'ngo';
+
+  const handleLanguageSelect = (lang: "en" | "ta" | "hi") => {
+    setLanguage(lang);
+    setShowLanguageSelector(false);
+  };
+
+  const content = (() => {
+    if (!auth && isAppPath) {
+      return <Navigate to={ROUTES.HOME} replace />;
+    }
+    if (auth && pathname === ROUTES.SIGNUP) {
+      return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+    if (auth && pathname === ROUTES.HOME) {
+      return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+
+    if (auth && pathname === ROUTES.ADMIN) {
+      return (
+        <SecurityMonitoringPage
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+          onBack={() => navigate(ROUTES.DASHBOARD)}
+        />
+      );
+    }
+
+    if (!auth) {
+      if (pathname === ROUTES.SIGNUP) {
+        return (
+          <SignupPage
+            darkMode={darkMode}
+            onSuccess={handleLoginSuccess}
+            onBackToSignIn={() => navigate(ROUTES.HOME)}
+            onChangeLanguage={() => setShowLanguageSelector(true)}
+          />
+        );
+      }
+      if (showLanguageSelector) {
+        return (
+          <LanguageSelectorPage
+            darkMode={darkMode}
+            onSelect={handleLanguageSelect}
+          />
+        );
+      }
+      return (
+        <LoginPage
+          darkMode={darkMode}
+          onSuccess={handleLoginSuccess}
+          onGoToSignUp={() => navigate(ROUTES.SIGNUP)}
+          onChangeLanguage={() => setShowLanguageSelector(true)}
+        />
+      );
+    }
+
+    if (isOrgAdmin && auth?.user) {
+      return (
+        <OrganisationReport
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          language={language}
+          setLanguage={setLanguage}
+          user={auth.user}
+          onLogout={handleLogout}
+        />
+      );
+    }
+
+    if (isAppPath) {
+      return (
+        <ResQMealApp
+          auth={auth?.user ?? null}
+          loginKey={loginKey}
+          onOpenSignIn={() => setShowLoginModal(true)}
+          onLogout={auth?.user ? handleLogout : undefined}
+          language={language}
+          setLanguage={setLanguage}
+          currentPath={pathname}
+          routes={ROUTES}
+        />
+      );
+    }
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
+  })();
+
+  const handleFirstTimeComplete = () => {
+    if (auth?.user?.id) setFirstTimeDone(auth.user.id);
+    setFirstTimeComplete(true);
+  };
+
+  const handleRoleUpdated = (token: string, user: LoginSuccessUser) => {
+    const storage = getStorage(true);
+    try {
+      storage.setItem(STORAGE_TOKEN, token);
+      storage.setItem(STORAGE_USER, JSON.stringify(user));
+      const other = storage === localStorage ? sessionStorage : localStorage;
+      other.removeItem(STORAGE_TOKEN);
+      other.removeItem(STORAGE_USER);
+    } catch (_) {}
+    setAuth({ token, user });
+    setLoginKey(Date.now());
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <OnboardingProvider>
+          <ModeProvider>
+            <LanguageProvider language={language} setLanguage={setLanguage}>
+              <NotificationProvider hasAuth={!!auth}>
+                {content}
+              {showLoginModal && (
+                <div
+                  className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+                  role="dialog"
+                  aria-modal="true"
+                  onClick={() => setShowLoginModal(false)}
+                >
+                  <div
+                    className="relative w-full max-w-md"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <LoginPage
+                      darkMode={darkMode}
+                      onSuccess={handleLoginSuccess}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginModal(false)}
+                      className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition ${
+                        darkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-white text-slate-700 hover:bg-slate-100 shadow"
+                      }`}
+                      aria-label="Close"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+                <OnboardingGate auth={auth} darkMode={darkMode} />
+              </NotificationProvider>
+            </LanguageProvider>
+          </ModeProvider>
+        </OnboardingProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;

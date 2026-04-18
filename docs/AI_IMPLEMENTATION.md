@@ -111,14 +111,14 @@ AI is implemented as a **decision-support layer**, not as automation replacing h
 
 | Aspect | Detail |
 |--------|--------|
-| **Where AI lives** | Separate ML services (Python), e.g. under `ml-services/`. |
+| **Where AI lives** | Separate ML services (Python), e.g. under `ml/`. |
 | **Communication** | Spring Boot calls ML sidecars via **REST** (e.g. `/evaluate`, `/evaluate-environment`). |
 | **Why this matters** | Does not break the existing system; easy to scale and to replace or upgrade models. |
 
 **Relevant code**
 
-- **Matching (rule-based):** `server/src/main/java/.../MatchingService.java`, `MatchController.java`
-- **Freshness (rules + optional ML):** `FoodQualityService.java`, `ml-services/*` (see README and `docs/FRESHNESS_REFERENCES.md`)
+- **Matching (rule-based):** `backend/src/main/java/.../MatchingService.java`, `MatchController.java`
+- **Freshness (rules + optional ML):** `FoodQualityService.java`, `ml/*` (see README and `docs/FRESHNESS_REFERENCES.md`)
 
 ---
 

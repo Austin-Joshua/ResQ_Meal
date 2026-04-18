@@ -4,10 +4,11 @@ A web platform connecting restaurants and food establishments with NGOs and volu
 
 ## Tech Stack
 
-- **Frontend**: React + TypeScript + Tailwind CSS + Vite
-- **Backend**: Java 17 + Spring Boot 3 (REST API, JDBC, Spring Security + JWT)
+- **Frontend**: React + TypeScript + Tailwind CSS + Vite (`frontend/`)
+- **Backend**: Java 17 + Spring Boot 3 (`backend/`) — REST API, JDBC, Spring Security + JWT
 - **Real-time**: Socket.IO (Java netty-socketio; default port **9090** alongside HTTP **8080**)
-- **Database**: MySQL
+- **Database**: MySQL (`database/`)
+- **ML** (optional): Python sidecars (`ml/`)
 
 ## Real-time & Notifications
 
@@ -20,17 +21,19 @@ A web platform connecting restaurants and food establishments with NGOs and volu
 
 ## Quick Start
 
+**Step-by-step connection (DB, `.env`, admin IDs, Telegram, `/Admin`):** see **[docs/CONNECT.md](docs/CONNECT.md)**.
+
 ### Prerequisites
 
 - Node.js (for the Vite frontend)
-- Java 17 + Maven (or use the included `server/mvnw` wrapper)
+- Java 17 + Maven (or use the included `backend/mvnw` wrapper)
 - MySQL
 
 ### Run frontend and API together (recommended)
 
-1. Copy `server/.env.example` to `server/.env` (or set env vars) with `DB_*`, `JWT_SECRET`, etc.
-2. Create and seed the database (see [Database setup](#database-setup)).
-3. From the project root:
+1. Copy `backend/.env.example` to `backend/.env` and set `DB_*`, `JWT_SECRET`, and optionally `ADMIN_USER_IDS`, Telegram vars (see [docs/CONNECT.md](docs/CONNECT.md)).
+2. Create and seed the database (see [Database setup](#database-setup)). If you already have a DB from an older version, apply `database/security-migration.sql` for security monitoring tables.
+3. From the **repository root**:
 
 ```bash
 npm install
@@ -47,15 +50,23 @@ Open **http://localhost:5173** and use the login page status indicator to confir
 
 ### Frontend only
 
+From the **repository root**:
+
 ```bash
 npm install
 npm run dev
 ```
 
+Or from `frontend/`:
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
 ### API only
 
 ```bash
-cd server
+cd backend
 ./mvnw spring-boot:run
 ```
 
@@ -64,24 +75,27 @@ cd server
 ### Production JAR (full-stack static + API)
 
 ```bash
+npm install
 npm run build
 npm run build:fullstack
-java -jar server/target/resqmeal-server-1.0.0.jar
+java -jar backend/target/resqmeal-server-1.0.0.jar
 ```
 
 ### App logo
 
-Place **`logo.png`** (or `logo.jpg`) in **`public/`**. The app uses `/logo.png` everywhere. See `public/LOGO_README.txt`.
+Place **`logo.png`** (or `logo.jpg`) in **`frontend/public/`**. The app uses `/logo.png` everywhere. See `frontend/public/LOGO_README.txt`.
 
 ## Project structure
 
 ```
-├── src/                 # React frontend
-├── server/              # Spring Boot (Maven): API, security, Socket.IO
-├── database/            # MySQL schema, seed, notifications migration
-├── ml-services/         # Optional Python ML sidecars (freshness, classification)
-├── public/              # Static assets
-└── package.json         # Frontend scripts; `dev:backend` runs Spring in server/
+├── frontend/              # React + Vite + TypeScript (UI)
+├── backend/               # Spring Boot (Maven): API, security, Socket.IO
+├── database/              # MySQL schema, seed, migrations
+├── ml/                    # Optional Python ML services (freshness, classification)
+├── docs/                  # Architecture and AI references
+├── scripts/               # Repo tooling (e.g. model download helper)
+├── package.json           # Root workspace: run `npm install` once here
+└── README.md
 ```
 
 ## Features
@@ -110,14 +124,14 @@ Runs on `http://localhost:5173`.
 ### Backend
 
 ```bash
-cd server && ./mvnw spring-boot:run
+cd backend && ./mvnw spring-boot:run
 ```
 
-API base path: **`/api`** on port **8080** (see `server/src/main/resources/application.properties`).
+API base path: **`/api`** on port **8080** (see `backend/src/main/resources/application.properties`).
 
 ## Environment (Spring)
 
-Use **`server/.env.example`** as a reference. Spring reads `DB_*`, `JWT_SECRET`, `PORT`, `SOCKETIO_PORT`, optional ML URLs (`FRESHNESS_AI_URL`, `FRESHNESS_ENV_AI_URL`, `FOOD_IMAGE_RECOGNITION_URL`), etc., via environment variables or `application.properties`.
+Use **`backend/.env.example`** as a reference. Spring reads `DB_*`, `JWT_SECRET`, `PORT`, `SOCKETIO_PORT`, optional ML URLs (`FRESHNESS_AI_URL`, `FRESHNESS_ENV_AI_URL`, `FOOD_IMAGE_RECOGNITION_URL`), etc., via environment variables or `application.properties`.
 
 ## Database setup
 
@@ -128,6 +142,12 @@ Use **`server/.env.example`** as a reference. Spring reads `DB_*`, `JWT_SECRET`,
 mysql -u root -p resqmeal_db < database/database.sql
 mysql -u root -p resqmeal_db < database/seed.sql
 mysql -u root -p resqmeal_db < database/notifications-migration.sql
+```
+
+For an **existing** database that is missing only the security tables:
+
+```bash
+mysql -u root -p resqmeal_db < database/security-migration.sql
 ```
 
 ## Test login credentials
@@ -145,7 +165,7 @@ If login fails, ensure the DB is seeded and the API can reach MySQL.
 
 ## Freshness detector & ML models
 
-Without ML URLs, the API returns **mock** freshness assessments. For real models, see **`docs/FRESHNESS_REFERENCES.md`** and each **`ml-services/*/README.md`**.
+Without ML URLs, the API returns **mock** freshness assessments. For real models, see **`docs/FRESHNESS_REFERENCES.md`** and each **`ml/*/README.md`**.
 
 ### One-command model download (image-based)
 
@@ -155,7 +175,7 @@ node scripts/setup-freshness-models.js
 
 ### Wire ML services to Spring
 
-Set environment variables (or entries in `server/src/main/resources/application.properties`) such as:
+Set environment variables (or entries in `backend/src/main/resources/application.properties`) such as:
 
 | Service | Variable | Example |
 |--------|----------|---------|
