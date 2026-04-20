@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.Customizer;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -39,7 +40,8 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.csrf(csrf -> csrf.disable())
+    http.cors(Customizer.withDefaults())
+        .csrf(csrf -> csrf.disable())
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(
             e ->
@@ -52,6 +54,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(HttpMethod.GET, "/api/health")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register")
                     .permitAll()
@@ -77,9 +81,9 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(ipBlockFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(trafficCaptureFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterAfter(securityMonitoringFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterAfter(trafficCaptureFilter, IpBlockFilter.class)
+        .addFilterAfter(jwtAuthenticationFilter, TrafficCaptureFilter.class)
+        .addFilterAfter(securityMonitoringFilter, JwtAuthenticationFilter.class);
     return http.build();
   }
 

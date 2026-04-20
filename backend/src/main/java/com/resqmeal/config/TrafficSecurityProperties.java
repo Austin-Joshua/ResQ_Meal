@@ -4,12 +4,17 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "app.traffic-security")
 public class TrafficSecurityProperties {
+  private static final String DEFAULT_ML_SERVICE_BASE_URL = "http://127.0.0.1:8091";
+  private static final int MIN_BODY_BYTES = 1024;
+  private static final int MAX_BODY_BYTES = 1024 * 1024;
+  private static final int MIN_CONNECT_TIMEOUT_MS = 100;
+  private static final int MIN_READ_TIMEOUT_MS = 500;
 
   /** When false, traffic is not wrapped or sent to the ML service. */
   private boolean enabled = false;
 
   /** Base URL of the traffic-security ML FastAPI service. */
-  private String mlServiceBaseUrl = "http://127.0.0.1:8091";
+  private String mlServiceBaseUrl = DEFAULT_ML_SERVICE_BASE_URL;
 
   private int maxBodyBytes = 65536;
 
@@ -41,7 +46,11 @@ public class TrafficSecurityProperties {
   }
 
   public void setMlServiceBaseUrl(String mlServiceBaseUrl) {
-    this.mlServiceBaseUrl = mlServiceBaseUrl;
+    if (mlServiceBaseUrl == null || mlServiceBaseUrl.isBlank()) {
+      this.mlServiceBaseUrl = DEFAULT_ML_SERVICE_BASE_URL;
+      return;
+    }
+    this.mlServiceBaseUrl = mlServiceBaseUrl.trim();
   }
 
   public int getMaxBodyBytes() {
@@ -49,7 +58,7 @@ public class TrafficSecurityProperties {
   }
 
   public void setMaxBodyBytes(int maxBodyBytes) {
-    this.maxBodyBytes = maxBodyBytes;
+    this.maxBodyBytes = Math.max(MIN_BODY_BYTES, Math.min(MAX_BODY_BYTES, maxBodyBytes));
   }
 
   public int getConnectTimeoutMs() {
@@ -57,7 +66,7 @@ public class TrafficSecurityProperties {
   }
 
   public void setConnectTimeoutMs(int connectTimeoutMs) {
-    this.connectTimeoutMs = connectTimeoutMs;
+    this.connectTimeoutMs = Math.max(MIN_CONNECT_TIMEOUT_MS, connectTimeoutMs);
   }
 
   public int getReadTimeoutMs() {
@@ -65,7 +74,7 @@ public class TrafficSecurityProperties {
   }
 
   public void setReadTimeoutMs(int readTimeoutMs) {
-    this.readTimeoutMs = readTimeoutMs;
+    this.readTimeoutMs = Math.max(MIN_READ_TIMEOUT_MS, readTimeoutMs);
   }
 
   public String getFirebaseWebhookUrl() {
@@ -73,7 +82,7 @@ public class TrafficSecurityProperties {
   }
 
   public void setFirebaseWebhookUrl(String firebaseWebhookUrl) {
-    this.firebaseWebhookUrl = firebaseWebhookUrl;
+    this.firebaseWebhookUrl = firebaseWebhookUrl != null ? firebaseWebhookUrl.trim() : "";
   }
 
   public String getFirebaseWebhookSecret() {
@@ -81,7 +90,7 @@ public class TrafficSecurityProperties {
   }
 
   public void setFirebaseWebhookSecret(String firebaseWebhookSecret) {
-    this.firebaseWebhookSecret = firebaseWebhookSecret;
+    this.firebaseWebhookSecret = firebaseWebhookSecret != null ? firebaseWebhookSecret.trim() : "";
   }
 
   public boolean isBlockOnMalicious() {

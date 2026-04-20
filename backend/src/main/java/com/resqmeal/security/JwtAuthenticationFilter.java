@@ -17,12 +17,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ordered {
 
   public static final int ORDER = 120;
+  private static final Set<String> ALLOWED_APP_ROLES = Set.of("restaurant", "ngo", "volunteer");
 
   private final JwtUtil jwtUtil;
   private final SecurityMonitoringProperties securityMonitoringProperties;
@@ -53,10 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ord
           id = Long.parseLong(claims.getSubject());
         }
         String role = claims.get("role", String.class);
-        if (id != null && role != null) {
-          var principal = new AuthPrincipal(id, role);
+        String normalizedRole = normalizeRole(role);
+        if (id != null && normalizedRole != null) {
+          var principal = new AuthPrincipal(id, normalizedRole);
           var authorities = new ArrayList<SimpleGrantedAuthority>();
-          authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+          authorities.add(
+              new SimpleGrantedAuthority("ROLE_" + normalizedRole.toUpperCase(Locale.ROOT)));
           if (securityMonitoringProperties.getAdminUserIds() != null
               && securityMonitoringProperties.getAdminUserIds().contains(id)) {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
@@ -70,5 +74,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ord
       }
     }
     filterChain.doFilter(request, response);
+  }
+
+  private static String normalizeRole(String rawRole) {
+    if (rawRole == null || rawRole.isBlank()) {
+      return null;
+    }
+    String normalized = rawRole.trim().toLowerCase(Locale.ROOT);
+    return ALLOWED_APP_ROLES.contains(normalized) ? normalized : null;
   }
 }

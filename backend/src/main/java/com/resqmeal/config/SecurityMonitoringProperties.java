@@ -42,7 +42,33 @@ public class SecurityMonitoringProperties {
   }
 
   public void setAdminUserIds(List<Long> adminUserIds) {
-    this.adminUserIds = adminUserIds;
+    this.adminUserIds = sanitizeAdminUserIds(adminUserIds);
+  }
+
+  /**
+   * Supports env-style CSV values (e.g. ADMIN_USER_IDS=1,42) without failing binding when values
+   * are blank or contain whitespace.
+   */
+  public void setAdminUserIds(String rawAdminUserIds) {
+    if (rawAdminUserIds == null || rawAdminUserIds.isBlank()) {
+      this.adminUserIds = new ArrayList<>();
+      return;
+    }
+    List<Long> parsed = new ArrayList<>();
+    for (String token : rawAdminUserIds.split(",")) {
+      String value = token.trim();
+      if (value.isEmpty()) {
+        continue;
+      }
+      try {
+        long id = Long.parseLong(value);
+        if (id > 0) {
+          parsed.add(id);
+        }
+      } catch (NumberFormatException ignored) {
+      }
+    }
+    this.adminUserIds = sanitizeAdminUserIds(parsed);
   }
 
   public int getMaxFailedLoginsPerMinute() {
@@ -50,7 +76,7 @@ public class SecurityMonitoringProperties {
   }
 
   public void setMaxFailedLoginsPerMinute(int maxFailedLoginsPerMinute) {
-    this.maxFailedLoginsPerMinute = maxFailedLoginsPerMinute;
+    this.maxFailedLoginsPerMinute = Math.max(1, maxFailedLoginsPerMinute);
   }
 
   public int getMaxMutationsPerMinute() {
@@ -58,6 +84,19 @@ public class SecurityMonitoringProperties {
   }
 
   public void setMaxMutationsPerMinute(int maxMutationsPerMinute) {
-    this.maxMutationsPerMinute = maxMutationsPerMinute;
+    this.maxMutationsPerMinute = Math.max(1, maxMutationsPerMinute);
+  }
+
+  private static List<Long> sanitizeAdminUserIds(List<Long> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return new ArrayList<>();
+    }
+    List<Long> out = new ArrayList<>();
+    for (Long id : ids) {
+      if (id != null && id > 0 && !out.contains(id)) {
+        out.add(id);
+      }
+    }
+    return out;
   }
 }
