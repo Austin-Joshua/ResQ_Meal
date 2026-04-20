@@ -177,6 +177,16 @@ export const adminSecurityApi = {
     }),
 };
 
+/** Attack simulation admin APIs (requires ROLE_ADMIN). */
+export const adminAttackSimApi = {
+  getState: () =>
+    api.get<{ success: boolean; security_mode_on: boolean }>('/admin/attack-sim/state'),
+  getLogs: (limit = 100) =>
+    api.get<{ success: boolean; data: AttackSimulationLogRow[] }>('/admin/attack-sim/logs', {
+      params: { limit },
+    }),
+};
+
 export interface SecurityLogRow {
   id: number;
   user_id: string | null;
@@ -206,6 +216,16 @@ export interface ThreatMlEventRow {
   confidence: number;
   attack_families: string | null;
   details: string | null;
+  created_at: string;
+}
+
+export interface AttackSimulationLogRow {
+  id: number;
+  event_type: string;
+  action: string;
+  actor: string | null;
+  details: string | null;
+  blocked: boolean;
   created_at: string;
 }
 

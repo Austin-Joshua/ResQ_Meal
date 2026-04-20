@@ -17,6 +17,7 @@ import VolunteerMode from "@/pages/VolunteerMode";
 import SecurityMonitoringPage from "@/pages/SecurityMonitoringPage";
 import ResQMealApp from "@/pages/App";
 import type { LoginSuccessUser } from "@/pages/Login";
+import { userApi } from "@/services/api";
 
 const queryClient = new QueryClient();
 
@@ -146,7 +147,7 @@ const App = () => {
     } catch {}
   }, [language]);
 
-  const handleLoginSuccess = (user: LoginSuccessUser, token: string, rememberMe = true) => {
+  const handleLoginSuccess = async (user: LoginSuccessUser, token: string, rememberMe = true) => {
     const storage = getStorage(rememberMe);
     try {
       storage.setItem(STORAGE_TOKEN, token);
@@ -159,6 +160,16 @@ const App = () => {
     setShowLoginModal(false);
     setLoginKey(Date.now());
     setFirstTimeComplete(getFirstTimeDone(user.id));
+    try {
+      const me = await userApi.getMe();
+      const isSecurityAdmin = Boolean((me.data as { data?: { is_security_admin?: boolean } })?.data?.is_security_admin);
+      if (isSecurityAdmin) {
+        navigate(ROUTES.ADMIN);
+        return;
+      }
+    } catch {
+      // Fall through to default route if admin check fails.
+    }
     navigate(ROUTES.DASHBOARD);
   };
 

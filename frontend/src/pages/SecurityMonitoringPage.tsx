@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { Shield, List, AlertOctagon, Ban, RefreshCw, Loader2, Radar } from 'lucide-react';
 import {
+  adminAttackSimApi,
   adminSecurityApi,
   userApi,
+  type AttackSimulationLogRow,
   type BlockedEntityRow,
   type SecurityLogRow,
   type ThreatMlEventRow,
@@ -29,17 +31,19 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
   onBack,
 }) => {
   const [allowed, setAllowed] = useState<boolean | null>(null);
-  const [active, setActive] = useState<'logs' | 'critical' | 'blocked' | 'ml'>('logs');
+  const [active, setActive] = useState<'logs' | 'critical' | 'blocked' | 'ml' | 'malicious'>('logs');
   const [logs, setLogs] = useState<SecurityLogRow[]>([]);
   const [criticalLogs, setCriticalLogs] = useState<SecurityLogRow[]>([]);
   const [blocked, setBlocked] = useState<BlockedEntityRow[]>([]);
   const [threatMl, setThreatMl] = useState<ThreatMlEventRow[]>([]);
+  const [attackSimLogs, setAttackSimLogs] = useState<AttackSimulationLogRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const navItems: AppShellNavItem[] = [
     { id: 'logs', icon: List, label: 'All logs' },
     { id: 'critical', icon: AlertOctagon, label: 'Critical' },
+    { id: 'malicious', icon: Shield, label: 'Malicious' },
     { id: 'blocked', icon: Ban, label: 'Blocked' },
     { id: 'ml', icon: Radar, label: 'ML threats' },
   ];
@@ -66,16 +70,18 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const [l, c, b, m] = await Promise.all([
+      const [l, c, b, m, a] = await Promise.all([
         adminSecurityApi.getLogs(150),
         adminSecurityApi.getCriticalLogs(150),
         adminSecurityApi.getBlocked(),
         adminSecurityApi.getThreatMlEvents(150),
+        adminAttackSimApi.getLogs(150),
       ]);
       setLogs(l.data.data ?? []);
       setCriticalLogs(c.data.data ?? []);
       setBlocked(b.data.data ?? []);
       setThreatMl(m.data.data ?? []);
+      setAttackSimLogs(a.data.data ?? []);
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e
         ? String((e as { response?: { status?: number } }).response?.status)
@@ -92,6 +98,34 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
 
   const tableShell =
     darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200';
+
+  const maliciousSummary = [
+    ...threatMl
+      .filter((r) => r.label.toLowerCase() !== 'normal')
+      .map((r) => ({
+        id: `ml-${r.id}`,
+        source: 'Traffic ML',
+        when: r.created_at,
+        kind: `${r.label.toUpperCase()} (${(r.confidence * 100).toFixed(1)}%)`,
+        details: `${r.http_method} ${r.path} | ip=${r.ip_address} | families=${r.attack_families ?? 'n/a'}`,
+      })),
+    ...criticalLogs.map((r) => ({
+      id: `critical-${r.id}`,
+      source: 'Security Log',
+      when: r.created_at,
+      kind: `${r.action} / ${r.status}`,
+      details: `${r.details ?? 'No details'} | ip=${r.ip_address} | user=${r.user_id ?? 'anonymous'}`,
+    })),
+    ...attackSimLogs
+      .filter((r) => r.event_type === 'ATTACK_EXECUTED' || r.event_type === 'THREAT_BLOCKED')
+      .map((r) => ({
+        id: `sim-${r.id}`,
+        source: 'Attack Simulation',
+        when: r.created_at,
+        kind: `${r.event_type} / ${r.action}`,
+        details: `${r.details ?? 'No details'} | actor=${r.actor ?? 'system'} | blocked=${r.blocked ? 'yes' : 'no'}`,
+      })),
+  ].sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime());
 
   const renderRows = (rows: SecurityLogRow[]) => (
     <div className="overflow-x-auto rounded-lg border">
@@ -257,6 +291,44 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
                       <td className="p-2">{r.user_id ?? '—'}</td>
                       <td className="p-2 max-w-xs truncate text-xs" title={r.attack_families ?? ''}>
                         {r.attack_families ?? '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {active === 'malicious' && (
+          <section className={`rounded-xl border p-4 ${tableShell}`}>
+            <h2 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+              Malicious / Threat details
+            </h2>
+            <p className={`text-sm mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Combined feed for critical security events, ML malicious classifications, and attack simulation actions.
+            </p>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className={darkMode ? 'bg-slate-900/80' : 'bg-slate-100'}>
+                  <tr>
+                    <th className="text-left p-2 font-semibold">Time</th>
+                    <th className="text-left p-2 font-semibold">Source</th>
+                    <th className="text-left p-2 font-semibold">Type</th>
+                    <th className="text-left p-2 font-semibold">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {maliciousSummary.map((r) => (
+                    <tr
+                      key={r.id}
+                      className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}
+                    >
+                      <td className="p-2 whitespace-nowrap">{new Date(r.when).toLocaleString()}</td>
+                      <td className="p-2">{r.source}</td>
+                      <td className="p-2">{r.kind}</td>
+                      <td className="p-2 max-w-xl truncate" title={r.details}>
+                        {r.details}
                       </td>
                     </tr>
                   ))}
