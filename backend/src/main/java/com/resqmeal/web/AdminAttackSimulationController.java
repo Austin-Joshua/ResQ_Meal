@@ -2,6 +2,8 @@ package com.resqmeal.web;
 
 import com.resqmeal.security.AuthPrincipal;
 import com.resqmeal.service.AttackSimulationService;
+import com.resqmeal.service.SecurityMonitoringService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +37,12 @@ public class AdminAttackSimulationController {
 
   @PostMapping("/attack/{type}")
   public ResponseEntity<Map<String, Object>> executeAttack(
-      @PathVariable String type, @AuthenticationPrincipal AuthPrincipal user) {
-    return ResponseEntity.ok(attackSimulationService.executeAttack(type, actor(user, "api_admin")));
+      @PathVariable String type,
+      @AuthenticationPrincipal AuthPrincipal user,
+      HttpServletRequest request) {
+    String ip = SecurityMonitoringService.clientIp(request);
+    return ResponseEntity.ok(
+        attackSimulationService.executeAttack(type, actor(user, "api_admin"), ip, null));
   }
 
   @PostMapping("/recover")

@@ -104,14 +104,19 @@ public class TelegramThreatBotService {
     }
     String command = text.trim().split("\\s+")[0].toLowerCase();
     String actor = "telegram_user:" + fromId;
+    String telegramSource = telegramSourceHint(msg, fromId);
     String response;
     switch (command) {
-      case "/insert" -> response = toMessage(attackSimulationService.executeAttack("insert", actor));
-      case "/delete" -> response = toMessage(attackSimulationService.executeAttack("delete", actor));
+      case "/insert" ->
+          response = toMessage(attackSimulationService.executeAttack("insert", actor, null, telegramSource));
+      case "/delete" ->
+          response = toMessage(attackSimulationService.executeAttack("delete", actor, null, telegramSource));
       case "/manipulate" ->
-          response = toMessage(attackSimulationService.executeAttack("manipulate", actor));
+          response =
+              toMessage(attackSimulationService.executeAttack("manipulate", actor, null, telegramSource));
       case "/duplicate" ->
-          response = toMessage(attackSimulationService.executeAttack("duplicate", actor));
+          response =
+              toMessage(attackSimulationService.executeAttack("duplicate", actor, null, telegramSource));
       case "/security_on" -> response = toMessage(attackSimulationService.setSecurityMode(true, actor));
       case "/security_off" -> response = toMessage(attackSimulationService.setSecurityMode(false, actor));
       case "/recover" -> response = toMessage(attackSimulationService.recoverFromBackup(actor));
@@ -143,6 +148,20 @@ public class TelegramThreatBotService {
         && attackProps.getAuthorizedTelegramUserIds().contains(fromId);
   }
 
+  /** Telegram does not expose the operator's public IP to the bot; we record sender id and @username. */
+  private static String telegramSourceHint(JsonNode msg, long fromId) {
+    String username = msg.path("from").path("username").asText("").trim();
+    String first = msg.path("from").path("first_name").asText("").trim();
+    StringBuilder sb = new StringBuilder();
+    sb.append("telegram_user_id=").append(fromId);
+    if (!username.isEmpty()) {
+      sb.append(" @").append(username);
+    } else if (!first.isEmpty()) {
+      sb.append(" first_name=").append(first);
+    }
+    return sb.toString();
+  }
+
   private void sendMessage(String token, long chatId, String text) {
     if (chatId == 0 || text == null || text.isBlank()) {
       return;
@@ -172,9 +191,23 @@ public class TelegramThreatBotService {
       return "No response.";
     }
     Object message = response.get("message");
+    StringBuilder out = new StringBuilder();
     if (message != null) {
-      return String.valueOf(message);
+      out.append(message);
+    } else {
+      out.append(response);
     }
-    return response.toString();
+    Object ip = response.get("source_http_ip");
+    Object hint = response.get("source_hint");
+    if (ip != null && !String.valueOf(ip).isBlank()) {
+      out.append("\nHTTP client IP: ").append(ip);
+    }
+    if (hint != null && !String.valueOf(hint).isBlank()) {
+      out.append("\nSource: ").append(hint);
+    }
+    if (Boolean.TRUE.equals(response.get("blocked"))) {
+      out.append("\n(Blocked by security mode.)");
+    }
+    return out.toString();
   }
 }

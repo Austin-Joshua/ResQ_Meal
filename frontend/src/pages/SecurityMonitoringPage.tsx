@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { Shield, List, AlertOctagon, Ban, RefreshCw, Loader2, Radar } from 'lucide-react';
 import {
@@ -10,6 +11,53 @@ import {
   type SecurityLogRow,
   type ThreatMlEventRow,
 } from '@/services/api';
+
+function extractApiErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as Record<string, unknown> | string | undefined;
+    if (data && typeof data === 'object') {
+      const msg = data.message ?? data.error;
+      if (msg != null && String(msg).length > 0) return String(msg);
+    }
+    if (typeof data === 'string' && data.length > 0) return data;
+    if (err.response?.status) return `Request failed (HTTP ${err.response.status})`;
+    if (err.message) return err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong';
+}
+
+function isPlausibleIpv4(s: string | null | undefined): s is string {
+  if (!s || typeof s !== 'string') return false;
+  const t = s.trim();
+  if (t === '' || t.toLowerCase() === 'n/a' || t === '—') return false;
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(t);
+}
+
+function parseAttackSimSourceIp(details: string): string | null {
+  const m = details.match(/source_http_ip=([^\s]+)/);
+  if (!m?.[1]) return null;
+  const v = m[1].trim();
+  if (v.toLowerCase() === 'n/a' || !isPlausibleIpv4(v)) return null;
+  return v;
+}
+
+function parseDetailsLooseIp(details: string): string | null {
+  const m = details.match(/\bip=([^\s|]+)/i);
+  if (!m?.[1]) return null;
+  const v = m[1].trim();
+  return isPlausibleIpv4(v) ? v : null;
+}
+
+interface MaliciousFeedRow {
+  id: string;
+  source: string;
+  when: string;
+  kind: string;
+  details: string;
+  blockIp: string | null;
+  blockUserId: string | null;
+}
 
 interface SecurityMonitoringPageProps {
   darkMode: boolean;
@@ -39,6 +87,8 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
   const [attackSimLogs, setAttackSimLogs] = useState<AttackSimulationLogRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [blockingId, setBlockingId] = useState<string | null>(null);
 
   const navItems: AppShellNavItem[] = [
     { id: 'logs', icon: List, label: 'All logs' },
@@ -83,10 +133,12 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
       setThreatMl(m.data.data ?? []);
       setAttackSimLogs(a.data.data ?? []);
     } catch (e: unknown) {
-      const msg = e && typeof e === 'object' && 'response' in e
-        ? String((e as { response?: { status?: number } }).response?.status)
-        : 'Failed to load';
-      setError(msg === '403' ? 'Access denied' : 'Could not load security data');
+      const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+      if (status === 403) {
+        setError('Access denied (not a security admin).');
+      } else {
+        setError(extractApiErrorMessage(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -99,35 +151,79 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
   const tableShell =
     darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200';
 
-  const maliciousSummary = [
+  const maliciousSummary: MaliciousFeedRow[] = [
     ...threatMl
       .filter((r) => r.label.toLowerCase() !== 'normal')
-      .map((r) => ({
-        id: `ml-${r.id}`,
-        source: 'Traffic ML',
+      .map((r) => {
+        const ip = isPlausibleIpv4(r.ip_address) ? r.ip_address.trim() : null;
+        return {
+          id: `ml-${r.id}`,
+          source: 'Traffic ML',
+          when: r.created_at,
+          kind: `${r.label.toUpperCase()} (${(r.confidence * 100).toFixed(1)}%)`,
+          details: `${r.http_method} ${r.path} | ip=${r.ip_address} | families=${r.attack_families ?? 'n/a'}`,
+          blockIp: ip,
+          blockUserId: r.user_id && /^\d+$/.test(String(r.user_id)) ? String(r.user_id) : null,
+        };
+      }),
+    ...criticalLogs.map((r) => {
+      const ip = isPlausibleIpv4(r.ip_address) ? r.ip_address.trim() : parseDetailsLooseIp(r.details ?? '');
+      return {
+        id: `critical-${r.id}`,
+        source: 'Security Log',
         when: r.created_at,
-        kind: `${r.label.toUpperCase()} (${(r.confidence * 100).toFixed(1)}%)`,
-        details: `${r.http_method} ${r.path} | ip=${r.ip_address} | families=${r.attack_families ?? 'n/a'}`,
-      })),
-    ...criticalLogs.map((r) => ({
-      id: `critical-${r.id}`,
-      source: 'Security Log',
-      when: r.created_at,
-      kind: `${r.action} / ${r.status}`,
-      details: `${r.details ?? 'No details'} | ip=${r.ip_address} | user=${r.user_id ?? 'anonymous'}`,
-    })),
+        kind: `${r.action} / ${r.status}`,
+        details: `${r.details ?? 'No details'} | ip=${r.ip_address} | user=${r.user_id ?? 'anonymous'}`,
+        blockIp: ip,
+        blockUserId: r.user_id && /^\d+$/.test(String(r.user_id)) ? String(r.user_id) : null,
+      };
+    }),
     ...attackSimLogs
       .filter((r) => r.event_type === 'ATTACK_EXECUTED' || r.event_type === 'THREAT_BLOCKED')
-      .map((r) => ({
-        id: `sim-${r.id}`,
-        source: 'Attack Simulation',
-        when: r.created_at,
-        kind: `${r.event_type} / ${r.action}`,
-        details: `${r.details ?? 'No details'} | actor=${r.actor ?? 'system'} | blocked=${r.blocked ? 'yes' : 'no'}`,
-      })),
+      .map((r) => {
+        const d = r.details ?? '';
+        const ipFromDetails = parseAttackSimSourceIp(d) ?? parseDetailsLooseIp(d);
+        return {
+          id: `sim-${r.id}`,
+          source: 'Attack Simulation',
+          when: r.created_at,
+          kind: `${r.event_type} / ${r.action}`,
+          details: `${d} | actor=${r.actor ?? 'system'} | blocked=${r.blocked ? 'yes' : 'no'}`,
+          blockIp: ipFromDetails,
+          blockUserId: null,
+        };
+      }),
   ].sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime());
 
-  const renderRows = (rows: SecurityLogRow[]) => (
+  const blockIpNow = async (ip: string, rowId: string) => {
+    setBlockingId(rowId);
+    setActionMessage(null);
+    try {
+      await adminSecurityApi.blockIp(ip, `Security admin block (${rowId})`);
+      setActionMessage(`Blocked IP ${ip}.`);
+      await load();
+    } catch (e: unknown) {
+      setActionMessage(extractApiErrorMessage(e));
+    } finally {
+      setBlockingId(null);
+    }
+  };
+
+  const blockUserNow = async (userId: string, rowId: string) => {
+    setBlockingId(rowId);
+    setActionMessage(null);
+    try {
+      await adminSecurityApi.blockUser(Number(userId), `Security admin block (${rowId})`);
+      setActionMessage(`Blocked user id ${userId}.`);
+      await load();
+    } catch (e: unknown) {
+      setActionMessage(extractApiErrorMessage(e));
+    } finally {
+      setBlockingId(null);
+    }
+  };
+
+  const renderRows = (rows: SecurityLogRow[], showBlockActions = false) => (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-sm">
         <thead className={darkMode ? 'bg-slate-900/80' : 'bg-slate-100'}>
@@ -139,10 +235,17 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
             <th className="text-left p-2 font-semibold">Status</th>
             <th className="text-left p-2 font-semibold">Critical</th>
             <th className="text-left p-2 font-semibold">Details</th>
+            {showBlockActions && (
+              <th className="text-left p-2 font-semibold whitespace-nowrap">Block</th>
+            )}
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {rows.map((r) => {
+            const bip = isPlausibleIpv4(r.ip_address) ? r.ip_address.trim() : null;
+            const buid = r.user_id && /^\d+$/.test(String(r.user_id)) ? String(r.user_id) : null;
+            const rowKey = `log-${r.id}`;
+            return (
             <tr
               key={r.id}
               className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}
@@ -156,8 +259,34 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
               <td className="p-2 max-w-xs truncate" title={r.details ?? ''}>
                 {r.details ?? '—'}
               </td>
+              {showBlockActions && (
+                <td className="p-2 whitespace-nowrap space-x-1">
+                  {bip && (
+                    <button
+                      type="button"
+                      disabled={blockingId !== null}
+                      onClick={() => void blockIpNow(bip, rowKey)}
+                      className="px-2 py-1 rounded text-xs font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+                    >
+                      {blockingId === rowKey ? '…' : 'IP'}
+                    </button>
+                  )}
+                  {buid && (
+                    <button
+                      type="button"
+                      disabled={blockingId !== null}
+                      onClick={() => void blockUserNow(buid, rowKey)}
+                      className="px-2 py-1 rounded text-xs font-semibold bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-40 dark:bg-slate-600"
+                    >
+                      {blockingId === rowKey ? '…' : 'User'}
+                    </button>
+                  )}
+                  {!bip && !buid && '—'}
+                </td>
+              )}
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -231,22 +360,45 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-300 bg-red-50 text-red-900 px-4 py-3 text-sm">
+          <div className="rounded-lg border border-red-300 bg-red-50 text-red-900 px-4 py-3 text-sm whitespace-pre-wrap break-words">
             {error}
+          </div>
+        )}
+
+        {actionMessage && (
+          <div
+            className={`rounded-lg border px-4 py-3 text-sm whitespace-pre-wrap break-words ${
+              actionMessage.startsWith('Blocked')
+                ? darkMode
+                  ? 'border-emerald-700 bg-emerald-950/60 text-emerald-100'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                : darkMode
+                  ? 'border-amber-700 bg-amber-950/40 text-amber-100'
+                  : 'border-amber-200 bg-amber-50 text-amber-950'
+            }`}
+          >
+            {actionMessage}
+            <button
+              type="button"
+              className="ml-3 text-xs underline opacity-80 hover:opacity-100"
+              onClick={() => setActionMessage(null)}
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
         {active === 'logs' && (
           <section className={`rounded-xl border p-4 ${tableShell}`}>
             <h2 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Audit log</h2>
-            {renderRows(logs)}
+            {renderRows(logs, true)}
           </section>
         )}
 
         {active === 'critical' && (
           <section className={`rounded-xl border p-4 ${tableShell}`}>
             <h2 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Critical events</h2>
-            {renderRows(criticalLogs)}
+            {renderRows(criticalLogs, true)}
           </section>
         )}
 
@@ -272,10 +424,15 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
                     <th className="text-left p-2 font-semibold">IP</th>
                     <th className="text-left p-2 font-semibold">User</th>
                     <th className="text-left p-2 font-semibold">Families</th>
+                    <th className="text-left p-2 font-semibold whitespace-nowrap">Block</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {threatMl.map((r) => (
+                  {threatMl.map((r) => {
+                    const bip = isPlausibleIpv4(r.ip_address) ? r.ip_address.trim() : null;
+                    const buid = r.user_id && /^\d+$/.test(String(r.user_id)) ? String(r.user_id) : null;
+                    const rowKey = `ml-row-${r.id}`;
+                    return (
                     <tr
                       key={r.id}
                       className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}
@@ -292,8 +449,32 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
                       <td className="p-2 max-w-xs truncate text-xs" title={r.attack_families ?? ''}>
                         {r.attack_families ?? '—'}
                       </td>
+                      <td className="p-2 whitespace-nowrap space-x-1">
+                        {bip && (
+                          <button
+                            type="button"
+                            disabled={blockingId !== null}
+                            onClick={() => void blockIpNow(bip, rowKey)}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+                          >
+                            {blockingId === rowKey ? '…' : 'Block IP'}
+                          </button>
+                        )}
+                        {buid && (
+                          <button
+                            type="button"
+                            disabled={blockingId !== null}
+                            onClick={() => void blockUserNow(buid, rowKey)}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-40 dark:bg-slate-600"
+                          >
+                            {blockingId === rowKey ? '…' : 'Block user'}
+                          </button>
+                        )}
+                        {!bip && !buid && '—'}
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -316,6 +497,7 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
                     <th className="text-left p-2 font-semibold">Source</th>
                     <th className="text-left p-2 font-semibold">Type</th>
                     <th className="text-left p-2 font-semibold">Details</th>
+                    <th className="text-left p-2 font-semibold whitespace-nowrap">Block now</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -329,6 +511,33 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
                       <td className="p-2">{r.kind}</td>
                       <td className="p-2 max-w-xl truncate" title={r.details}>
                         {r.details}
+                      </td>
+                      <td className="p-2 whitespace-nowrap space-x-1">
+                        {r.blockIp && (
+                          <button
+                            type="button"
+                            disabled={blockingId !== null}
+                            onClick={() => void blockIpNow(r.blockIp!, r.id)}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+                          >
+                            {blockingId === r.id ? '…' : 'Block IP'}
+                          </button>
+                        )}
+                        {r.blockUserId && (
+                          <button
+                            type="button"
+                            disabled={blockingId !== null}
+                            onClick={() => void blockUserNow(r.blockUserId!, r.id)}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-40 dark:bg-slate-600"
+                          >
+                            {blockingId === r.id ? '…' : 'Block user'}
+                          </button>
+                        )}
+                        {!r.blockIp && !r.blockUserId && (
+                          <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                            No IP / user
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}

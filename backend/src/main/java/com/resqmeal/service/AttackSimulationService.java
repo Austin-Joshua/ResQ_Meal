@@ -2,12 +2,18 @@ package com.resqmeal.service;
 
 import com.resqmeal.config.AttackSimulationProperties;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -15,6 +21,8 @@ import java.util.UUID;
 
 @Service
 public class AttackSimulationService {
+
+  private static final Logger log = LoggerFactory.getLogger(AttackSimulationService.class);
 
   public static final String BLOCK_MESSAGE =
       "Threat attack has been stopped by the security system.";
@@ -25,10 +33,15 @@ public class AttackSimulationService {
 
   private final JdbcTemplate jdbc;
   private final AttackSimulationProperties props;
+  private final TelegramAlertService telegramAlertService;
 
-  public AttackSimulationService(JdbcTemplate jdbc, AttackSimulationProperties props) {
+  public AttackSimulationService(
+      JdbcTemplate jdbc,
+      AttackSimulationProperties props,
+      TelegramAlertService telegramAlertService) {
     this.jdbc = jdbc;
     this.props = props;
+    this.telegramAlertService = telegramAlertService;
   }
 
   @PostConstruct
@@ -132,14 +145,32 @@ public class AttackSimulationService {
         enabled ? "Security mode enabled." : "Security mode disabled.");
   }
 
+  /**
+   * @param sourceHttpIp client IP when the attack is triggered over HTTP (admin API); may be null
+   * @param sourceHint free-text source when there is no HTTP IP (e.g. Telegram sender id / username)
+   */
   @Transactional
-  public Map<String, Object> executeAttack(String attackType, String actor) {
+  public Map<String, Object> executeAttack(
+      String attackType, String actor, String sourceHttpIp, String sourceHint) {
     String normalized = normalizeAttackType(attackType);
     if (normalized == null) {
       return Map.of("success", false, "message", "Unsupported attack type.");
     }
     if (isSecurityModeOn()) {
-      logEvent("THREAT_BLOCKED", normalized, actor, BLOCK_MESSAGE, true);
+      String blockDetails =
+          "attack="
+              + normalized
+              + " source_http_ip="
+              + nullToNa(sourceHttpIp)
+              + " source="
+              + nullToNa(sourceHint);
+      logEvent("THREAT_BLOCKED", normalized, actor, blockDetails, true);
+      log.warn(
+          "SECURITY attack BLOCKED (security mode ON): type={} actor={} source_http_ip={} source={}",
+          normalized,
+          actor,
+          nullToNa(sourceHttpIp),
+          nullToNa(sourceHint));
       return Map.of("success", false, "blocked", true, "message", BLOCK_MESSAGE);
     }
     int affectedRows = switch (normalized) {
@@ -149,19 +180,51 @@ public class AttackSimulationService {
       case "duplicate" -> duplicateExistingRecord();
       default -> 0;
     };
-    String details = "attack=" + normalized + " affected_rows=" + affectedRows;
+    String httpIp = sourceHttpIp != null ? sourceHttpIp.trim() : "";
+    String hint = sourceHint != null ? sourceHint.trim() : "";
+    String details =
+        "attack="
+            + normalized
+            + " affected_rows="
+            + affectedRows
+            + " source_http_ip="
+            + (httpIp.isEmpty() ? "n/a" : httpIp)
+            + " source="
+            + (hint.isEmpty() ? "n/a" : hint);
     logEvent("ATTACK_EXECUTED", normalized, actor, details, false);
-    return Map.of(
-        "success",
-        true,
-        "blocked",
-        false,
-        "attack",
+    log.warn(
+        "SECURITY attack EXECUTED while security mode OFF: type={} actor={} affected_rows={} source_http_ip={} source={}",
         normalized,
-        "affected_rows",
+        actor,
         affectedRows,
-        "message",
-        "Attack simulation executed on main database.");
+        httpIp.isEmpty() ? "n/a" : httpIp,
+        hint.isEmpty() ? "n/a" : hint);
+    String ts = OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    String ipForAlert =
+        !httpIp.isEmpty()
+            ? httpIp
+            : (!hint.isEmpty() ? "(no HTTP IP) " + hint : "unknown (no HTTP IP or Telegram hint)");
+    String reason =
+        "Security mode OFF — simulated attack ran on main DB. "
+            + details
+            + " — block this IP in Admin if it is a real client.";
+    telegramAlertService.sendAlertAsync(actor, ipForAlert, "ATTACK_SIM_EXECUTED", reason, ts);
+    Map<String, Object> out = new LinkedHashMap<>();
+    out.put("success", true);
+    out.put("blocked", false);
+    out.put("attack", normalized);
+    out.put("affected_rows", affectedRows);
+    out.put("message", "Attack simulation executed on main database.");
+    out.put("source_http_ip", httpIp.isEmpty() ? null : httpIp);
+    out.put("source_hint", hint.isEmpty() ? null : hint);
+    return out;
+  }
+
+  private static String nullToNa(String s) {
+    if (s == null || s.isBlank()) {
+      return "n/a";
+    }
+    return s.trim();
   }
 
   @Transactional

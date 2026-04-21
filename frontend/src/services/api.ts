@@ -175,6 +175,16 @@ export const adminSecurityApi = {
     api.get<{ success: boolean; data: ThreatMlEventRow[] }>('/admin/threat-ml-events', {
       params: { limit },
     }),
+  blockIp: (ip: string, reason?: string) =>
+    api.post<{ success: boolean; message?: string; error?: string }>('/admin/block-ip', {
+      ip,
+      ...(reason ? { reason } : {}),
+    }),
+  blockUser: (userId: number, reason?: string) =>
+    api.post<{ success: boolean; message?: string; error?: string }>('/admin/block-user', {
+      userId,
+      ...(reason ? { reason } : {}),
+    }),
 };
 
 /** Attack simulation admin APIs (requires ROLE_ADMIN). */
