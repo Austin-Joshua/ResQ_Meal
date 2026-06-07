@@ -1,12 +1,13 @@
 package com.resqmeal.controller;
 
+import com.resqmeal.common.ApiResponse;
+import com.resqmeal.dto.request.FoodPostRequest;
+import com.resqmeal.exception.UnauthorizedException;
 import com.resqmeal.security.AuthPrincipal;
 import com.resqmeal.service.FoodService;
-import com.resqmeal.dto.request.FoodPostRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -29,7 +30,7 @@ public class FoodPostController {
 
   @GetMapping
   @Operation(summary = "List food posts with pagination")
-  public ResponseEntity<?> list(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> list(
       @AuthenticationPrincipal AuthPrincipal user,
       @RequestParam(required = false) String status,
       @RequestParam(name = "food_type", required = false) String foodType,
@@ -37,34 +38,30 @@ public class FoodPostController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "createdAt,desc") String sort) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    return ResponseEntity.ok(foodService.listFoodPosts(status, foodType, page, size, sort));
+    return ApiResponse.okEntity(foodService.listFoodPosts(status, foodType, page, size, sort));
   }
 
   @PostMapping
   @Operation(summary = "Create a food post")
-  public ResponseEntity<?> create(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> create(
       @AuthenticationPrincipal AuthPrincipal user, @Valid @RequestBody FoodPostRequest request) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(foodService.postFood(user.id(), toBodyMap(request)));
+    return ApiResponse.createdEntity(foodService.postFood(user.id(), toBodyMap(request)));
   }
 
   @DeleteMapping("/{id:[0-9]+}")
   @Operation(summary = "Soft-delete a food post")
-  public ResponseEntity<?> delete(@AuthenticationPrincipal AuthPrincipal user, @PathVariable long id) {
+  public ResponseEntity<ApiResponse<Map<String, String>>> delete(
+      @AuthenticationPrincipal AuthPrincipal user, @PathVariable long id) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    try {
-      foodService.deleteFood(user.id(), id);
-      return ResponseEntity.ok(Map.of("message", "Food post deleted successfully"));
-    } catch (IllegalStateException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
-    }
+    foodService.deleteFood(user.id(), id);
+    return ApiResponse.okEntity(Map.of("message", "Food post deleted successfully"));
   }
 
   private static Map<String, Object> toBodyMap(FoodPostRequest request) {

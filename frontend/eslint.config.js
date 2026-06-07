@@ -23,7 +23,17 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-empty-object-type": "off",
-      "no-empty": "warn",
+      "no-empty": ["warn", { allowEmptyCatch: true }],
+    },
+  },
+  {
+    files: [
+      "src/components/ui/**",
+      "src/context/**",
+      "src/router.tsx",
+    ],
+    rules: {
+      "react-refresh/only-export-components": "off",
     },
   }
 );

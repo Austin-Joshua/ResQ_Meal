@@ -26,5 +26,3 @@ export function MlFreshnessBadge({ source, className }: MlFreshnessBadgeProps) {
     </span>
   );
 }
-
-export default MlFreshnessBadge;

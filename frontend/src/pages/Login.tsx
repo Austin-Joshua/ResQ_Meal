@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Mail, LogIn, AlertCircle, Loader2 } from 'lucide-react';
 import { get } from '@/api/client';
 import { endpoints } from '@/api/endpoints';
+import { loginSchema } from '@/schemas';
 import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
@@ -82,6 +83,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
     e.preventDefault();
     setError(null);
     setIsBackendOffline(false);
+
+    const parsed = loginSchema.safeParse({ email: email.trim(), password, rememberMe });
+    if (!parsed.success) {
+      setError(parsed.error.errors[0]?.message ?? 'Invalid input');
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -101,8 +109,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
       }
 
       const { data } = await authApi.login(email.trim(), password);
-      if (data.success && data.data) {
-        const { token, id, name, email: userEmail, role } = data.data;
+      if (data?.token) {
+        const { token, id, name, email: userEmail, role } = data;
         try {
           localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
           if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, userEmail);
@@ -298,4 +306,4 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
   );
 };
 
-export default LoginPage;
+export { LoginPage };

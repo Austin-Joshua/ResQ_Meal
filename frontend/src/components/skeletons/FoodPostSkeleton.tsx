@@ -13,5 +13,3 @@ export function FoodPostSkeleton() {
     </div>
   );
 }
-
-export default FoodPostSkeleton;

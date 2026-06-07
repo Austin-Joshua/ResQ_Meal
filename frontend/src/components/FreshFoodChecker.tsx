@@ -34,7 +34,7 @@ interface FoodClassification {
 
 type CheckMode = 'photo' | 'environment';
 
-const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, onFail }) => {
+export function FreshFoodChecker({ darkMode, onPass, onFail }: FreshFoodCheckerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
     const el = qualityProgressRef.current;
     if (!el || assessment == null) return;
     el.style.width = `${Math.min(100, assessment.qualityScore)}%`;
-  }, [assessment?.qualityScore]);
+  }, [assessment]);
 
   const mockAssessment = (): FoodAssessment => {
     const qualityScore = Math.random() * 100;
@@ -605,6 +605,4 @@ const FreshFoodChecker: React.FC<FreshFoodCheckerProps> = ({ darkMode, onPass, o
       </div>
     </div>
   );
-};
-
-export default FreshFoodChecker;
+}

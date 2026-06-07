@@ -1,18 +1,22 @@
 package com.resqmeal.controller;
 
+import com.resqmeal.common.ApiResponse;
+import com.resqmeal.dto.request.FoodPostRequest;
+import com.resqmeal.exception.ResourceNotFoundException;
+import com.resqmeal.exception.UnauthorizedException;
 import com.resqmeal.security.AuthPrincipal;
 import com.resqmeal.service.FoodQualityService;
 import com.resqmeal.service.FoodService;
-import com.resqmeal.dto.request.FoodPostRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,123 +37,115 @@ public class FoodController {
 
   @PostMapping("/assess-freshness")
   @Operation(summary = "Assess food freshness from an uploaded image")
-  public ResponseEntity<?> assessFreshness(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> assessFreshness(
       @AuthenticationPrincipal AuthPrincipal user, @RequestParam("image") MultipartFile image) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
     try {
-      return ResponseEntity.ok(foodQualityService.assessFreshness(image));
+      return ApiResponse.okEntity(foodQualityService.assessFreshness(image));
     } catch (Exception e) {
-      return ResponseEntity.internalServerError().body(Map.of("error", "Failed to assess food freshness"));
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Failed to assess food freshness");
     }
   }
 
   @PostMapping("/assess-freshness-by-environment")
   @Operation(summary = "Assess freshness from storage environment data")
-  public ResponseEntity<?> assessEnv(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> assessEnv(
       @AuthenticationPrincipal AuthPrincipal user, @RequestBody Map<String, Object> body) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    return ResponseEntity.ok(foodQualityService.assessFreshnessByEnvironment(body));
+    return ApiResponse.okEntity(foodQualityService.assessFreshnessByEnvironment(body));
   }
 
   @PostMapping("/classify-image")
   @Operation(summary = "Classify food type from an uploaded image")
-  public ResponseEntity<?> classify(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> classify(
       @AuthenticationPrincipal AuthPrincipal user, @RequestParam("image") MultipartFile image) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
     try {
       Map<String, Object> res = foodQualityService.classifyImage(image);
       if (res.containsKey("error")) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(res);
+        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, String.valueOf(res.get("error")));
       }
-      return ResponseEntity.ok(res);
+      return ApiResponse.okEntity(res);
+    } catch (ResponseStatusException e) {
+      throw e;
     } catch (Exception e) {
-      return ResponseEntity.internalServerError()
-          .body(Map.of("error", "Failed to classify food image", "message", e.getMessage()));
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Failed to classify food image: " + e.getMessage());
     }
   }
 
   @PostMapping
   @Operation(summary = "Create a new food post")
-  public ResponseEntity<?> post(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> post(
       @AuthenticationPrincipal AuthPrincipal user, @Valid @RequestBody FoodPostRequest request) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    try {
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(foodService.postFood(user.id(), toBodyMap(request)));
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-    }
+    return ApiResponse.createdEntity(foodService.postFood(user.id(), toBodyMap(request)));
   }
 
   @GetMapping("/my-posts")
   @Operation(summary = "List food posts created by the authenticated restaurant")
-  public ResponseEntity<?> myPosts(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> myPosts(
       @AuthenticationPrincipal AuthPrincipal user,
       @RequestParam(required = false) String status,
       @RequestParam(defaultValue = "20") int limit,
       @RequestParam(defaultValue = "0") int offset) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    return ResponseEntity.ok(foodService.getMyPosts(user.id(), status, limit, offset));
+    return ApiResponse.okEntity(foodService.getMyPosts(user.id(), status, limit, offset));
   }
 
   @GetMapping("/available/all")
   @Operation(summary = "List available food posts for NGOs and volunteers")
-  public Map<String, Object> available(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> available(
       @RequestParam(required = false) String food_type,
       @RequestParam(required = false) Integer min_urgency,
       @RequestParam(required = false) Integer max_urgency,
       @RequestParam(defaultValue = "50") int limit) {
-    return foodService.getAvailableFood(food_type, min_urgency, max_urgency, limit);
+    return ApiResponse.okEntity(
+        foodService.getAvailableFood(food_type, min_urgency, max_urgency, limit));
   }
 
   @GetMapping("/{id:[0-9]+}")
   @Operation(summary = "Get a food post by ID")
-  public ResponseEntity<?> one(@PathVariable long id) {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> one(@PathVariable long id) {
     Map<String, Object> post = foodService.getFoodPost(id);
     if (post == null || post.isEmpty()) {
-      return ResponseEntity.notFound().build();
+      throw new ResourceNotFoundException("Food post not found");
     }
-    return ResponseEntity.ok(post);
+    return ApiResponse.okEntity(post);
   }
 
   @PutMapping("/{id:[0-9]+}")
   @Operation(summary = "Update a food post")
-  public ResponseEntity<?> update(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> update(
       @AuthenticationPrincipal AuthPrincipal user,
       @PathVariable long id,
       @RequestBody Map<String, Object> body) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    try {
-      return ResponseEntity.ok(foodService.updateFood(user.id(), id, body));
-    } catch (IllegalStateException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
-    }
+    return ApiResponse.okEntity(foodService.updateFood(user.id(), id, body));
   }
 
   @DeleteMapping("/{id:[0-9]+}")
   @Operation(summary = "Soft-delete a food post")
-  public ResponseEntity<?> delete(@AuthenticationPrincipal AuthPrincipal user, @PathVariable long id) {
+  public ResponseEntity<ApiResponse<Map<String, String>>> delete(
+      @AuthenticationPrincipal AuthPrincipal user, @PathVariable long id) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    try {
-      foodService.deleteFood(user.id(), id);
-      return ResponseEntity.ok(Map.of("message", "Food post deleted successfully"));
-    } catch (IllegalStateException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
-    }
+    foodService.deleteFood(user.id(), id);
+    return ApiResponse.okEntity(Map.of("message", "Food post deleted successfully"));
   }
 
   private static Map<String, Object> toBodyMap(FoodPostRequest request) {
@@ -172,4 +168,3 @@ public class FoodController {
     return body;
   }
 }
-

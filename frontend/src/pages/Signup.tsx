@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Lock, Mail, User, LogIn, ArrowLeft, Loader2, AlertCircle, Check, X } from 'lucide-react';
 import { authApi } from '@/services/api';
+import { registerSchema } from '@/schemas';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
 import { BackendStatus } from '@/components/BackendStatus';
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordMinLength = 8;
 
 export interface SignupSuccessUser {
@@ -32,32 +32,15 @@ const SignupPage: React.FC<SignupPageProps> = ({ darkMode, onSuccess, onBackToSi
   const [loading, setLoading] = useState(false);
 
   const validate = (): boolean => {
-    if (!name.trim()) {
-      setError(t('fullNameRequired') || 'Full name is required');
-      return false;
-    }
-    if (name.trim().length < 2) {
-      setError(t('fullNameMinLength') || 'Name must be at least 2 characters');
-      return false;
-    }
-    if (!email.trim()) {
-      setError(t('emailRequired') || 'Email is required');
-      return false;
-    }
-    if (!emailRegex.test(email.trim())) {
-      setError(t('invalidEmail') || 'Please enter a valid email address');
-      return false;
-    }
-    if (!password) {
-      setError(t('passwordRequired') || 'Password is required');
-      return false;
-    }
-    if (password.length < passwordMinLength) {
-      setError((t('passwordMinLength') || 'Password must be at least 8 characters').replace('8', String(passwordMinLength)));
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setError(t('passwordsDoNotMatch') || 'Passwords do not match');
+    const parsed = registerSchema.safeParse({
+      name: name.trim(),
+      email: email.trim(),
+      password,
+      confirmPassword,
+      role: 'volunteer' as const,
+    });
+    if (!parsed.success) {
+      setError(parsed.error.errors[0]?.message ?? 'Invalid input');
       return false;
     }
     return true;
@@ -75,8 +58,8 @@ const SignupPage: React.FC<SignupPageProps> = ({ darkMode, onSuccess, onBackToSi
         password,
         role: 'volunteer',
       });
-      if (data.success && data.data) {
-        const { token, id, name: n, email: em, role } = data.data;
+      if (data?.token) {
+        const { token, id, name: n, email: em, role } = data;
         onSuccess({ id, name: n, email: em, role }, token);
       } else {
         setError(t('registrationFailed') || 'Registration failed. Please try again.');
@@ -355,4 +338,4 @@ const SignupPage: React.FC<SignupPageProps> = ({ darkMode, onSuccess, onBackToSi
   );
 };
 
-export default SignupPage;
+export { SignupPage };

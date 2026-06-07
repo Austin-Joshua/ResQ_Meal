@@ -94,4 +94,4 @@ const LanguageSelectorPage: React.FC<LanguageSelectorPageProps> = ({ darkMode, o
   );
 };
 
-export default LanguageSelectorPage;
+export { LanguageSelectorPage };

@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import { Leaf, Droplets, UtensilsCrossed, Truck, type LucideIcon } from 'lucide-react';
-import apiClient from '@/api/client';
+import { get } from '@/api/client';
 import { impactApi } from '@/services/api';
 import { StatCard } from '@/components/StatCard';
 import { useLanguage } from '@/context/LanguageContext';
@@ -28,7 +28,7 @@ interface PublicImpact {
 
 async function fetchPublicImpact(): Promise<PublicImpact> {
   try {
-    return await apiClient.get<PublicImpact>('/public/impact');
+    return await get<PublicImpact>('/public/impact');
   } catch {
     const global = await impactApi.getGlobalImpact();
     const timeline = await impactApi.getGlobalImpact().catch(() => ({ data: {} }));
@@ -56,7 +56,7 @@ function ImpactStatCard({
   return <StatCard icon={icon} title={title} value={value} variant="primary" />;
 }
 
-export default function ImpactDashboard() {
+export function ImpactDashboard() {
   const { t } = useLanguage();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['publicImpact'],

@@ -18,7 +18,7 @@ const FOOD_TYPE_FILTERS = [
   { label: 'Others', value: 'others' },
 ];
 
-export default function MapView() {
+export function MapView() {
   const { t } = useLanguage();
   const [foodType, setFoodType] = useState('');
   const [search, setSearch] = useState('');

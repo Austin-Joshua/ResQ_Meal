@@ -139,5 +139,3 @@ export const del = <T>(path: string, init?: RequestInit): Promise<T> =>
 
 /** @deprecated Use named exports (`get`, `post`, etc.) instead. */
 export const apiClient = { get, post, put, patch, del };
-
-export default apiClient;

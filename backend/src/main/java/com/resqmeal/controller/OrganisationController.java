@@ -1,13 +1,14 @@
 package com.resqmeal.controller;
 
+import com.resqmeal.common.ApiResponse;
+import com.resqmeal.exception.UnauthorizedException;
 import com.resqmeal.security.AuthPrincipal;
 import com.resqmeal.service.OrganisationService;
-import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,39 +27,30 @@ public class OrganisationController {
 
   @PostMapping("/food")
   @Operation(summary = "Create an organisation food post")
-  public ResponseEntity<?> post(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> post(
       @AuthenticationPrincipal AuthPrincipal user, @RequestBody Map<String, Object> body) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    try {
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(organisationService.postFood(user.id(), user.role(), body));
-    } catch (IllegalStateException | IllegalArgumentException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(Map.of("success", false, "message", e.getMessage()));
-    }
+    return ApiResponse.createdEntity(organisationService.postFood(user.id(), user.role(), body));
   }
 
   @GetMapping("/food")
   @Operation(summary = "List food posts for the authenticated organisation")
-  public ResponseEntity<?> mine(@AuthenticationPrincipal AuthPrincipal user) {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> mine(@AuthenticationPrincipal AuthPrincipal user) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    try {
-      return ResponseEntity.ok(organisationService.getMyOrganisationFood(user.id(), user.role()));
-    } catch (IllegalStateException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false, "message", e.getMessage()));
-    }
+    return ApiResponse.okEntity(organisationService.getMyOrganisationFood(user.id(), user.role()));
   }
 
   @GetMapping("/food/available")
   @Operation(summary = "List available organisation food posts")
-  public ResponseEntity<?> available(@AuthenticationPrincipal AuthPrincipal user) {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> available(
+      @AuthenticationPrincipal AuthPrincipal user) {
     if (user == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access token required"));
+      throw new UnauthorizedException("Access token required");
     }
-    return ResponseEntity.ok(organisationService.getAvailableOrganisationFood());
+    return ApiResponse.okEntity(organisationService.getAvailableOrganisationFood());
   }
 }

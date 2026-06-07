@@ -584,4 +584,4 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
   );
 };
 
-export default SecurityMonitoringPage;
+export { SecurityMonitoringPage };

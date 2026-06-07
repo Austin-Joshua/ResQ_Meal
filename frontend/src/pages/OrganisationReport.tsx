@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Plus, MapPin, Zap, X, FileText, Settings as SettingsIcon, HeartHandshake } from 'lucide-react';
+import React, { useState } from 'react';
+import { BarChart3, Users, Utensils, Truck, TrendingUp, ArrowLeft, Zap, X, FileText, Settings as SettingsIcon, HeartHandshake } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { organisationApi } from '@/services/api';
-import FreshFoodChecker from '@/components/FreshFoodChecker';
+import { FreshFoodChecker } from '@/components/FreshFoodChecker';
 import { useLanguage } from '@/context/LanguageContext';
 import { NATIVE_LANGUAGE_LABELS } from '@/lib/utils';
 import { SettingsPage } from './SettingsPage';
@@ -181,13 +181,11 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   const [activePage, setActivePage] = useState<ActivePage>('report');
   const [showSettings, setShowSettings] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<CardId | null>(null);
-  const [organisationFood, setOrganisationFood] = useState<Array<{ id: number; food_name: string; food_type: string; quantity_servings: number; address?: string; status: string; organization_name?: string; created_at?: string }>>([]);
   const [addFoodLoading, setAddFoodLoading] = useState(false);
   const [addFoodMessage, setAddFoodMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [addFoodForm, setAddFoodForm] = useState({ food_name: '', food_type: 'meals' as const, quantity_servings: 10, description: '', address: '' });
   const [addFoodStep, setAddFoodStep] = useState<'form' | 'check'>('check');
   const [addFoodAssessment, setAddFoodAssessment] = useState<OrgFoodAssessment | null>(null);
-  const [foodListLoading, setFoodListLoading] = useState(true);
   const report = defaultReport;
   
   // Get translated bar data
@@ -197,20 +195,6 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
     { name: t('deliveries'), value: 892, fill: '#0d9488' },
     { name: t('volunteers'), value: 34, fill: '#14b8a6' },
   ];
-
-  const loadOrganisationFood = () => {
-    setFoodListLoading(true);
-    organisationApi.getMyFood()
-      .then((res) => {
-        setOrganisationFood(
-          Array.isArray(res.data?.data) ? (res.data.data as typeof organisationFood) : []
-        );
-      })
-      .catch(() => setOrganisationFood([]))
-      .finally(() => setFoodListLoading(false));
-  };
-
-  useEffect(() => { loadOrganisationFood(); }, []);
 
   const handleAddFood = (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,8 +217,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
         setAddFoodMessage({ type: 'success', text: t('foodAddedSuccess') });
         setAddFoodForm({ food_name: '', food_type: 'meals', quantity_servings: 10, description: '', address: '' });
         setAddFoodAssessment(null);
-        setAddFoodStep('check'); // Reset to freshness check step
-        loadOrganisationFood();
+        setAddFoodStep('check');
       })
       .catch((err: any) => {
         setAddFoodMessage({ type: 'error', text: err.response?.data?.message || t('failedToAddFood') });
@@ -710,4 +693,4 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
   );
 };
 
-export default OrganisationReport;
+export { OrganisationReport };

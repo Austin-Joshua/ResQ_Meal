@@ -10,14 +10,14 @@ import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
 import { ModeProvider } from "@/context/ModeContext";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { SkipLink } from "@/components/SkipLink";
-import LanguageSelectorPage from "@/pages/LanguageSelector";
-import LoginPage from "@/pages/Login";
-import SignupPage from "@/pages/Signup";
-import OrganisationReport from "@/pages/OrganisationReport";
-import SecurityMonitoringPage from "@/pages/SecurityMonitoringPage";
-import MapView from "@/pages/MapView";
-import ImpactDashboard from "@/pages/ImpactDashboard";
-import ResQMealApp from "@/pages/App";
+import { LanguageSelectorPage } from "@/pages/LanguageSelector";
+import { LoginPage } from "@/pages/Login";
+import { SignupPage } from "@/pages/Signup";
+import { OrganisationReport } from "@/pages/OrganisationReport";
+import { SecurityMonitoringPage } from "@/pages/SecurityMonitoringPage";
+import { MapView } from "@/pages/MapView";
+import { ImpactDashboard } from "@/pages/ImpactDashboard";
+import { ResQMealApp } from "@/pages/App";
 import type { LoginSuccessUser } from "@/pages/Login";
 import { userApi } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
@@ -38,25 +38,6 @@ function OnboardingGate({ darkMode }: { darkMode: boolean }) {
   );
 }
 
-const FIRST_TIME_DONE_PREFIX = "resqmeal_first_time_done_";
-
-function getFirstTimeDoneKey(userId: number): string {
-  return `${FIRST_TIME_DONE_PREFIX}${userId}`;
-}
-
-function getFirstTimeDone(userId: number): boolean {
-  try {
-    return localStorage.getItem(getFirstTimeDoneKey(userId)) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function setFirstTimeDone(userId: number): void {
-  try {
-    localStorage.setItem(getFirstTimeDoneKey(userId), "true");
-  } catch {}
-}
 
 import { ROUTES, isAppPath } from '@/router';
 export { ROUTES } from '@/router';
@@ -92,12 +73,6 @@ const App = () => {
   });
 
   useEffect(() => {
-    if (auth?.user?.id != null) {
-      getFirstTimeDone(auth.user.id);
-    }
-  }, [auth?.user?.id]);
-
-  useEffect(() => {
     try {
       localStorage.setItem("darkMode", JSON.stringify(darkMode));
       document.documentElement.classList.toggle("dark", darkMode);
@@ -114,7 +89,6 @@ const App = () => {
     login(user, token, rememberMe);
     setShowLoginModal(false);
     setLoginKey(Date.now());
-    getFirstTimeDone(user.id);
     try {
       const me = await userApi.getMe();
       const isSecurityAdmin = Boolean((me.data as { data?: { is_security_admin?: boolean } })?.data?.is_security_admin);

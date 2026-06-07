@@ -40,7 +40,7 @@ function queryString(params?: Record<string, string | number | boolean | undefin
 export const authApi = {
   login: (email: string, password: string) =>
     wrap(
-      post<{ success: boolean; data: { id: number; name: string; email: string; role: string; token: string }; message?: string }>(
+      post<{ id: number; name: string; email: string; role: string; token: string }>(
         endpoints.auth.login,
         { email, password }
       )
@@ -54,11 +54,10 @@ export const authApi = {
     address?: string;
   }) =>
     wrap(
-      post<{
-        success: boolean;
-        data?: { id: number; name: string; email: string; role: string; token: string };
-        message?: string;
-      }>(endpoints.auth.register, data)
+      post<{ id: number; name: string; email: string; role: string; token: string }>(
+        endpoints.auth.register,
+        data
+      )
     ),
   logout: () => wrap(post(endpoints.auth.logout)),
 };
@@ -285,5 +284,4 @@ export interface AttackSimulationLogRow {
 }
 
 /** @deprecated Use named API groups (authApi, foodApi, etc.) */
-const api = { get: wrap, post: wrap, put: wrap, del: wrap };
-export default api;
+export const api = { get: wrap, post: wrap, put: wrap, del: wrap };

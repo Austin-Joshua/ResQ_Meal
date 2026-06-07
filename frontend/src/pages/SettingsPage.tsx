@@ -585,5 +585,3 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
     </div>
   );
 };
-
-export default SettingsPage;

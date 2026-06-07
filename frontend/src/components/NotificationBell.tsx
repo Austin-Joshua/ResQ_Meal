@@ -8,7 +8,7 @@ interface NotificationBellProps {
   className?: string;
 }
 
-export function NotificationBell({ darkMode, className }: NotificationBellProps) {
+export function NotificationBell({ className }: NotificationBellProps) {
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);

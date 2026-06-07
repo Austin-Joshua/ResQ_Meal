@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Dashboard from './Dashboard';
-import SettingsPage from './SettingsPage';
+import { Dashboard } from './Dashboard';
+import { SettingsPage } from './SettingsPage';
 import { useLanguage } from '@/context/LanguageContext';
 
 export interface BaseAuthUser {
@@ -23,20 +23,6 @@ const PATH_TO_PAGE: Record<string, string> = {
   '/Report/water-saved': 'waterSaved',
   '/About': 'about',
   '/Settings': 'settings',
-};
-
-const PAGE_TO_PATH: Record<string, string> = {
-  dashboard: '/Dashboard',
-  freshness: '/Freshness',
-  matches: '/NGO',
-  elite: '/Elite',
-  impact: '/Report',
-  mealsSaved: '/Report/meals-saved',
-  foodDiverted: '/Report/food-diverted',
-  co2Prevented: '/Report/co2-prevented',
-  waterSaved: '/Report/water-saved',
-  about: '/About',
-  settings: '/Settings',
 };
 
 interface ResQMealAppProps {
@@ -78,7 +64,7 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({
     try {
       const saved = localStorage.getItem('darkMode');
       return saved ? JSON.parse(saved) : false;
-    } catch (e) {
+    } catch {
       return false;
     }
   });
@@ -143,5 +129,3 @@ export const ResQMealApp: React.FC<ResQMealAppProps> = ({
     </div>
   );
 };
-
-export default ResQMealApp;

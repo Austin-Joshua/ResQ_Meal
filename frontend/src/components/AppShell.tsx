@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Globe, ChevronDown, User, Settings, LogOut, type LucideIcon } from 'lucide-react';
+import { Menu, Sun, Moon, Globe, ChevronDown, User, Settings, LogOut, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
 

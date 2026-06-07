@@ -1,10 +1,12 @@
 package com.resqmeal.controller;
 
+import com.resqmeal.common.ApiResponse;
+import com.resqmeal.exception.ResourceNotFoundException;
 import com.resqmeal.service.NgoService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -23,37 +25,39 @@ public class NgoController {
 
   @GetMapping("/{id:[0-9]+}")
   @Operation(summary = "Get an NGO profile by ID")
-  public ResponseEntity<?> get(@PathVariable long id) {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> get(@PathVariable long id) {
     Map<String, Object> n = ngoService.getNgo(id);
     if (n == null) {
-      return ResponseEntity.notFound().build();
+      throw new ResourceNotFoundException("NGO not found");
     }
-    return ResponseEntity.ok(n);
+    return ApiResponse.okEntity(n);
   }
 
   @PutMapping("/{id:[0-9]+}")
   @Operation(summary = "Update an NGO profile")
-  public ResponseEntity<?> update(@PathVariable long id, @RequestBody Map<String, Object> body) {
-    return ResponseEntity.ok(ngoService.updateNgo(id, body));
+  public ResponseEntity<ApiResponse<Map<String, Object>>> update(
+      @PathVariable long id, @RequestBody Map<String, Object> body) {
+    return ApiResponse.okEntity(ngoService.updateNgo(id, body));
   }
 
   @GetMapping("/{id:[0-9]+}/capacity")
   @Operation(summary = "Get NGO capacity details")
-  public ResponseEntity<?> capacity(@PathVariable long id) {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> capacity(@PathVariable long id) {
     Map<String, Object> c = ngoService.capacity(id);
     if (c == null) {
-      return ResponseEntity.notFound().build();
+      throw new ResourceNotFoundException("NGO capacity not found");
     }
-    return ResponseEntity.ok(c);
+    return ApiResponse.okEntity(c);
   }
 
   @PostMapping("/{id:[0-9]+}/capacity/update")
   @Operation(summary = "Update NGO capacity quantity")
-  public ResponseEntity<?> updateCapacity(@PathVariable long id, @RequestBody Map<String, Object> body) {
+  public ResponseEntity<ApiResponse<Map<String, Object>>> updateCapacity(
+      @PathVariable long id, @RequestBody Map<String, Object> body) {
     int qty = ((Number) body.get("quantity")).intValue();
     if (qty <= 0) {
-      return ResponseEntity.badRequest().body(Map.of("error", "Invalid quantity"));
+      throw new IllegalArgumentException("Invalid quantity");
     }
-    return ResponseEntity.ok(ngoService.updateCapacity(id, qty));
+    return ApiResponse.okEntity(ngoService.updateCapacity(id, qty));
   }
 }

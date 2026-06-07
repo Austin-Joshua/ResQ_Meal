@@ -8,5 +8,3 @@ export function SkipLink() {
     </a>
   );
 }
-
-export default SkipLink;

@@ -34,5 +34,3 @@ export function ApiErrorFallback({ error, onRetry }: ApiErrorFallbackProps) {
     </div>
   );
 }
-
-export default ApiErrorFallback;
