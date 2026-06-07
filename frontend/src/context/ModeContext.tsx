@@ -35,7 +35,9 @@ export const ModeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (saved && ['volunteer', 'restaurant', 'ngo', 'admin'].includes(saved)) {
         setCurrentMode(saved);
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error('Failed to load mode preference:', err);
+    }
 
     // Load analytics history
     try {
@@ -43,7 +45,9 @@ export const ModeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (analytics) {
         setModeHistory(JSON.parse(analytics));
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error('Failed to load mode preference:', err);
+    }
   }, []);
 
   // Track mode duration when switching modes
@@ -63,7 +67,9 @@ export const ModeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const trimmed = updated.slice(-100);
         try {
           localStorage.setItem(MODE_ANALYTICS_KEY, JSON.stringify(trimmed));
-        } catch (_) {}
+        } catch (err) {
+      console.error('Failed to load mode preference:', err);
+    }
         return trimmed;
       });
     }
@@ -80,7 +86,8 @@ export const ModeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const getModePreference = (): UserMode | null => {
     try {
       return localStorage.getItem(MODE_PREFERENCE_KEY) as UserMode | null;
-    } catch (_) {
+    } catch (err) {
+      console.error('Failed to read mode preference:', err);
       return null;
     }
   };
@@ -88,14 +95,18 @@ export const ModeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const saveModePreference = (mode: UserMode) => {
     try {
       localStorage.setItem(MODE_PREFERENCE_KEY, mode);
-    } catch (_) {}
+    } catch (err) {
+      console.error('Failed to load mode preference:', err);
+    }
   };
 
   const clearModeHistory = () => {
     setModeHistory([]);
     try {
       localStorage.removeItem(MODE_ANALYTICS_KEY);
-    } catch (_) {}
+    } catch (err) {
+      console.error('Failed to load mode preference:', err);
+    }
   };
 
   const value: ModeContextType = {

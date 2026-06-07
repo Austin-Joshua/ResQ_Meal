@@ -8,6 +8,12 @@ public final class AppConstants {
   public static final String AUTH_HEADER = "Authorization";
   public static final String TOKEN_PREFIX = "Bearer ";
 
+  // Roles
+  public static final String ROLE_RESTAURANT = "restaurant";
+  public static final String ROLE_NGO = "ngo";
+  public static final String ROLE_VOLUNTEER = "volunteer";
+  public static final String ROLE_ADMIN = "admin";
+
   // Food post statuses
   public static final String FOOD_STATUS_POSTED = "POSTED";
   public static final String FOOD_STATUS_MATCHED = "MATCHED";
@@ -27,6 +33,7 @@ public final class AppConstants {
   public static final String SOURCE_RULE_BASED = "rule-based";
 
   // Pagination defaults
+  public static final int DEFAULT_PAGE = 0;
   public static final int DEFAULT_PAGE_SIZE = 20;
   public static final int MAX_PAGE_SIZE = 100;
 }

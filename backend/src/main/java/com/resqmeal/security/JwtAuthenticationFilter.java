@@ -25,7 +25,9 @@ import java.util.Set;
 public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ordered {
 
   public static final int ORDER = 120;
-  private static final Set<String> ALLOWED_APP_ROLES = Set.of("restaurant", "ngo", "volunteer");
+  private static final Set<String> ALLOWED_APP_ROLES =
+      Set.of(
+          AppConstants.ROLE_RESTAURANT, AppConstants.ROLE_NGO, AppConstants.ROLE_VOLUNTEER);
 
   private final JwtUtil jwtUtil;
   private final SecurityMonitoringProperties securityMonitoringProperties;

@@ -1,5 +1,6 @@
 package com.resqmeal.service;
 
+import com.resqmeal.common.AppConstants;
 import com.resqmeal.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -110,7 +111,10 @@ public class UserService {
       params.add(body.get("longitude"));
     }
     String role = (String) body.get("role");
-    if (role != null && List.of("volunteer", "restaurant", "ngo").contains(role)) {
+    if (role != null
+        && List.of(
+                AppConstants.ROLE_VOLUNTEER, AppConstants.ROLE_RESTAURANT, AppConstants.ROLE_NGO)
+            .contains(role)) {
       sql.append(", role = ?");
       params.add(role);
     }
@@ -145,7 +149,10 @@ public class UserService {
               return m;
             },
             userId);
-    if (role != null && List.of("volunteer", "restaurant", "ngo").contains(role)) {
+    if (role != null
+        && List.of(
+                AppConstants.ROLE_VOLUNTEER, AppConstants.ROLE_RESTAURANT, AppConstants.ROLE_NGO)
+            .contains(role)) {
       data.put("token", jwtUtil.generateToken(userId, (String) data.get("role")));
     }
     String photo = (String) data.get("profile_photo");

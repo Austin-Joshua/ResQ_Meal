@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Mail, LogIn, AlertCircle, Loader2 } from 'lucide-react';
-import { getHealthCheckUrl } from '@/lib/apiConfig';
+import { get } from '@/api/client';
+import { endpoints } from '@/api/endpoints';
 import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
@@ -55,39 +56,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
   };
 
   const checkBackendHealth = async (): Promise<{ available: boolean; error?: string }> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-      
-      const response = await fetch(getHealthCheckUrl(), {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        mode: 'cors',
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        return { available: true };
-      }
-      
-      // Check for CORS error
-      if (response.status === 0 || response.type === 'opaque') {
-        return { available: false, error: 'CORS' };
-      }
-      
-      return { available: false, error: `HTTP ${response.status}` };
-    } catch (err: any) {
-      // Network error (backend not running)
-      if (err.name === 'AbortError' || err.message?.includes('Failed to fetch') || err.code === 'ERR_NETWORK') {
+      await get(endpoints.health, { signal: controller.signal });
+      return { available: true };
+    } catch (err: unknown) {
+      const e = err as { name?: string; message?: string; code?: string };
+      if (e.name === 'AbortError') {
         return { available: false, error: 'NETWORK' };
       }
-      // CORS error
-      if (err.message?.includes('CORS') || err.message?.includes('Access-Control')) {
+      if (e.message?.includes('CORS') || e.message?.includes('Access-Control')) {
         return { available: false, error: 'CORS' };
       }
-      return { available: false, error: err.message || 'UNKNOWN' };
+      if (e.message?.includes('Failed to fetch') || e.code === 'ERR_NETWORK') {
+        return { available: false, error: 'NETWORK' };
+      }
+      return { available: false, error: e.message ?? 'UNKNOWN' };
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
@@ -120,7 +107,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
           localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
           if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, userEmail);
           else localStorage.removeItem(REMEMBER_EMAIL_KEY);
-        } catch (_) {}
+        } catch (storageErr) {
+          console.error('Failed to persist remember-me preference:', storageErr);
+        }
         onSuccess({ id, name, email: userEmail, role }, token, rememberMe);
       } else {
         setError('Invalid response from server.');

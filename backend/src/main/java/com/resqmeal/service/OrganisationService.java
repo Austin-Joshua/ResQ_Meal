@@ -1,5 +1,6 @@
 package com.resqmeal.service;
 
+import com.resqmeal.common.AppConstants;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class OrganisationService {
 
   @Transactional
   public Map<String, Object> postFood(long userId, String role, Map<String, Object> body) {
-    if (!"restaurant".equalsIgnoreCase(role)) {
+    if (!AppConstants.ROLE_RESTAURANT.equalsIgnoreCase(role)) {
       throw new IllegalStateException("Only donors (restaurants) can add food.");
     }
     long restaurantId =
@@ -86,10 +87,11 @@ public class OrganisationService {
   }
 
   public Map<String, Object> getMyOrganisationFood(long userId, String role) {
-    if (!("ngo".equalsIgnoreCase(role) || "restaurant".equalsIgnoreCase(role))) {
+    if (!(AppConstants.ROLE_NGO.equalsIgnoreCase(role)
+        || AppConstants.ROLE_RESTAURANT.equalsIgnoreCase(role))) {
       throw new IllegalStateException("Only donors or organisations can view their food list.");
     }
-    if ("restaurant".equalsIgnoreCase(role)) {
+    if (AppConstants.ROLE_RESTAURANT.equalsIgnoreCase(role)) {
       return UserIds.restaurantId(jdbc, userId)
           .map(
               rid -> {

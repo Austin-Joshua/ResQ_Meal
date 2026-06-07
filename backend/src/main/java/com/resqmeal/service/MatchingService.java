@@ -560,7 +560,7 @@ public class MatchingService {
     int off = Math.max(page, 0) * lim;
     String normalizedRole = role != null ? role.toLowerCase() : "";
 
-    if ("ngo".equals(normalizedRole)) {
+    if (AppConstants.ROLE_NGO.equals(normalizedRole)) {
       long ngoId =
           UserIds.ngoId(jdbc, userId).orElseThrow(() -> new IllegalStateException("NGO profile not found"));
       StringBuilder q = new StringBuilder("SELECT * FROM matches WHERE ngo_id = ?");
@@ -580,7 +580,7 @@ public class MatchingService {
       return PageEnvelope.of(rows, page, lim, total != null ? total : 0);
     }
 
-    if ("restaurant".equals(normalizedRole)) {
+    if (AppConstants.ROLE_RESTAURANT.equals(normalizedRole)) {
       long restaurantId =
           UserIds.restaurantId(jdbc, userId)
               .orElseThrow(() -> new IllegalStateException("Restaurant profile not found"));

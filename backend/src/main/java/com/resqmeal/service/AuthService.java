@@ -1,5 +1,6 @@
 package com.resqmeal.service;
 
+import com.resqmeal.common.AppConstants;
 import com.resqmeal.security.JwtUtil;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -39,7 +40,9 @@ public class AuthService {
         || email == null
         || password == null
         || role == null
-        || !List.of("restaurant", "ngo", "volunteer").contains(role)) {
+        || !List.of(
+                AppConstants.ROLE_RESTAURANT, AppConstants.ROLE_NGO, AppConstants.ROLE_VOLUNTEER)
+            .contains(role)) {
       throw new IllegalArgumentException("Invalid registration data");
     }
     String hash = passwordEncoder.encode(password);
@@ -91,15 +94,15 @@ public class AuthService {
 
   private void createRoleProfile(long userId, String name, String role) {
     switch (role) {
-      case "restaurant" -> jdbc.update(
+      case AppConstants.ROLE_RESTAURANT -> jdbc.update(
           "INSERT INTO restaurants (user_id, business_name) VALUES (?, ?)",
           userId,
           name != null && !name.isBlank() ? name : "Donor");
-      case "ngo" -> jdbc.update(
+      case AppConstants.ROLE_NGO -> jdbc.update(
           "INSERT INTO ngos (user_id, organization_name, daily_capacity, used_capacity, verified) VALUES (?, ?, 100, 0, FALSE)",
           userId,
           name != null && !name.isBlank() ? name : "Organisation");
-      case "volunteer" -> {
+      case AppConstants.ROLE_VOLUNTEER -> {
         Long ngoId =
             jdbc.query(
                 "SELECT MIN(id) AS id FROM ngos",
