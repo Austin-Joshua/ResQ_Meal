@@ -6,9 +6,12 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class ImpactService {
+
+  private static final Set<String> ALLOWED_PERIODS = Set.of("today", "week", "month");
 
   private final JdbcTemplate jdbc;
 
@@ -16,16 +19,44 @@ public class ImpactService {
     this.jdbc = jdbc;
   }
 
-  private static String periodClause(String period) {
-    if (period == null) {
-      return "1=1";
-    }
-    return switch (period) {
-      case "today" -> "DATE(il.created_at) = CURDATE()";
-      case "week" -> "il.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
-      case "month" -> "il.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-      default -> "1=1";
+  private static String ngoImpactSql(String period) {
+    String base =
+        """
+        SELECT COALESCE(SUM(il.meals_saved),0) AS meals_saved, COALESCE(SUM(il.food_saved_kg),0) AS food_saved_kg,
+               COALESCE(SUM(il.co2_saved_kg),0) AS co2_saved_kg, COALESCE(SUM(il.water_saved_liters),0) AS water_saved_liters,
+               COUNT(DISTINCT il.food_post_id) AS total_deliveries
+        FROM impact_logs il WHERE il.ngo_id = ?
+        """;
+    return switch (normalizePeriod(period)) {
+      case "today" -> base + " AND DATE(il.created_at) = CURDATE()";
+      case "week" -> base + " AND il.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+      case "month" -> base + " AND il.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+      default -> base;
     };
+  }
+
+  private static String restaurantImpactSql(String period) {
+    String base =
+        """
+        SELECT COALESCE(SUM(il.meals_saved),0) AS meals_saved, COALESCE(SUM(il.food_saved_kg),0) AS food_saved_kg,
+               COALESCE(SUM(il.co2_saved_kg),0) AS co2_saved_kg, COALESCE(SUM(il.water_saved_liters),0) AS water_saved_liters,
+               COUNT(DISTINCT il.food_post_id) AS total_deliveries
+        FROM impact_logs il JOIN food_posts fp ON il.food_post_id = fp.id
+        WHERE fp.restaurant_id = ?
+        """;
+    return switch (normalizePeriod(period)) {
+      case "today" -> base + " AND DATE(il.created_at) = CURDATE()";
+      case "week" -> base + " AND il.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+      case "month" -> base + " AND il.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+      default -> base;
+    };
+  }
+
+  private static String normalizePeriod(String period) {
+    if (period == null || !ALLOWED_PERIODS.contains(period)) {
+      return "all";
+    }
+    return period;
   }
 
   private Map<String, Object> formatRow(Map<String, Object> row) {
@@ -57,15 +88,7 @@ public class ImpactService {
   public Map<String, Object> ngoImpact(long userId, String period) {
     long ngoId =
         UserIds.ngoId(jdbc, userId).orElseThrow(() -> new IllegalStateException("NGO profile not found"));
-    String clause = periodClause(period);
-    Map<String, Object> row =
-        jdbc.queryForMap(
-            "SELECT COALESCE(SUM(il.meals_saved),0) AS meals_saved, COALESCE(SUM(il.food_saved_kg),0) AS food_saved_kg, "
-                + "COALESCE(SUM(il.co2_saved_kg),0) AS co2_saved_kg, COALESCE(SUM(il.water_saved_liters),0) AS water_saved_liters, "
-                + "COUNT(DISTINCT il.food_post_id) AS total_deliveries "
-                + "FROM impact_logs il WHERE il.ngo_id = ? AND "
-                + clause,
-            ngoId);
+    Map<String, Object> row = jdbc.queryForMap(ngoImpactSql(period), ngoId);
     return formatRow(row);
   }
 
@@ -73,26 +96,40 @@ public class ImpactService {
     long restaurantId =
         UserIds.restaurantId(jdbc, userId)
             .orElseThrow(() -> new IllegalStateException("Restaurant profile not found"));
-    String clause = periodClause(period);
-    Map<String, Object> row =
-        jdbc.queryForMap(
-            "SELECT COALESCE(SUM(il.meals_saved),0) AS meals_saved, COALESCE(SUM(il.food_saved_kg),0) AS food_saved_kg, "
-                + "COALESCE(SUM(il.co2_saved_kg),0) AS co2_saved_kg, COALESCE(SUM(il.water_saved_liters),0) AS water_saved_liters, "
-                + "COUNT(DISTINCT il.food_post_id) AS total_deliveries "
-                + "FROM impact_logs il JOIN food_posts fp ON il.food_post_id = fp.id "
-                + "WHERE fp.restaurant_id = ? AND "
-                + clause,
-            restaurantId);
+    Map<String, Object> row = jdbc.queryForMap(restaurantImpactSql(period), restaurantId);
     return formatRow(row);
   }
 
   public Map<String, Object> globalImpact() {
     Map<String, Object> row =
         jdbc.queryForMap(
-            "SELECT COALESCE(SUM(il.meals_saved),0) AS meals_saved, COALESCE(SUM(il.food_saved_kg),0) AS food_saved_kg, "
-                + "COALESCE(SUM(il.co2_saved_kg),0) AS co2_saved_kg, COALESCE(SUM(il.water_saved_liters),0) AS water_saved_liters, "
-                + "COUNT(DISTINCT il.food_post_id) AS total_deliveries FROM impact_logs il");
+            """
+            SELECT COALESCE(SUM(il.meals_saved),0) AS meals_saved, COALESCE(SUM(il.food_saved_kg),0) AS food_saved_kg,
+                   COALESCE(SUM(il.co2_saved_kg),0) AS co2_saved_kg, COALESCE(SUM(il.water_saved_liters),0) AS water_saved_liters,
+                   COUNT(DISTINCT il.food_post_id) AS total_deliveries FROM impact_logs il
+            """);
     return formatRow(row);
+  }
+
+  public Map<String, Object> publicImpact() {
+    Map<String, Object> totals =
+        jdbc.queryForMap(
+            """
+            SELECT COALESCE(SUM(il.meals_saved), 0) AS total_meals_saved,
+                   COALESCE(SUM(il.co2_saved_kg), 0) AS co2_kg_avoided,
+                   COUNT(DISTINCT il.food_post_id) AS total_deliveries
+            FROM impact_logs il
+            """);
+    Integer activeNgos =
+        jdbc.queryForObject("SELECT COUNT(*) FROM ngos WHERE verified = TRUE", Integer.class);
+    Integer activeRestaurants =
+        jdbc.queryForObject("SELECT COUNT(*) FROM restaurants WHERE verified = TRUE", Integer.class);
+    return Map.of(
+        "totalMealsSaved", intVal(totals.get("total_meals_saved")),
+        "co2KgAvoided", doubleVal(totals.get("co2_kg_avoided")),
+        "activeNGOs", activeNgos != null ? activeNgos : 0,
+        "activeRestaurants", activeRestaurants != null ? activeRestaurants : 0,
+        "totalDeliveries", intVal(totals.get("total_deliveries")));
   }
 
   public Map<String, Object> timeline(int days) {

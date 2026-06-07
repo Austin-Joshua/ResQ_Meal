@@ -16,7 +16,8 @@
     "build:fullstack": "npm run build -w frontend && node backend/scripts/maven-package.mjs",
     "lint": "npm run lint -w frontend",
     "preview": "npm run preview -w frontend",
-    "test": "npm run test -w frontend"
+    "test": "npm run test -w frontend",
+    "seed:info": "node scripts/print-seed-creds.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

@@ -1,5 +1,7 @@
 package com.resqmeal.service;
 
+import com.resqmeal.common.AppConstants;
+import com.resqmeal.dto.response.PageEnvelope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,8 @@ public class FoodService {
     }
     return Math.min(100, Math.max(0, score));
   }
+
+  private static final String NOT_DELETED = " AND deleted_at IS NULL";
 
   public long ensureRestaurantId(long userId) {
     return UserIds.restaurantId(jdbc, userId)
@@ -105,8 +109,20 @@ public class FoodService {
             ? ((Number) body.get("availability_time_hours")).intValue()
             : null;
     String photoUrl = (String) body.get("photo_url");
-    long expiryMs = System.currentTimeMillis() + safetyWindow * 60_000L;
-    Timestamp expiry = Timestamp.from(Instant.ofEpochMilli(expiryMs));
+    Timestamp expiry;
+    if (body.get("expiry_time") != null) {
+      Object expiryRaw = body.get("expiry_time");
+      if (expiryRaw instanceof java.time.Instant instant) {
+        expiry = Timestamp.from(instant);
+      } else if (expiryRaw instanceof java.util.Date date) {
+        expiry = new Timestamp(date.getTime());
+      } else {
+        expiry = Timestamp.from(java.time.Instant.parse(expiryRaw.toString()));
+      }
+    } else {
+      long expiryMs = System.currentTimeMillis() + safetyWindow * 60_000L;
+      expiry = Timestamp.from(Instant.ofEpochMilli(expiryMs));
+    }
     int urgency = calculateUrgencyScore(safetyWindow, quantity);
 
     GeneratedKeyHolder kh = new GeneratedKeyHolder();
@@ -170,7 +186,7 @@ public class FoodService {
 
   private Map<String, Object> loadFoodRow(long id) {
     return jdbc.query(
-        "SELECT * FROM food_posts WHERE id = ?",
+        "SELECT * FROM food_posts WHERE id = ?" + NOT_DELETED,
         rs -> {
           if (!rs.next()) {
             return null;
@@ -230,7 +246,7 @@ public class FoodService {
       return Map.of("data", List.of(), "count", 0);
     }
     StringBuilder q =
-        new StringBuilder("SELECT * FROM food_posts WHERE restaurant_id = ?");
+        new StringBuilder("SELECT * FROM food_posts WHERE restaurant_id = ?" + NOT_DELETED);
     List<Object> params = new ArrayList<>();
     params.add(rid.get());
     if (status != null && !status.isBlank()) {
@@ -268,6 +284,7 @@ public class FoodService {
             SELECT * FROM food_posts
             WHERE status IN ('POSTED','MATCHED','ACCEPTED','PICKED_UP')
             AND expiry_time > NOW()
+            AND deleted_at IS NULL
             """);
     List<Object> params = new ArrayList<>();
     if (foodType != null && !foodType.isBlank()) {
@@ -302,7 +319,7 @@ public class FoodService {
     if (existing == null || restaurantId != toLong(existing.get("restaurant_id"))) {
       throw new IllegalStateException("Food post not found");
     }
-    if (!"POSTED".equals(existing.get("status"))) {
+    if (!AppConstants.FOOD_STATUS_POSTED.equals(existing.get("status"))) {
       throw new IllegalStateException("Cannot update post after POSTED status");
     }
     jdbc.update(
@@ -332,10 +349,48 @@ public class FoodService {
     if (existing == null || restaurantId != toLong(existing.get("restaurant_id"))) {
       throw new IllegalStateException("Food post not found");
     }
-    if (!"POSTED".equals(existing.get("status"))) {
+    if (!AppConstants.FOOD_STATUS_POSTED.equals(existing.get("status"))) {
       throw new IllegalStateException("Cannot delete post after POSTED status");
     }
-    jdbc.update("DELETE FROM food_posts WHERE id = ?", id);
+    jdbc.update("UPDATE food_posts SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?", id);
+  }
+
+  public Map<String, Object> listFoodPosts(
+      String status, String foodType, int page, int size, String sort) {
+    int lim = Math.min(Math.max(size, 1), 100);
+    int off = Math.max(page, 0) * lim;
+    String orderBy =
+        switch (sort != null ? sort.toLowerCase() : "") {
+          case "createdat,asc", "created_at,asc" -> "created_at ASC";
+          case "expiry_time,asc", "expirytime,asc" -> "expiry_time ASC";
+          case "expiry_time,desc", "expirytime,desc" -> "expiry_time DESC";
+          default -> "created_at DESC";
+        };
+    StringBuilder q =
+        new StringBuilder(
+            "SELECT * FROM food_posts WHERE deleted_at IS NULL AND expiry_time > NOW()");
+    List<Object> params = new ArrayList<>();
+    if (status != null && !status.isBlank()) {
+      q.append(" AND status = ?");
+      params.add(status);
+    }
+    if (foodType != null && !foodType.isBlank()) {
+      q.append(" AND food_type = ?");
+      params.add(foodType);
+    }
+    String countSql = q.toString().replace("SELECT *", "SELECT COUNT(*)");
+    Integer total = jdbc.queryForObject(countSql, Integer.class, params.toArray());
+    q.append(" ORDER BY ").append(orderBy).append(" LIMIT ? OFFSET ?");
+    params.add(lim);
+    params.add(off);
+    List<Map<String, Object>> rows =
+        jdbc.query(q.toString(), (rs, rowNum) -> rowToFoodMap(rs), params.toArray());
+    List<Map<String, Object>> formatted = new ArrayList<>();
+    for (Map<String, Object> r : rows) {
+      formatted.add(mapFoodRow(r));
+    }
+    int totalElements = total != null ? total : 0;
+    return PageEnvelope.of(formatted, page, lim, totalElements);
   }
 
   private static long toLong(Object o) {
@@ -345,3 +400,4 @@ public class FoodService {
     return 0;
   }
 }
+

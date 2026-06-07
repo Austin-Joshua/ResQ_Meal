@@ -1,5 +1,6 @@
 package com.resqmeal.service;
 
+import com.resqmeal.common.AppConstants;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +58,7 @@ public class DeliveryService {
     if (assigned == null || assigned != vol) {
       throw new IllegalStateException("Not assigned to this delivery");
     }
-    return matchingService.updateMatchStatus(matchId, "DELIVERED", null, proofPhoto);
+    return matchingService.updateMatchStatus(matchId, AppConstants.MATCH_DELIVERED, null, proofPhoto);
   }
 
   public Map<String, Object> updateDeliveryStatus(String deliveryId, String status) {

@@ -202,7 +202,9 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
     setFoodListLoading(true);
     organisationApi.getMyFood()
       .then((res) => {
-        setOrganisationFood(Array.isArray(res.data?.data) ? res.data.data : []);
+        setOrganisationFood(
+          Array.isArray(res.data?.data) ? (res.data.data as typeof organisationFood) : []
+        );
       })
       .catch(() => setOrganisationFood([]))
       .finally(() => setFoodListLoading(false));
@@ -313,7 +315,7 @@ const OrganisationReport: React.FC<OrganisationReportProps> = ({
       logo={<AppLogo size="header" className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[260px]" />}
       sidebarItems={sidebarItems}
       activeId={activePage}
-      onNavigate={handleNavigate}
+      onNavigate={(id) => handleNavigate(id as ActivePage)}
       darkMode={darkMode}
       setDarkMode={setDarkMode}
       language={language}

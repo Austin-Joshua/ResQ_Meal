@@ -1,26 +1,73 @@
-# Local fullstack: MySQL for Spring Boot (schema loaded on first container data volume only).
-# Host port 3307 avoids clashing with a MySQL already bound to 3306 on the machine.
-# Usage: docker compose up -d db
-# Then set backend/.env: DB_PORT=3307 (and DB_PASSWORD to match MYSQL_ROOT_PASSWORD below).
+# Full-stack local stack: MySQL + Spring Boot API + React SPA (nginx).
+# Copy .env.docker.example to .env.docker before running.
+#
+# Usage:
+#   docker compose up -d --build
+#   Open http://localhost (frontend) — API proxied at /api
+#
+# DB-only (legacy dev on host):
+#   docker compose up -d db
+#   Set backend/.env DB_PORT=3307
 services:
   db:
     image: mysql:8.0
     container_name: resqmeal-mysql
     restart: unless-stopped
+    env_file:
+      - .env.docker
     environment:
-      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: resqmeal_db
     ports:
       - "3307:3306"
     volumes:
       - resqmeal_mysql_data:/var/lib/mysql
       - ./database/database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p123456"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 40
       start_period: 30s
 
+  backend:
+    build:
+      context: ./backend
+    container_name: resqmeal-backend
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: resqmeal_db
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      PORT: 8080
+      UPLOAD_DIR: /app/uploads
+      API_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - resqmeal_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    container_name: resqmeal-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
 volumes:
   resqmeal_mysql_data:
+  resqmeal_uploads:

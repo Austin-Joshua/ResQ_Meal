@@ -18,8 +18,8 @@ export function getHealthCheckUrl(): string {
 
 /**
  * Socket.IO engine URL (no path; client still uses `path: '/socket.io'`).
- * - Dev default: same origin as the page → Vite proxies `/socket.io` to port 9090.
- * - Prod default: same hostname, port 9090 (Spring netty-socketio).
+ * - Dev default: same origin as the page → Vite proxies `/socket.io` to Spring Boot (8080).
+ * - Prod default: same origin (Socket.IO served alongside API on 8080).
  * - Override anytime with VITE_SOCKET_URL (full origin, e.g. `https://ws.example.com`).
  */
 export function getSocketUrl(): string {
@@ -27,12 +27,8 @@ export function getSocketUrl(): string {
   if (explicit) {
     return explicit.replace(/\/$/, '');
   }
-  if (import.meta.env.DEV && typeof window !== 'undefined') {
+  if (typeof window !== 'undefined') {
     return window.location.origin;
   }
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:9090`;
-  }
-  return 'http://localhost:9090';
+  return 'http://localhost:8080';
 }

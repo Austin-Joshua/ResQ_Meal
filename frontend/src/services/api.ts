@@ -1,100 +1,131 @@
-import axios from 'axios';
+/**
+ * Typed API facade — all HTTP goes through @/api/client (single fetch wrapper).
+ * Returns axios-compatible `{ data }` envelopes for backward compatibility.
+ */
+import { del, get, patch, post, put, upload, ApiError } from '@/api/client';
+import { endpoints } from '@/api/endpoints';
 
-import { getApiBasePath } from '@/lib/apiConfig';
+type AxiosLikeError = Error & { response?: { status: number; data: unknown } };
 
-const api = axios.create({
-  baseURL: getApiBasePath(),
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Read token from same storage as app (localStorage then sessionStorage)
-function getAuthToken(): string | null {
-  return localStorage.getItem('resqmeal_token') || sessionStorage.getItem('resqmeal_token') || null;
+function toAxiosError(err: unknown): AxiosLikeError {
+  if (err instanceof ApiError) {
+    const axErr = new Error(err.message) as AxiosLikeError;
+    axErr.response = { status: err.status, data: err.body };
+    return axErr;
+  }
+  return err as AxiosLikeError;
 }
 
-// Request interceptor to add auth token
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+export type ApiDataEnvelope<T = unknown> = { data?: T; success?: boolean; message?: string };
 
-// Response interceptor: on 401 (invalid/expired token) clear auth and redirect; on 403 do not (user stays on page)
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status;
-    const isAuthRequest = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
-    if (!isAuthRequest && status === 401) {
-      localStorage.removeItem('resqmeal_token');
-      localStorage.removeItem('resqmeal_user');
-      sessionStorage.removeItem('resqmeal_token');
-      sessionStorage.removeItem('resqmeal_user');
-      window.location.href = '/';
-    }
-    return Promise.reject(error);
+async function wrap<T>(promise: Promise<T>): Promise<{ data: T }> {
+  try {
+    return { data: await promise };
+  } catch (err) {
+    throw toAxiosError(err);
   }
-);
+}
 
-// Auth APIs (passwords hashed on backend with bcrypt; JWT returned)
+function queryString(params?: Record<string, string | number | boolean | undefined>): string {
+  if (!params) return '';
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null) qs.set(k, String(v));
+  }
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+// Auth APIs
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post<{ success: boolean; data: { id: number; name: string; email: string; role: string; token: string } }>('/auth/login', { email, password }),
-  register: (data: { name: string; email: string; password: string; role: 'restaurant' | 'ngo' | 'volunteer'; phone_number?: string; address?: string }) =>
-    api.post('/auth/register', data),
-  logout: () => api.post('/auth/logout'),
+    wrap(
+      post<{ success: boolean; data: { id: number; name: string; email: string; role: string; token: string }; message?: string }>(
+        endpoints.auth.login,
+        { email, password }
+      )
+    ),
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'restaurant' | 'ngo' | 'volunteer';
+    phone_number?: string;
+    address?: string;
+  }) =>
+    wrap(
+      post<{
+        success: boolean;
+        data?: { id: number; name: string; email: string; role: string; token: string };
+        message?: string;
+      }>(endpoints.auth.register, data)
+    ),
+  logout: () => wrap(post(endpoints.auth.logout)),
 };
 
-// Food APIs (Restaurant)
+// Food APIs
 export const foodApi = {
-  postFood: (data: any) => api.post('/food', data),
-  getMyPosts: () => api.get('/food/my-posts'),
-  /** Get available food for NGOs (POSTED/MATCHED/ACCEPTED/PICKED_UP, not expired). Query: latitude?, longitude?, radius_km?, food_type?, min_urgency?, max_urgency?, limit? */
+  postFood: (data: Record<string, unknown>) =>
+    wrap(post<ApiDataEnvelope<{ id?: number }>>(endpoints.food, data)),
+  getMyPosts: () => wrap(get<ApiDataEnvelope<unknown[]>>(`${endpoints.food}/my-posts`)),
   getAvailableFood: (params?: Record<string, string | number>) =>
-    api.get('/food/available/all', { params }),
-  updateFood: (id: string, data: any) => api.put(`/food/${id}`, data),
-  deleteFood: (id: string) => api.delete(`/food/${id}`),
-  /** Upload image for freshness check (uses fruit-veg-freshness-ai when backend is configured). */
+    wrap(get<ApiDataEnvelope<unknown[]>>(`${endpoints.food}/available/all${queryString(params)}`)),
+  updateFood: (id: string, data: Record<string, unknown>) => wrap(put(`${endpoints.food}/${id}`, data)),
+  deleteFood: (id: string) => wrap(del(`${endpoints.food}/${id}`)),
   assessFreshness: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    return api.post('/food/assess-freshness', formData);
+    return wrap(upload(`${endpoints.food}/assess-freshness`, formData));
   },
-  /** Check freshness by storage conditions (temperature, humidity, time) - Food-Freshness-Analyzer. */
   assessFreshnessByEnvironment: (data: {
     temperature: number;
     humidity: number;
     time_stored_hours: number;
     gas?: number;
-  }) => api.post('/food/assess-freshness-by-environment', data),
-  /** Classify food from image and get nutrition (Food-Image-Recognition, Food-101). */
+  }) => wrap(post(`${endpoints.food}/assess-freshness-by-environment`, data)),
   classifyImage: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    return api.post('/food/classify-image', formData);
+    return wrap(upload(`${endpoints.food}/classify-image`, formData));
   },
 };
 
-// Match APIs (NGO / Restaurant)
+// Match APIs
 export const matchApi = {
-  getNGOMatches: () => api.get('/matches/for-ngo/all'),
-  getRestaurantMatches: () => api.get('/matches/for-restaurant/all'),
+  getNGOMatches: () => wrap(get(`${endpoints.matches}/for-ngo/all`)),
+  getRestaurantMatches: () => wrap(get(`${endpoints.matches}/for-restaurant/all`)),
   getRecommended: (foodPostId: number, top?: number) =>
-    api.get(`/matches/recommended/${foodPostId}`, { params: top != null ? { top } : undefined }),
-  getMatch: (id: string) => api.get(`/matches/${id}`),
-  createMatch: (foodPostId: number) => api.post('/matches', { food_post_id: foodPostId }),
-  acceptMatch: (matchId: string) => api.put(`/matches/${matchId}/status`, { status: 'ACCEPTED' }),
-  rejectMatch: (_matchId: string) => Promise.resolve({ data: {} }), // Backend has no REJECTED status; UI can hide or use as no-op
-  updateMatchStatus: (matchId: string, status: 'ACCEPTED' | 'PICKED_UP' | 'DELIVERED', volunteer_id?: number, delivery_proof_photo?: string) =>
-    api.put(`/matches/${matchId}/status`, { status, volunteer_id, delivery_proof_photo }),
-  assignVolunteer: (matchId: string, volunteerId: number) => api.put(`/matches/${matchId}/assign-volunteer`, { volunteer_id: volunteerId }),
+    wrap(get(`${endpoints.matches}/recommended/${foodPostId}${queryString({ top })}`)),
+  getMatch: (id: string) => wrap(get(`${endpoints.matches}/${id}`)),
+  createMatch: (foodPostId: number) =>
+    wrap(post(endpoints.matches, { food_post_id: foodPostId })),
+  acceptMatch: (matchId: string) =>
+    wrap(put(`${endpoints.matches}/${matchId}/status`, { status: 'ACCEPTED' })),
+  rejectMatch: (_matchId: string) => Promise.resolve({ data: {} }),
+  updateMatchStatus: (
+    matchId: string,
+    status: 'ACCEPTED' | 'PICKED_UP' | 'DELIVERED',
+    volunteer_id?: number,
+    delivery_proof_photo?: string
+  ) =>
+    wrap(
+      put(`${endpoints.matches}/${matchId}/status`, {
+        status,
+        volunteer_id,
+        delivery_proof_photo,
+      })
+    ),
+  assignVolunteer: (matchId: string, volunteerId: number) =>
+    wrap(put(`${endpoints.matches}/${matchId}/assign-volunteer`, { volunteer_id: volunteerId })),
+  completeMatch: (matchId: string, photo: File, volunteerId?: number) => {
+    const formData = new FormData();
+    formData.append('photo', photo);
+    if (volunteerId != null) formData.append('volunteer_id', String(volunteerId));
+    return wrap(upload(`${endpoints.matches}/${matchId}/complete`, formData));
+  },
 };
 
-// Organisation food (NGO adds food → reflected on volunteer page)
+// Organisation food
 export const organisationApi = {
   postFood: (data: {
     food_name: string;
@@ -106,35 +137,40 @@ export const organisationApi = {
     longitude?: number;
     freshness_score?: number | null;
     quality_score?: number | null;
-  }) => api.post('/organisation/food', data),
-  getMyFood: () => api.get('/organisation/food'),
-  getAvailableFood: () => api.get('/organisation/food/available'),
+  }) => wrap(post('/organisation/food', data)),
+  getMyFood: () => wrap(get<ApiDataEnvelope<unknown[]>>('/organisation/food')),
+  getAvailableFood: () => wrap(get<ApiDataEnvelope<unknown[]>>('/organisation/food/available')),
 };
 
-// Delivery APIs (Volunteer)
+// Delivery APIs
 export const deliveryApi = {
-  getVolunteerDeliveries: () => api.get('/delivery/volunteer'),
+  getVolunteerDeliveries: () => wrap(get<ApiDataEnvelope<unknown[]>>('/delivery/volunteer')),
   completeDelivery: (deliveryId: string, proofPhoto: string) =>
-    api.post('/delivery/complete', { deliveryId, proofPhoto }),
+    wrap(post('/delivery/complete', { deliveryId, proofPhoto })),
   updateDeliveryStatus: (deliveryId: string, status: string) =>
-    api.put(`/delivery/${deliveryId}/status`, { status }),
+    wrap(put(`/delivery/${deliveryId}/status`, { status })),
 };
 
 // Impact APIs
 export const impactApi = {
-  getImpact: () => api.get('/impact/ngo').catch(() => api.get('/impact/restaurant')),
-  getNGOImpact: () => api.get('/impact/ngo'),
-  getRestaurantImpact: () => api.get('/impact/restaurant'),
-  getGlobalImpact: () => api.get('/impact/global'),
-  getPublicStats: () => api.get('/impact/global'),
+  getImpact: () =>
+    wrap(get('/impact/ngo').catch(() => get('/impact/restaurant'))),
+  getNGOImpact: () => wrap(get('/impact/ngo')),
+  getRestaurantImpact: () => wrap(get('/impact/restaurant')),
+  getGlobalImpact: () => wrap(get('/impact/global')),
+  getPublicStats: () => wrap(get('/impact/global')),
 };
 
-// Notification APIs (real-time + persisted)
+// Notification APIs
 export const notificationApi = {
   getList: (params?: { unread_only?: boolean; limit?: number }) =>
-    api.get<{ data: NotificationItem[]; unreadCount: number }>('/notifications', { params }),
-  markRead: (id: number) => api.patch(`/notifications/${id}/read`),
-  markAllRead: () => api.post('/notifications/read-all'),
+    wrap(
+      get<{ data: NotificationItem[]; unreadCount: number }>(
+        `${endpoints.notifications}${queryString(params)}`
+      )
+    ),
+  markRead: (id: number) => wrap(patch(`${endpoints.notifications}/${id}/read`)),
+  markAllRead: () => wrap(post(`${endpoints.notifications}/read-all`)),
 };
 
 export interface NotificationItem {
@@ -150,51 +186,60 @@ export interface NotificationItem {
 
 // User APIs
 export const userApi = {
-  getMe: () => api.get('/users/me'),
-  updateMe: (data: any) => api.put('/users/me', data),
+  getMe: () => wrap(get('/users/me')),
+  updateMe: (data: Record<string, unknown>) =>
+    wrap(
+      put<ApiDataEnvelope<{ id: number; name: string; email: string; role: string; token?: string }>>(
+        '/users/me',
+        data
+      )
+    ),
   uploadProfilePhoto: (file: File) => {
     const formData = new FormData();
     formData.append('photo', file);
-    return api.post('/upload/profile-photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return wrap(upload(endpoints.upload + '/profile-photo', formData));
   },
 };
 
-/** Security admin APIs (requires ROLE_ADMIN; configure ADMIN_USER_IDS on server). */
 export const adminSecurityApi = {
   getLogs: (limit = 100) =>
-    api.get<{ success: boolean; data: SecurityLogRow[] }>('/admin/logs', { params: { limit } }),
+    wrap(get<{ success: boolean; data: SecurityLogRow[] }>(`/admin/logs${queryString({ limit })}`)),
   getCriticalLogs: (limit = 100) =>
-    api.get<{ success: boolean; data: SecurityLogRow[] }>('/admin/critical-logs', {
-      params: { limit },
-    }),
-  getBlocked: () =>
-    api.get<{ success: boolean; data: BlockedEntityRow[] }>('/admin/blocked-users'),
+    wrap(
+      get<{ success: boolean; data: SecurityLogRow[] }>(`/admin/critical-logs${queryString({ limit })}`)
+    ),
+  getBlocked: () => wrap(get<{ success: boolean; data: BlockedEntityRow[] }>('/admin/blocked-users')),
   getThreatMlEvents: (limit = 100) =>
-    api.get<{ success: boolean; data: ThreatMlEventRow[] }>('/admin/threat-ml-events', {
-      params: { limit },
-    }),
+    wrap(
+      get<{ success: boolean; data: ThreatMlEventRow[] }>(
+        `/admin/threat-ml-events${queryString({ limit })}`
+      )
+    ),
   blockIp: (ip: string, reason?: string) =>
-    api.post<{ success: boolean; message?: string; error?: string }>('/admin/block-ip', {
-      ip,
-      ...(reason ? { reason } : {}),
-    }),
+    wrap(
+      post<{ success: boolean; message?: string; error?: string }>('/admin/block-ip', {
+        ip,
+        ...(reason ? { reason } : {}),
+      })
+    ),
   blockUser: (userId: number, reason?: string) =>
-    api.post<{ success: boolean; message?: string; error?: string }>('/admin/block-user', {
-      userId,
-      ...(reason ? { reason } : {}),
-    }),
+    wrap(
+      post<{ success: boolean; message?: string; error?: string }>('/admin/block-user', {
+        userId,
+        ...(reason ? { reason } : {}),
+      })
+    ),
 };
 
-/** Attack simulation admin APIs (requires ROLE_ADMIN). */
 export const adminAttackSimApi = {
   getState: () =>
-    api.get<{ success: boolean; security_mode_on: boolean }>('/admin/attack-sim/state'),
+    wrap(get<{ success: boolean; security_mode_on: boolean }>('/admin/attack-sim/state')),
   getLogs: (limit = 100) =>
-    api.get<{ success: boolean; data: AttackSimulationLogRow[] }>('/admin/attack-sim/logs', {
-      params: { limit },
-    }),
+    wrap(
+      get<{ success: boolean; data: AttackSimulationLogRow[] }>(
+        `/admin/attack-sim/logs${queryString({ limit })}`
+      )
+    ),
 };
 
 export interface SecurityLogRow {
@@ -239,4 +284,6 @@ export interface AttackSimulationLogRow {
   created_at: string;
 }
 
+/** @deprecated Use named API groups (authApi, foodApi, etc.) */
+const api = { get: wrap, post: wrap, put: wrap, del: wrap };
 export default api;

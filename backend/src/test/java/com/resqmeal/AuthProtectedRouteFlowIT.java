@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
+      "spring.flyway.enabled=false",
       "spring.datasource.url=jdbc:h2:mem:authflow;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
       "spring.datasource.driver-class-name=org.h2.Driver",
       "spring.datasource.username=sa",
@@ -25,7 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
       "jwt.secret=integration-test-secret-do-not-use-in-prod",
       "socketio.port=0",
       "app.traffic-security.enabled=false",
-      "app.security.admin-user-ids="
+      "app.security.admin-user-ids=",
+      "app.attack-sim.enabled=false"
     })
 class AuthProtectedRouteFlowIT {
 

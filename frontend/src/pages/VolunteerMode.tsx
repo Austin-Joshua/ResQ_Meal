@@ -50,14 +50,26 @@ const VolunteerMode: React.FC<VolunteerModeProps> = ({
 
   useEffect(() => {
     deliveryApi.getVolunteerDeliveries()
-      .then((res) => setDeliveries(Array.isArray(res.data?.data) ? res.data.data : res.data ? [res.data] : []))
+      .then((res) =>
+        setDeliveries(
+          Array.isArray(res.data?.data)
+            ? (res.data.data as typeof deliveries)
+            : res.data
+              ? [res.data as (typeof deliveries)[number]]
+              : []
+        )
+      )
       .catch(() => setDeliveries([]))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     organisationApi.getAvailableFood()
-      .then((res) => setAvailableFood(Array.isArray(res.data?.data) ? res.data.data : []))
+      .then((res) =>
+        setAvailableFood(
+          Array.isArray(res.data?.data) ? (res.data.data as typeof availableFood) : []
+        )
+      )
       .catch(() => setAvailableFood([]))
       .finally(() => setAvailableFoodLoading(false));
   }, []);

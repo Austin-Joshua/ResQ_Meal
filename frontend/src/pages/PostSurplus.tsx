@@ -105,7 +105,8 @@ const PostSurplusPage: React.FC<PostSurplusPageProps> = ({ darkMode, onBack }) =
         availability_time_hours: formData.availabilityHours != null ? Number(formData.availabilityHours) : undefined,
       };
       const { data } = await foodApi.postFood(payload);
-      setPostedId(data?.id ?? null);
+      const id = data?.data?.id ?? (data as { id?: number })?.id;
+      setPostedId(id != null ? String(id) : null);
       setStep('success');
     } catch (err: unknown) {
       const message = err && typeof err === 'object' && 'response' in err

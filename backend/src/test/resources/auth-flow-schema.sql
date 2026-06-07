@@ -74,3 +74,26 @@ CREATE TABLE IF NOT EXISTS user_known_ips (
   first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, ip_address)
 );
+
+CREATE TABLE IF NOT EXISTS token_blacklist (
+  token_hash VARCHAR(64) PRIMARY KEY,
+  expires_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS food_posts (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  restaurant_id INT NOT NULL,
+  food_name VARCHAR(255) NOT NULL,
+  food_type VARCHAR(32) NOT NULL,
+  quantity_servings INT NOT NULL,
+  description TEXT,
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
+  address VARCHAR(255),
+  safety_window_minutes INT DEFAULT 30,
+  expiry_time TIMESTAMP,
+  urgency_score INT DEFAULT 50,
+  status VARCHAR(32) DEFAULT 'POSTED',
+  posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP NULL
+);

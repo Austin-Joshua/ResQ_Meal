@@ -1,52 +1,114 @@
 package com.resqmeal.service;
 
+import com.resqmeal.common.AppConstants;
+import com.resqmeal.config.MatchingWeightsConfig;
 import com.resqmeal.util.GeoUtils;
+import com.resqmeal.dto.response.PageEnvelope;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class MatchingService {
 
+  private static final List<String> PREFERRED_FOOD_TYPES = List.of("meals", "vegetables", "baked");
+
   private final JdbcTemplate jdbc;
   private final NotificationService notificationService;
   private final RealtimeEmitter realtimeEmitter;
+  private final MatchingWeightsConfig weights;
+
+  @Value("${app.upload-dir:uploads}")
+  private String uploadDir;
 
   public MatchingService(
-      JdbcTemplate jdbc, NotificationService notificationService, RealtimeEmitter realtimeEmitter) {
+      JdbcTemplate jdbc,
+      NotificationService notificationService,
+      RealtimeEmitter realtimeEmitter,
+      MatchingWeightsConfig weights) {
     this.jdbc = jdbc;
     this.notificationService = notificationService;
     this.realtimeEmitter = realtimeEmitter;
+    this.weights = weights;
+  }
+
+  public double scoreDistanceComponent(double distanceKm) {
+    double normalized =
+        distanceKm <= 2 ? 1.0 : distanceKm <= 5 ? 0.75 : distanceKm <= 10 ? 0.5 : 0.25;
+    return normalized * weights.getDistanceWeight();
+  }
+
+  public double scoreFreshnessComponent(int minutesToExpiry) {
+    double hours = minutesToExpiry / 60.0;
+    double normalized;
+    if (hours <= 1) {
+      normalized = 1.0;
+    } else if (hours <= 6) {
+      normalized = 1.0 - ((hours - 1) / 5.0) * 0.8;
+    } else {
+      normalized = Math.max(0, 0.2 - (hours - 6) * 0.02);
+    }
+    return normalized * weights.getFreshnessWeight();
+  }
+
+  public double scoreCapacityComponent(int dailyCapacity, int usedCapacity) {
+    if (dailyCapacity <= 0) {
+      return 0;
+    }
+    double remaining = Math.max(0, dailyCapacity - usedCapacity);
+    if (remaining == 0) {
+      return 0;
+    }
+    return (remaining / dailyCapacity) * weights.getCapacityWeight();
+  }
+
+  public double scoreFoodTypeComponent(String foodType) {
+    if (foodType != null && PREFERRED_FOOD_TYPES.contains(foodType)) {
+      return weights.getFoodTypeWeight();
+    }
+    return 0;
+  }
+
+  public double calculateWeightedScore(
+      double distanceKm, int minutesToExpiry, int dailyCapacity, int usedCapacity, String foodType) {
+    return Math.min(
+        1.0,
+        scoreDistanceComponent(distanceKm)
+            + scoreFreshnessComponent(minutesToExpiry)
+            + scoreCapacityComponent(dailyCapacity, usedCapacity)
+            + scoreFoodTypeComponent(foodType));
+  }
+
+  public double applyDemandBoost(double score, int recentAccepted) {
+    double boost = 1.0;
+    if (recentAccepted >= 10) {
+      boost = 1.25;
+    } else if (recentAccepted >= 5) {
+      boost = 1.15;
+    }
+    return Math.min(1.0, score * boost);
   }
 
   public static double calculateMatchScore(double distanceKm, double capacityPercent, String foodType) {
-    double score = 0.5;
-    if (distanceKm <= 2) {
-      score += 0.35;
-    } else if (distanceKm <= 5) {
-      score += 0.25;
-    } else if (distanceKm <= 10) {
-      score += 0.15;
-    } else {
-      score += 0.05;
-    }
-    score += (capacityPercent / 100.0) * 0.3;
-    List<String> high = List.of("meals", "vegetables", "baked");
-    if (high.contains(foodType)) {
-      score += 0.15;
-    } else {
-      score += 0.05;
-    }
-    return Math.min(1.0, score);
+    MatchingWeightsConfig defaults = new MatchingWeightsConfig();
+    MatchingService svc =
+        new MatchingService(null, null, null, defaults);
+    int daily = 100;
+    int used = (int) Math.round(daily - (capacityPercent / 100.0) * daily);
+    return svc.calculateWeightedScore(distanceKm, 60, daily, used, foodType);
   }
 
   private Map<String, Object> formatMatch(java.sql.ResultSet rs) throws java.sql.SQLException {
@@ -79,7 +141,7 @@ public class MatchingService {
         UserIds.ngoId(jdbc, userId).orElseThrow(() -> new IllegalStateException("NGO profile not found"));
     Map<String, Object> food =
         jdbc.query(
-            "SELECT * FROM food_posts WHERE id = ?",
+            "SELECT * FROM food_posts WHERE id = ? AND deleted_at IS NULL",
             rs -> {
               if (!rs.next()) {
                 return null;
@@ -91,13 +153,14 @@ public class MatchingService {
               fp.put("food_type", rs.getString("food_type"));
               fp.put("latitude", rs.getObject("latitude"));
               fp.put("longitude", rs.getObject("longitude"));
+              fp.put("expiry_time", rs.getTimestamp("expiry_time"));
               return fp;
             },
             foodPostId);
     if (food == null) {
       throw new IllegalStateException("Food post not found");
     }
-    if (!"POSTED".equals(food.get("status"))) {
+    if (!AppConstants.FOOD_STATUS_POSTED.equals(food.get("status"))) {
       throw new IllegalStateException("Food already matched or not available");
     }
     Map<String, Object> ngo =
@@ -132,10 +195,9 @@ public class MatchingService {
     }
     int daily = ((Number) ngo.get("daily_capacity")).intValue();
     int used = ((Number) ngo.get("used_capacity")).intValue();
-    double remaining = Math.max(0, daily - used);
-    double capacityPercent = daily > 0 ? (remaining / daily) * 100.0 : 0;
     String foodType = (String) food.get("food_type");
-    double matchScore = calculateMatchScore(distanceKm, capacityPercent, foodType);
+    int minutesToExpiry = minutesUntilExpiry((java.sql.Timestamp) food.get("expiry_time"));
+    double matchScore = calculateWeightedScore(distanceKm, minutesToExpiry, daily, used, foodType);
 
     GeneratedKeyHolder kh = new GeneratedKeyHolder();
     double finalDistanceKm = distanceKm;
@@ -215,7 +277,7 @@ public class MatchingService {
         new StringBuilder(
             """
             SELECT m.* FROM matches m
-            JOIN food_posts fp ON m.food_post_id = fp.id
+            JOIN food_posts fp ON m.food_post_id = fp.id AND fp.deleted_at IS NULL
             WHERE fp.restaurant_id = ?
             """);
     List<Object> p = new ArrayList<>();
@@ -247,7 +309,9 @@ public class MatchingService {
   @Transactional
   public Map<String, Object> updateMatchStatus(
       long matchId, String status, Long volunteerId, String deliveryProofPhoto) {
-    if (!List.of("ACCEPTED", "PICKED_UP", "DELIVERED").contains(status)) {
+    if (!List.of(
+            AppConstants.MATCH_ACCEPTED, AppConstants.MATCH_PICKED_UP, AppConstants.MATCH_DELIVERED)
+        .contains(status)) {
       throw new IllegalArgumentException("Invalid status");
     }
     Map<String, Object> match =
@@ -269,28 +333,33 @@ public class MatchingService {
       throw new IllegalStateException("Match not found");
     }
     String current = (String) match.get("status");
-    List<String> progression = List.of("MATCHED", "ACCEPTED", "PICKED_UP", "DELIVERED");
+    List<String> progression =
+        List.of(
+            AppConstants.MATCH_MATCHED,
+            AppConstants.MATCH_ACCEPTED,
+            AppConstants.MATCH_PICKED_UP,
+            AppConstants.MATCH_DELIVERED);
     int cur = progression.indexOf(current);
     int nxt = progression.indexOf(status);
     if (nxt <= cur) {
       throw new IllegalStateException("Invalid status transition");
     }
-    if ("PICKED_UP".equals(status) && volunteerId == null) {
+    if (AppConstants.MATCH_PICKED_UP.equals(status) && volunteerId == null) {
       throw new IllegalArgumentException("volunteer_id required for PICKED_UP");
     }
     long foodPostId = ((Number) match.get("food_post_id")).longValue();
-    if ("ACCEPTED".equals(status)) {
+    if (AppConstants.MATCH_ACCEPTED.equals(status)) {
       jdbc.update(
           "UPDATE matches SET status = ?, accepted_at = NOW(), updated_at = NOW() WHERE id = ?",
           status,
           matchId);
-    } else if ("PICKED_UP".equals(status)) {
+    } else if (AppConstants.MATCH_PICKED_UP.equals(status)) {
       jdbc.update(
           "UPDATE matches SET status = ?, picked_up_at = NOW(), volunteer_id = ?, updated_at = NOW() WHERE id = ?",
           status,
           volunteerId,
           matchId);
-    } else if ("DELIVERED".equals(status)) {
+    } else if (AppConstants.MATCH_DELIVERED.equals(status)) {
       jdbc.update(
           """
           UPDATE matches SET status = ?, delivered_at = NOW(),
@@ -354,13 +423,13 @@ public class MatchingService {
 
     String title = "Match updated";
     String message = "Status: " + status;
-    if ("ACCEPTED".equals(status)) {
+    if (AppConstants.MATCH_ACCEPTED.equals(status)) {
       title = "Match accepted";
       message = "An NGO accepted the match. Food can be picked up.";
-    } else if ("PICKED_UP".equals(status)) {
+    } else if (AppConstants.MATCH_PICKED_UP.equals(status)) {
       title = "Food picked up";
       message = "Volunteer has picked up the food.";
-    } else if ("DELIVERED".equals(status)) {
+    } else if (AppConstants.MATCH_DELIVERED.equals(status)) {
       title = "Delivery completed";
       message = "Food was delivered successfully.";
     }
@@ -385,7 +454,7 @@ public class MatchingService {
             FROM food_posts fp
             JOIN restaurants r ON r.id = fp.restaurant_id
             JOIN users u ON u.id = r.user_id
-            WHERE fp.id = ? AND fp.status = 'POSTED'
+            WHERE fp.id = ? AND fp.status = 'POSTED' AND fp.deleted_at IS NULL
             """,
             rs -> {
               if (!rs.next()) {
@@ -398,6 +467,7 @@ public class MatchingService {
               m.put("donor_lon", rs.getObject("donor_lon"));
               m.put("quantity_servings", rs.getInt("quantity_servings"));
               m.put("food_type", rs.getString("food_type"));
+              m.put("expiry_time", rs.getTimestamp("expiry_time"));
               return m;
             },
             foodPostId);
@@ -414,6 +484,8 @@ public class MatchingService {
     if (foodType == null) {
       foodType = "others";
     }
+
+    int minutesToExpiry = minutesUntilExpiry((java.sql.Timestamp) post.get("expiry_time"));
 
     List<Map<String, Object>> ngos =
         jdbc.query(
@@ -462,20 +534,12 @@ public class MatchingService {
       double distanceKm = GeoUtils.distanceKm(donorLat, donorLon, nla, nlo);
       int available = ((Number) ngo.get("available_capacity")).intValue();
       int dailyCap = ((Number) ngo.get("daily_capacity")).intValue();
-      double capacityPercent = dailyCap > 0 ? (available / (double) dailyCap) * 100.0 : 0;
-      List<String> highDemand = List.of("meals", "vegetables", "baked");
-      double demandBoost = 1.0;
+      int usedCap = dailyCap - available;
       int recentAccepted = demandByNgo.getOrDefault(((Number) ngo.get("id")).longValue(), 0);
-      if (recentAccepted >= 10) {
-        demandBoost = 1.25;
-      } else if (recentAccepted >= 5) {
-        demandBoost = 1.15;
-      }
-      double overallScore = 0.5;
-      overallScore += distanceKm <= 2 ? 0.35 : distanceKm <= 5 ? 0.25 : distanceKm <= 10 ? 0.15 : 0.05;
-      overallScore += (capacityPercent / 100.0) * 0.3;
-      overallScore += highDemand.contains(foodType) ? 0.15 : 0.05;
-      overallScore = Math.min(1.0, overallScore * demandBoost);
+      double baseScore =
+          calculateWeightedScore(distanceKm, minutesToExpiry, dailyCap, usedCap, foodType);
+      double overallScore = applyDemandBoost(baseScore, recentAccepted);
+      double demandBoost = recentAccepted >= 10 ? 1.25 : recentAccepted >= 5 ? 1.15 : 1.0;
       Map<String, Object> item = new HashMap<>();
       item.put("ngo_id", ngo.get("id"));
       item.put("organization_name", ngo.get("organization_name"));
@@ -491,6 +555,69 @@ public class MatchingService {
     return Map.of("data", top, "food_post_id", foodPostId);
   }
 
+  public Map<String, Object> listMatchesPaginated(long userId, String role, String status, int page, int size) {
+    int lim = Math.min(Math.max(size, 1), 100);
+    int off = Math.max(page, 0) * lim;
+    String normalizedRole = role != null ? role.toLowerCase() : "";
+
+    if ("ngo".equals(normalizedRole)) {
+      long ngoId =
+          UserIds.ngoId(jdbc, userId).orElseThrow(() -> new IllegalStateException("NGO profile not found"));
+      StringBuilder q = new StringBuilder("SELECT * FROM matches WHERE ngo_id = ?");
+      List<Object> p = new ArrayList<>();
+      p.add(ngoId);
+      if (status != null && !status.isBlank()) {
+        q.append(" AND status = ?");
+        p.add(status);
+      }
+      String countSql = q.toString().replace("SELECT *", "SELECT COUNT(*)");
+      Integer total = jdbc.queryForObject(countSql, Integer.class, p.toArray());
+      q.append(" ORDER BY matched_at DESC LIMIT ? OFFSET ?");
+      p.add(lim);
+      p.add(off);
+      List<Map<String, Object>> rows =
+          jdbc.query(q.toString(), (rs, rowNum) -> formatMatch(rs), p.toArray());
+      return PageEnvelope.of(rows, page, lim, total != null ? total : 0);
+    }
+
+    if ("restaurant".equals(normalizedRole)) {
+      long restaurantId =
+          UserIds.restaurantId(jdbc, userId)
+              .orElseThrow(() -> new IllegalStateException("Restaurant profile not found"));
+      StringBuilder q =
+          new StringBuilder(
+              """
+              SELECT m.* FROM matches m
+              JOIN food_posts fp ON m.food_post_id = fp.id AND fp.deleted_at IS NULL
+              WHERE fp.restaurant_id = ?
+              """);
+      List<Object> p = new ArrayList<>();
+      p.add(restaurantId);
+      if (status != null && !status.isBlank()) {
+        q.append(" AND m.status = ?");
+        p.add(status);
+      }
+      String countSql = q.toString().replace("SELECT m.*", "SELECT COUNT(*)");
+      Integer total = jdbc.queryForObject(countSql, Integer.class, p.toArray());
+      q.append(" ORDER BY m.matched_at DESC LIMIT ? OFFSET ?");
+      p.add(lim);
+      p.add(off);
+      List<Map<String, Object>> rows =
+          jdbc.query(q.toString(), (rs, rowNum) -> formatMatch(rs), p.toArray());
+      return PageEnvelope.of(rows, page, lim, total != null ? total : 0);
+    }
+
+    throw new IllegalStateException("Matches listing requires NGO or restaurant role");
+  }
+
+  private static int minutesUntilExpiry(java.sql.Timestamp expiryTime) {
+    if (expiryTime == null) {
+      return 60;
+    }
+    long diffMs = expiryTime.getTime() - System.currentTimeMillis();
+    return (int) Math.max(0, diffMs / 60_000L);
+  }
+
   public Map<String, Object> assignVolunteer(long matchId, long volunteerId) {
     jdbc.update(
         "UPDATE matches SET volunteer_id = ?, updated_at = NOW() WHERE id = ?", volunteerId, matchId);
@@ -502,4 +629,57 @@ public class MatchingService {
         },
         matchId);
   }
+
+  private String savePickupPhoto(long matchId, byte[] bytes, String originalFilename) throws Exception {
+    Path dir = Path.of(uploadDir).toAbsolutePath().normalize();
+    Files.createDirectories(dir);
+    String ext = "";
+    if (originalFilename != null && originalFilename.contains(".")) {
+      ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+    }
+    String filename = "pickup_match_" + matchId + "_" + UUID.randomUUID() + ext;
+    Files.write(dir.resolve(filename), bytes);
+    return filename;
+  }
+
+  @Transactional
+  public Map<String, Object> completeMatch(
+      long userId, long matchId, byte[] photoBytes, String originalFilename, Long volunteerId)
+      throws Exception {
+    Map<String, Object> match = getMatch(matchId);
+    if (match == null) {
+      throw new IllegalStateException("Match not found");
+    }
+    String status = (String) match.get("status");
+    if (!List.of("ACCEPTED", "PICKED_UP").contains(status)) {
+      throw new IllegalStateException("Match cannot be completed from status: " + status);
+    }
+    if (photoBytes == null || photoBytes.length == 0) {
+      throw new IllegalArgumentException("Pickup photo is required");
+    }
+    String photoFilename = savePickupPhoto(matchId, photoBytes, originalFilename);
+
+    if (AppConstants.MATCH_ACCEPTED.equals(status)) {
+      long vid = volunteerId != null ? volunteerId : resolveVolunteerId(userId, match);
+      return updateMatchStatus(matchId, AppConstants.MATCH_PICKED_UP, vid, photoFilename);
+    }
+    return updateMatchStatus(matchId, AppConstants.MATCH_DELIVERED, volunteerId, photoFilename);
+  }
+
+  private long resolveVolunteerId(long userId, Map<String, Object> match) {
+    Object existing = match.get("volunteer_id");
+    if (existing != null) {
+      return ((Number) existing).longValue();
+    }
+    Long volunteerId =
+        jdbc.query(
+            "SELECT id FROM volunteers WHERE user_id = ? LIMIT 1",
+            rs -> rs.next() ? rs.getLong("id") : null,
+            userId);
+    if (volunteerId == null) {
+      throw new IllegalArgumentException("volunteer_id required for pickup completion");
+    }
+    return volunteerId;
+  }
 }
+

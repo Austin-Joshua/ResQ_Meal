@@ -1,12 +1,12 @@
--- ==================== SEED DATA ====================
--- All users use password: password123 (bcrypt hash below)
+-- Dev seed only. Never apply to production.
+-- Default test password: ResQ_Dev_2024! (bcrypt hashed below)
 
 -- Users
 INSERT INTO users (email, password, name, phone_number, role, latitude, longitude) VALUES
-('chef@kitchen.com', '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm', 'Chef Kumar', '8765432101', 'restaurant', 13.0827, 80.2707),
-('ngo@savechildren.com', '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm', 'Priya Sharma', '9876543210', 'ngo', 13.0897, 80.2777),
-('volunteer@community.com', '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm', 'Arjun Rao', '9123456789', 'volunteer', 13.0827, 80.2707),
-('baker@artisan.com', '$2b$10$a/AFX5BWMRD5WAMu7CAdKuekKL0w4tGMwfjLKCqI9znbyqZw6tNHm', 'Maria Silva', '8901234567', 'restaurant', 13.0850, 80.2650);
+('chef@kitchen.com', '$2b$10$RAepulm0vTlfP5XrV3amseTyEsO7vBpGD7MWlqJuLQkntFYwCOed2', 'Chef Kumar', '8765432101', 'restaurant', 13.0827, 80.2707),
+('ngo@savechildren.com', '$2b$10$RAepulm0vTlfP5XrV3amseTyEsO7vBpGD7MWlqJuLQkntFYwCOed2', 'Priya Sharma', '9876543210', 'ngo', 13.0897, 80.2777),
+('volunteer@community.com', '$2b$10$RAepulm0vTlfP5XrV3amseTyEsO7vBpGD7MWlqJuLQkntFYwCOed2', 'Arjun Rao', '9123456789', 'volunteer', 13.0827, 80.2707),
+('baker@artisan.com', '$2b$10$RAepulm0vTlfP5XrV3amseTyEsO7vBpGD7MWlqJuLQkntFYwCOed2', 'Maria Silva', '8901234567', 'restaurant', 13.0850, 80.2650);
 
 -- Restaurants
 INSERT INTO restaurants (user_id, business_name, registration_number, daily_food_average, verified) VALUES

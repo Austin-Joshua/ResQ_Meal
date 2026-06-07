@@ -1,16 +1,8 @@
-import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
-import { notificationApi, type NotificationItem } from '@/services/api';
-import { connectSocket, disconnectSocket, getSocket } from '@/services/socket';
-import { toast } from '@/hooks/use-toast';
-
-interface NotificationPayload {
-  type: string;
-  title: string;
-  message?: string;
-  link?: string;
-  ref_id?: number;
-  created_at?: string;
-}
+import React, { createContext, useContext, useCallback, useEffect } from 'react';
+import type { NotificationItem } from '@/services/api';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useSocketStore } from '@/store/socketStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -23,120 +15,38 @@ interface NotificationContextValue {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-const STORAGE_KEY = 'resqmeal_notifications_unread';
-
-export function NotificationProvider({ children, hasAuth }: { children: React.ReactNode; hasAuth: boolean }) {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+export function NotificationProvider({ children }: { children: React.ReactNode; hasAuth?: boolean }) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const notifications = useNotificationStore((s) => s.notifications);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const loading = useNotificationStore((s) => s.loading);
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
+  const markRead = useNotificationStore((s) => s.markRead);
+  const markAllRead = useNotificationStore((s) => s.markAllRead);
+  const reset = useNotificationStore((s) => s.reset);
+  const connect = useSocketStore((s) => s.connect);
+  const disconnect = useSocketStore((s) => s.disconnect);
 
   const refresh = useCallback(async () => {
-    if (!hasAuth) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setLoading(false);
+    if (!isAuthenticated) {
+      reset();
       return;
     }
-    setLoading(true);
-    try {
-      const { data } = await notificationApi.getList({ limit: 50 });
-      setNotifications(data.data);
-      setUnreadCount(data.unreadCount);
-    } catch {
-      setNotifications([]);
-      setUnreadCount(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [hasAuth]);
-
-  const markRead = useCallback(async (id: number) => {
-    try {
-      await notificationApi.markRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
-      );
-      setUnreadCount((c) => Math.max(0, c - 1));
-    } catch {}
-  }, []);
-
-  const markAllRead = useCallback(async () => {
-    try {
-      await notificationApi.markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
-      setUnreadCount(0);
-    } catch {}
-  }, []);
+    await fetchNotifications();
+  }, [isAuthenticated, fetchNotifications, reset]);
 
   useEffect(() => {
-    if (hasAuth) {
-      connectSocket();
-      refresh();
+    if (isAuthenticated) {
+      connect();
+      void refresh();
     } else {
-      disconnectSocket();
-      setNotifications([]);
-      setUnreadCount(0);
-      setLoading(false);
+      disconnect();
+      reset();
     }
     return () => {
-      if (!hasAuth) disconnectSocket();
+      disconnect();
     };
-  }, [hasAuth, refresh]);
-
-  useEffect(() => {
-    if (!hasAuth) return;
-    const socket = getSocket();
-    if (!socket) return;
-    const onNotification = (payload: NotificationPayload) => {
-      const newItem: NotificationItem = {
-        id: Math.random() * 1e9,
-        type: payload.type,
-        title: payload.title,
-        message: payload.message ?? null,
-        link: payload.link ?? null,
-        ref_id: payload.ref_id ?? null,
-        read_at: null,
-        created_at: payload.created_at ?? new Date().toISOString(),
-      };
-      setNotifications((prev) => [newItem, ...prev]);
-      setUnreadCount((c) => c + 1);
-    };
-    socket.on('notification', onNotification);
-    socket.on('food_posted', () => {
-      refresh();
-    });
-    socket.on('match_created', () => {
-      refresh();
-    });
-    socket.on('match_status_updated', () => {
-      refresh();
-    });
-    const onSecurityThreat = (payload: {
-      label?: string;
-      confidence?: number;
-      path?: string;
-      method?: string;
-      ip?: string;
-    }) => {
-      const label = payload.label ?? 'unknown';
-      if (label !== 'malicious' && label !== 'suspicious') {
-        return;
-      }
-      toast({
-        title: `Security: ${label}`,
-        description: `${payload.method ?? ''} ${payload.path ?? ''} (${payload.ip ?? ''}) · confidence ${payload.confidence != null ? (payload.confidence * 100).toFixed(0) : '?'}%`,
-        variant: label === 'malicious' ? 'destructive' : 'default',
-      });
-    };
-    socket.on('security_threat', onSecurityThreat);
-    return () => {
-      socket.off('notification', onNotification);
-      socket.off('food_posted');
-      socket.off('match_created');
-      socket.off('match_status_updated');
-      socket.off('security_threat', onSecurityThreat);
-    };
-  }, [hasAuth, refresh]);
+  }, [isAuthenticated, connect, disconnect, refresh, reset]);
 
   const value: NotificationContextValue = {
     notifications,
@@ -147,11 +57,7 @@ export function NotificationProvider({ children, hasAuth }: { children: React.Re
     refresh,
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }
 
 export function useNotifications() {

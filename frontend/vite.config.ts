@@ -18,11 +18,10 @@ export default defineConfig({
       "/api": { target: "http://localhost:8080", changeOrigin: true },
       "/uploads": { target: "http://localhost:8080", changeOrigin: true },
       /**
-       * Socket.IO → netty-socketio (9090) so the SPA can use same-origin in dev
-       * (`io(window.location.origin)` from `getSocketUrl()`).
+       * Socket.IO → Spring Boot (8080), same host as REST API in dev.
        */
       "/socket.io": {
-        target: "http://localhost:9090",
+        target: "http://localhost:8080",
         changeOrigin: true,
         ws: true,
         secure: false,
@@ -33,6 +32,32 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("leaflet") || id.includes("react-leaflet")) {
+              return "map";
+            }
+            if (id.includes("recharts")) {
+              return "charts";
+            }
+            if (
+              id.includes("react") ||
+              id.includes("react-dom") ||
+              id.includes("react-router")
+            ) {
+              return "vendor";
+            }
+          }
+          if (id.includes("LanguageContext")) {
+            return "i18n";
+          }
+        },
+      },
     },
   },
 });

@@ -253,14 +253,18 @@ public class SecurityMonitoringService {
     int lim = Math.min(Math.max(limit, 1), 500);
     if (criticalOnly) {
       return jdbc.queryForList(
-          "SELECT id, user_id, ip_address, action, status, is_critical, details, created_at "
-              + "FROM security_logs WHERE is_critical = TRUE ORDER BY created_at DESC LIMIT "
-              + lim);
+          """
+          SELECT id, user_id, ip_address, action, status, is_critical, details, created_at
+          FROM security_logs WHERE is_critical = TRUE ORDER BY created_at DESC LIMIT ?
+          """,
+          lim);
     }
     return jdbc.queryForList(
-        "SELECT id, user_id, ip_address, action, status, is_critical, details, created_at "
-            + "FROM security_logs ORDER BY created_at DESC LIMIT "
-            + lim);
+        """
+        SELECT id, user_id, ip_address, action, status, is_critical, details, created_at
+        FROM security_logs ORDER BY created_at DESC LIMIT ?
+        """,
+        lim);
   }
 
   public List<java.util.Map<String, Object>> listBlocked() {

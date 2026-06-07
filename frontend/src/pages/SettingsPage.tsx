@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Moon, Sun, Globe, Building2, Heart, TrendingUp, ChevronDown, ChevronUp, Settings, User, Palette } from 'lucide-react';
+import { toast } from 'sonner';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface SettingsPageProps {
@@ -570,7 +571,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ darkMode, setDarkMod
 
         {/* Save Button */}
         <button
-          onClick={() => alert(t('saved'))}
+          onClick={() => toast.success(t('saved'))}
           className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${
             darkMode
               ? 'bg-emerald-500 hover:bg-emerald-600 text-white'

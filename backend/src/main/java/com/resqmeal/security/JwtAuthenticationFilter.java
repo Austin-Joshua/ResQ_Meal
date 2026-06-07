@@ -1,12 +1,13 @@
 package com.resqmeal.security;
 
+import com.resqmeal.common.AppConstants;
 import com.resqmeal.config.SecurityMonitoringProperties;
+import com.resqmeal.service.TokenBlacklistService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
 import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,11 +29,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ord
 
   private final JwtUtil jwtUtil;
   private final SecurityMonitoringProperties securityMonitoringProperties;
+  private final TokenBlacklistService tokenBlacklistService;
 
   public JwtAuthenticationFilter(
-      JwtUtil jwtUtil, SecurityMonitoringProperties securityMonitoringProperties) {
+      JwtUtil jwtUtil,
+      SecurityMonitoringProperties securityMonitoringProperties,
+      TokenBlacklistService tokenBlacklistService) {
     this.jwtUtil = jwtUtil;
     this.securityMonitoringProperties = securityMonitoringProperties;
+    this.tokenBlacklistService = tokenBlacklistService;
   }
 
   @Override
@@ -45,9 +50,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ord
       @NonNull HttpServletRequest request,
       @NonNull HttpServletResponse response,
       @NonNull FilterChain filterChain) throws ServletException, IOException {
-    String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-    if (header != null && header.startsWith("Bearer ")) {
-      String token = header.substring(7);
+    String header = request.getHeader(AppConstants.AUTH_HEADER);
+    if (header != null && header.startsWith(AppConstants.TOKEN_PREFIX)) {
+      String token = header.substring(AppConstants.TOKEN_PREFIX.length());
+      if (tokenBlacklistService.isBlacklisted(token)) {
+        SecurityContextHolder.clearContext();
+        filterChain.doFilter(request, response);
+        return;
+      }
       try {
         var claims = jwtUtil.parse(token);
         Long id = claims.get("id", Long.class);

@@ -2,9 +2,10 @@
  * Backend connection status indicator
  * Shows real-time API connection status
  */
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
-import { getHealthCheckUrl } from '@/lib/apiConfig';
+import { useState, useEffect } from 'react';
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { get } from '@/api/client';
+import { endpoints } from '@/api/endpoints';
 import { cn } from '@/lib/utils';
 
 interface BackendStatusProps {
@@ -22,32 +23,21 @@ export function BackendStatus({ className, showDetails = false }: BackendStatusP
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-        const response = await fetch(getHealthCheckUrl(), {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          mode: 'cors',
-        });
-
+        await get(endpoints.health, { signal: controller.signal });
         clearTimeout(timeoutId);
-
-        if (response.ok) {
-          setStatus('online');
-          setError(null);
-        } else {
-          setStatus('offline');
-          setError(null);
-        }
-      } catch (err: any) {
+        setStatus('online');
+        setError(null);
+      } catch (err: unknown) {
         setStatus('offline');
-        if (err.name === 'AbortError') {
+        const e = err as { name?: string; message?: string; code?: string };
+        if (e.name === 'AbortError') {
           setError('Connection timeout');
-        } else if (err.message?.includes('Failed to fetch') || err.code === 'ERR_NETWORK') {
+        } else if (e.message?.includes('Failed to fetch') || e.code === 'ERR_NETWORK') {
           setError('Backend not running');
-        } else if (err.message?.includes('CORS')) {
+        } else if (e.message?.includes('CORS')) {
           setError('CORS error');
         } else {
-          setError(err.message || 'Connection failed');
+          setError(e.message || 'Connection failed');
         }
       }
     };

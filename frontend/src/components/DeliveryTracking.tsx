@@ -42,7 +42,7 @@ interface DeliveryTrackingProps {
 }
 
 // Google Maps API Key (to be set in .env)
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 
 const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
   darkMode,
@@ -145,14 +145,23 @@ const DeliveryTracking: React.FC<DeliveryTrackingProps> = ({
     });
 
     try {
-      const result = await directionsService.route({
-        origin: deliveryRoute.restaurantLocation,
-        destination: deliveryRoute.ngoLocation,
-        travelMode: window.google.maps.TravelMode.DRIVING,
+      await new Promise<void>((resolve, reject) => {
+        directionsService.route(
+          {
+            origin: deliveryRoute.restaurantLocation,
+            destination: deliveryRoute.ngoLocation,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+          },
+          (result, status) => {
+            if (status === 'OK' && result) {
+              directionsRenderer.setDirections(result);
+              resolve();
+            } else {
+              reject(new Error(`Directions request failed: ${status}`));
+            }
+          }
+        );
       });
-
-      directionsRenderer.setDirections(result);
-      setDirections(result);
     } catch {
       /* directions unavailable */
     }

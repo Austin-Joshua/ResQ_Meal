@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-/* eslint-disable no-inline-styles */
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { useMode } from '@/context/ModeContext';
 import { Plus, TrendingUp, Users, Clock, Home, FileText, Info, Settings, Zap } from 'lucide-react';

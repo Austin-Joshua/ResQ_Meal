@@ -14,6 +14,19 @@ If you previously had `node_modules` only under `frontend/`, you can delete `fro
 
 ## 2. MySQL database
 
+### Docker (recommended)
+
+Copy `.env.docker.example` to `.env.docker` before running docker compose:
+
+```bash
+cp .env.docker.example .env.docker
+docker compose up -d db
+```
+
+Set `backend/.env` `DB_PORT=3307` and `DB_PASSWORD` to match `MYSQL_ROOT_PASSWORD` in `.env.docker`.
+
+### Manual setup
+
 Create the database and apply schema + seed (adjust user/password):
 
 ```bash
@@ -21,6 +34,7 @@ mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS resqmeal_db CHARACTER SET utf
 mysql -u root -p resqmeal_db < database/database.sql
 mysql -u root -p resqmeal_db < database/seed.sql
 mysql -u root -p resqmeal_db < database/notifications-migration.sql
+mysql -u root -p resqmeal_db < database/token-blacklist-migration.sql
 ```
 
 **If your database already existed** from an older clone and you only need the security tables:

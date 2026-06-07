@@ -4,6 +4,7 @@ import com.resqmeal.security.IpBlockFilter;
 import com.resqmeal.security.JwtAuthenticationFilter;
 import com.resqmeal.security.SecurityMonitoringFilter;
 import com.resqmeal.security.TrafficCaptureFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,6 +27,9 @@ public class SecurityConfig {
   private final IpBlockFilter ipBlockFilter;
   private final TrafficCaptureFilter trafficCaptureFilter;
   private final SecurityMonitoringFilter securityMonitoringFilter;
+
+  @Value("${app.force-https:false}")
+  private boolean forceHttps;
 
   public SecurityConfig(
       JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -50,8 +54,13 @@ public class SecurityConfig {
                       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                       response.setContentType("application/json");
                       response.getWriter().write("{\"error\":\"Unauthorized\"}");
-                    }))
-        .authorizeHttpRequests(
+                    }));
+
+    if (forceHttps) {
+      http.requiresChannel(channel -> channel.requestMatchers("/api/**").requiresSecure());
+    }
+
+    http.authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(HttpMethod.GET, "/api/health")
                     .permitAll()
@@ -63,6 +72,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/impact/global", "/api/impact/timeline")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/public/impact")
+                    .permitAll()
                     .requestMatchers(
                         HttpMethod.GET, "/api/ngos/{id:[0-9]+}", "/api/ngos/{id:[0-9]+}/capacity")
                     .permitAll()
@@ -71,6 +82,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/food/{id:[0-9]+}")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/ai/health")
+                    .permitAll()
+                    .requestMatchers("/api/docs/**", "/api/swagger/**", "/v3/api-docs/**")
                     .permitAll()
                     .requestMatchers("/uploads/**")
                     .permitAll()

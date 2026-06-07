@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Thermometer, Clock, MapPin, UtensilsCrossed, ShoppingBag, Navigation, List, Map } from 'lucide-react';
-import { foodApi } from '@/services/api';
+import { useInView } from 'react-intersection-observer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FoodMapView } from '@/components/FoodMapView';
+import { MlFreshnessBadge } from '@/components/MlFreshnessBadge';
+import { FoodPostSkeleton } from '@/components/skeletons/FoodPostSkeleton';
+import { useInfiniteFoodPosts } from '@/hooks/useFoodPosts';
 
 export interface AvailableFoodItem {
   id: number;
@@ -20,6 +23,7 @@ export interface AvailableFoodItem {
   quality_score?: number | null;
   urgency_score?: number;
   status?: string;
+  source?: string;
 }
 
 const DAY_LABELS = ['All', 'Meals', 'Vegetables', 'Baked', 'Dairy', 'Fruits', 'Others'];
@@ -86,8 +90,6 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
   title = "Today's Available Food",
   searchPlaceholder = 'Search for surplus food...',
 }) => {
-  const [items, setItems] = useState<AvailableFoodItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [sortBy, setSortBy] = useState<'urgency' | 'newest' | 'servings' | 'timeLeft'>('newest');
   const [centerIndex, setCenterIndex] = useState(0);
@@ -97,14 +99,42 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const dayFilter = DAY_LABELS[activeDayIndex];
+  const foodTypeFilter = FOOD_TYPE_FILTERS[dayFilter] ?? '';
+
+  const {
+    data: foodPages,
+    isLoading: loading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteFoodPosts(foodTypeFilter ? { food_type: foodTypeFilter } : undefined);
+
+  const items = useMemo(() => foodPages?.pages.flat() ?? [], [foodPages]);
+
+  const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px' });
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (centerIndex >= items.length - 2 && hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [centerIndex, items.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    setCenterIndex(0);
+  }, [foodTypeFilter]);
+
   const openMapsWithDirections = (address: string) => {
     const encoded = encodeURIComponent(address);
     const url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
-
-  const dayFilter = DAY_LABELS[activeDayIndex];
-  const foodTypeFilter = FOOD_TYPE_FILTERS[dayFilter] ?? '';
 
   const SORT_OPTIONS: { id: typeof sortBy; label: string }[] = [
     { id: 'urgency', label: 'Urgency' },
@@ -112,175 +142,6 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
     { id: 'servings', label: 'Servings' },
     { id: 'timeLeft', label: 'Time left' },
   ];
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    const params: Record<string, string | number> = { limit: 50 };
-    if (foodTypeFilter) params.food_type = foodTypeFilter;
-    foodApi
-      .getAvailableFood(params)
-      .then((res) => {
-        if (cancelled) return;
-        const data = res.data?.data ?? res.data ?? [];
-        setItems(Array.isArray(data) ? data : []);
-        setCenterIndex(0);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // Sample data when API fails or no auth
-        setItems([
-          {
-            id: 1,
-            food_name: 'Boiled eggs + apple shake',
-            food_type: 'meals',
-            quantity_servings: 4,
-            safety_window_minutes: 30,
-            min_storage_temp_celsius: 4,
-            max_storage_temp_celsius: 60,
-            availability_time_hours: 2,
-            location: { address: 'Tiruvallur' },
-            urgency_score: 75,
-          },
-          {
-            id: 2,
-            food_name: 'Fresh grilled vegetables',
-            food_type: 'vegetables',
-            quantity_servings: 20,
-            safety_window_minutes: 60,
-            min_storage_temp_celsius: 0,
-            max_storage_temp_celsius: 10,
-            availability_time_hours: 4,
-            location: { address: 'Chennai Central' },
-            urgency_score: 60,
-          },
-          {
-            id: 3,
-            food_name: 'Cooked pasta dishes',
-            food_type: 'meals',
-            quantity_servings: 15,
-            safety_window_minutes: 45,
-            min_storage_temp_celsius: 4,
-            max_storage_temp_celsius: 60,
-            availability_time_hours: 3,
-            location: { address: 'Anna Nagar' },
-            urgency_score: 70,
-          },
-          {
-            id: 4,
-            food_name: 'Whole wheat bread & rolls',
-            food_type: 'baked',
-            quantity_servings: 30,
-            safety_window_minutes: 90,
-            min_storage_temp_celsius: 15,
-            max_storage_temp_celsius: 25,
-            availability_time_hours: 8,
-            location: { address: 'T Nagar' },
-            urgency_score: 50,
-          },
-          {
-            id: 5,
-            food_name: 'Mixed fruit platter',
-            food_type: 'fruits',
-            quantity_servings: 12,
-            safety_window_minutes: 120,
-            min_storage_temp_celsius: 2,
-            max_storage_temp_celsius: 8,
-            availability_time_hours: 6,
-            location: { address: 'Adyar' },
-            urgency_score: 55,
-          },
-          {
-            id: 6,
-            food_name: 'Curd rice & sambar',
-            food_type: 'meals',
-            quantity_servings: 25,
-            safety_window_minutes: 45,
-            min_storage_temp_celsius: 4,
-            max_storage_temp_celsius: 60,
-            availability_time_hours: 2,
-            location: { address: 'Mylapore' },
-            urgency_score: 78,
-          },
-          {
-            id: 7,
-            food_name: 'Croissants & Danish pastries',
-            food_type: 'baked',
-            quantity_servings: 18,
-            safety_window_minutes: 60,
-            min_storage_temp_celsius: 15,
-            max_storage_temp_celsius: 25,
-            availability_time_hours: 4,
-            location: { address: 'Nungambakkam' },
-            urgency_score: 65,
-          },
-          {
-            id: 8,
-            food_name: 'Fresh paneer & milk sweets',
-            food_type: 'dairy',
-            quantity_servings: 10,
-            safety_window_minutes: 180,
-            min_storage_temp_celsius: 2,
-            max_storage_temp_celsius: 6,
-            availability_time_hours: 12,
-            location: { address: 'Velachery' },
-            urgency_score: 40,
-          },
-          {
-            id: 9,
-            food_name: 'Stir-fried greens & beans',
-            food_type: 'vegetables',
-            quantity_servings: 15,
-            safety_window_minutes: 40,
-            min_storage_temp_celsius: 4,
-            max_storage_temp_celsius: 50,
-            availability_time_hours: 2,
-            location: { address: 'Egmore' },
-            urgency_score: 72,
-          },
-          {
-            id: 10,
-            food_name: 'Biryani & raita',
-            food_type: 'meals',
-            quantity_servings: 20,
-            safety_window_minutes: 50,
-            min_storage_temp_celsius: 4,
-            max_storage_temp_celsius: 55,
-            availability_time_hours: 3,
-            location: { address: 'Guindy' },
-            urgency_score: 68,
-          },
-          {
-            id: 11,
-            food_name: 'Bananas & seasonal fruits',
-            food_type: 'fruits',
-            quantity_servings: 35,
-            safety_window_minutes: 1440,
-            min_storage_temp_celsius: 10,
-            max_storage_temp_celsius: 25,
-            availability_time_hours: 24,
-            location: { address: 'Porur' },
-            urgency_score: 42,
-          },
-          {
-            id: 12,
-            food_name: 'Sandwiches & wraps',
-            food_type: 'others',
-            quantity_servings: 14,
-            safety_window_minutes: 90,
-            min_storage_temp_celsius: 4,
-            max_storage_temp_celsius: 25,
-            availability_time_hours: 4,
-            location: { address: 'OMR' },
-            urgency_score: 58,
-          },
-        ]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [foodTypeFilter]);
 
   const searchFiltered = search.trim()
     ? items.filter((i) => i.food_name.toLowerCase().includes(search.trim().toLowerCase()))
@@ -425,7 +286,10 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
           )
         ) : (
         loading ? (
-          <div className="flex items-center justify-center py-16 text-slate-500">Loading...</div>
+          <div className="grid sm:grid-cols-2 gap-4 py-8">
+            <FoodPostSkeleton />
+            <FoodPostSkeleton />
+          </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">
             <UtensilsCrossed className="w-12 h-12 mb-3 opacity-50" />
@@ -501,11 +365,12 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
                       <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden />
                       {(current?.food_type ?? 'food').replace(/^./, (c) => c.toUpperCase())}
                     </p>
-                    <h4 className={`text-lg font-bold mb-4 ${
+                    <h4 className={`text-lg font-bold mb-2 ${
                       darkMode ? 'text-white' : 'text-slate-900'
                     }`}>
                       {current?.food_name ?? '—'}
                     </h4>
+                    <MlFreshnessBadge source={current?.source} className="mb-2" />
                     {/* Nutrition-style stats row */}
                     <div className="grid grid-cols-5 gap-2 text-center border-t pt-3">
                       <div>
@@ -587,6 +452,12 @@ export const AvailableFoodCarousel: React.FC<AvailableFoodCarouselProps> = ({
             <p className={`text-center text-xs mt-4 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
               {centerIndex + 1} of {filteredItems.length}
             </p>
+            <div ref={loadMoreRef} className="h-2" aria-hidden />
+            {isFetchingNextPage && (
+              <div className="mt-4 grid sm:grid-cols-2 gap-4">
+                <FoodPostSkeleton />
+              </div>
+            )}
           </>
         )
         )}

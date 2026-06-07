@@ -210,7 +210,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="space-y-4">
                   {modeStats.map((mode) => {
-                    // Calculate width to determine which predefined width class to use
                     const widthPercentage = (mode.count / stats.totalUsers) * 100;
                     const colorMap: { [key: string]: string } = {
                       'blue': 'bg-blue-600',
@@ -218,12 +217,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       'orange': 'bg-orange-600',
                       'green': 'bg-green-600',
                     };
-                    const barRef = useRef<HTMLDivElement>(null);
-                    useEffect(() => {
-                      if (barRef.current) {
-                        barRef.current.style.width = `${widthPercentage}%`;
-                      }
-                    }, [widthPercentage]);
                     return (
                       <div key={mode.name}>
                         <div className="flex items-center justify-between mb-1">
@@ -236,8 +229,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <div className={`w-full h-3 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
                           <div
-                            ref={barRef}
                             className={`h-full transition-all ${colorMap[mode.color] || 'bg-slate-600'}`}
+                            style={{ width: `${widthPercentage}%` }}
                           />
                         </div>
                       </div>

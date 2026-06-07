@@ -1,14 +1,12 @@
 /**
- * App logo for ResQ Meal. Uses a single image path for frontend and backend.
- * Place your logo at: public/logo.png (recommended 256×256 or 512×512, PNG or JPG).
- * If the file is missing, a placeholder asks you to add it.
+ * App logo for ResQ Meal — SVG bowl icon at public/logo.svg (ResQ green).
  */
 import React, { useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/** Canonical logo path: same for frontend (public/logo.png) and backend (e.g. /logo.png in API responses). */
-export const APP_LOGO_PATH = '/logo.png';
+/** Canonical logo path: public/logo.svg */
+export const APP_LOGO_PATH = '/logo.svg';
 
 interface AppLogoProps {
   className?: string;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Gift, TrendingUp, Users, Leaf, Zap, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ThankYouMessageProps {
   darkMode: boolean;
@@ -280,7 +281,7 @@ const ThankYouMessage: React.FC<ThankYouMessageProps> = ({
               Share your impact and inspire others to donate. Every meal shared is a life touched.
             </p>
             <button
-              onClick={() => alert('Sharing feature coming soon!')}
+              onClick={() => toast.info('Sharing feature coming soon!')}
               className={`px-6 py-2 rounded-lg font-semibold transition ${
                 darkMode
                   ? 'bg-purple-600 hover:bg-purple-700 text-white'

@@ -1,0 +1,8 @@
+target/
+uploads/
+.env
+.env.*
+*.log
+.idea/
+.vscode/
+hs_err_pid*.log

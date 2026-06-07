@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { ApiError } from '@/api/client';
 import { AppShell, AppShellNavItem } from '@/components/AppShell';
 import { Shield, List, AlertOctagon, Ban, RefreshCw, Loader2, Radar } from 'lucide-react';
 import {
@@ -13,15 +13,17 @@ import {
 } from '@/services/api';
 
 function extractApiErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    const data = err.response?.data as Record<string, unknown> | string | undefined;
+  if (err instanceof ApiError || (err instanceof Error && 'response' in err)) {
+    const axErr = err as ApiError & { response?: { status?: number; data?: unknown } };
+    const data = (axErr.body ?? axErr.response?.data) as Record<string, unknown> | string | undefined;
     if (data && typeof data === 'object') {
       const msg = data.message ?? data.error;
       if (msg != null && String(msg).length > 0) return String(msg);
     }
     if (typeof data === 'string' && data.length > 0) return data;
-    if (err.response?.status) return `Request failed (HTTP ${err.response.status})`;
-    if (err.message) return err.message;
+    if (axErr.status ?? axErr.response?.status)
+      return `Request failed (HTTP ${axErr.status ?? axErr.response?.status})`;
+    if (axErr.message) return axErr.message;
   }
   if (err instanceof Error) return err.message;
   return 'Something went wrong';
@@ -133,7 +135,7 @@ const SecurityMonitoringPage: React.FC<SecurityMonitoringPageProps> = ({
       setThreatMl(m.data.data ?? []);
       setAttackSimLogs(a.data.data ?? []);
     } catch (e: unknown) {
-      const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+      const status = e instanceof ApiError ? e.status : (e as { response?: { status?: number } })?.response?.status;
       if (status === 403) {
         setError('Access denied (not a security admin).');
       } else {
