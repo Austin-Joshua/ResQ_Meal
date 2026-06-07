@@ -72,7 +72,10 @@ async function request<T>(
     payload = JSON.stringify(body);
   }
 
-  const isAuthRequest = path.includes('/auth/login') || path.includes('/auth/register');
+  const isAuthRequest =
+    path.includes('/auth/login') ||
+    path.includes('/auth/register') ||
+    path.includes('/auth/google');
 
   const response = await fetch(buildUrl(path), {
     method,

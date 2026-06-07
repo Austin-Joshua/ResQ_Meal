@@ -66,7 +66,11 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register")
+                    .requestMatchers(
+                        HttpMethod.POST,
+                        "/api/auth/login",
+                        "/api/auth/register",
+                        "/api/auth/google")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/food/available/all")
                     .permitAll()

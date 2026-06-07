@@ -3,6 +3,7 @@ export const endpoints = {
     login: '/auth/login',
     register: '/auth/register',
     logout: '/auth/logout',
+    google: '/auth/google',
   },
   foodPosts: '/food-posts',
   food: '/food',

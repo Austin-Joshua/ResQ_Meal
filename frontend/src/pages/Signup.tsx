@@ -5,6 +5,8 @@ import { registerSchema } from '@/schemas';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
 import { BackendStatus } from '@/components/BackendStatus';
+import { AuthDivider, GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { isFirebaseConfigured } from '@/lib/firebase';
 
 const passwordMinLength = 8;
 
@@ -313,6 +315,22 @@ const SignupPage: React.FC<SignupPageProps> = ({ darkMode, onSuccess, onBackToSi
             )}
             {loading ? (t('creatingAccount') || 'Creating account...') : (t('createAccount') || 'Create account')}
           </button>
+
+          {isFirebaseConfigured() && (
+            <>
+              <AuthDivider darkMode={darkMode} />
+              <GoogleSignInButton
+                darkMode={darkMode}
+                role="volunteer"
+                disabled={loading}
+                onSuccess={onSuccess}
+                onError={(msg) => {
+                  if (msg) setError(msg);
+                  else setError(null);
+                }}
+              />
+            </>
+          )}
         </form>
 
         <p className={`mt-4 text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>

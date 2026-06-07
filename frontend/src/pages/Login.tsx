@@ -7,6 +7,8 @@ import { authApi } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppLogo } from '@/components/AppLogo';
 import { BackendStatus } from '@/components/BackendStatus';
+import { AuthDivider, GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { isFirebaseConfigured } from '@/lib/firebase';
 
 const REMEMBER_EMAIL_KEY = 'resqmeal_remember_email';
 const REMEMBER_ME_KEY = 'resqmeal_remember_me';
@@ -134,6 +136,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = (user: LoginSuccessUser, token: string) => {
+    try {
+      localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+      if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, user.email);
+      else localStorage.removeItem(REMEMBER_EMAIL_KEY);
+    } catch (storageErr) {
+      console.error('Failed to persist remember-me preference:', storageErr);
+    }
+    onSuccess(user, token, rememberMe);
   };
 
   return (
@@ -275,6 +288,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ darkMode, onSuccess, onGoToSignUp
               )}
               {loading ? t('signingIn') : t('signIn')}
             </button>
+
+            {isFirebaseConfigured() && (
+              <>
+                <AuthDivider darkMode={darkMode} />
+                <GoogleSignInButton
+                  darkMode={darkMode}
+                  disabled={loading}
+                  onSuccess={handleGoogleSuccess}
+                  onError={(msg) => {
+                    if (msg) setError(msg);
+                    else clearError();
+                  }}
+                />
+              </>
+            )}
           </form>
 
           {onGoToSignUp && (

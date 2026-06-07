@@ -41,6 +41,9 @@ All configuration for ResQ Meal. Spring Boot reads `backend/.env` locally or con
 | `ATTACK_SIM_AUTHORIZED_TELEGRAM_USER_IDS` | No | — | Allowed Telegram user IDs |
 | `ATTACK_SIM_BOT_POLL_DELAY_MS` | No | `3000` | Bot poll interval |
 | `ATTACK_SIM_BACKUP_SYNC_DELAY_MS` | No | `15000` | Backup sync delay |
+| `FIREBASE_ENABLED` | No | `false` | Enable Firebase Admin for Google sign-in |
+| `FIREBASE_PROJECT_ID` | When enabled | — | Firebase project ID |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | When enabled | — | Service account JSON (single line) for token verification |
 
 ## Frontend (Vite — build time)
 
@@ -48,6 +51,12 @@ All configuration for ResQ Meal. Spring Boot reads `backend/.env` locally or con
 |----------|----------|---------|-------------|
 | `VITE_API_URL` | No | `/api` | REST API base (same-origin in Docker/nginx) |
 | `VITE_SOCKET_URL` | No | same-origin | Socket.IO URL override |
+| `VITE_FIREBASE_API_KEY` | For Google sign-in | — | Firebase web API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | For Google sign-in | — | e.g. `project.firebaseapp.com` |
+| `VITE_FIREBASE_PROJECT_ID` | For Google sign-in | — | Firebase project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | For Google sign-in | — | Firebase storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | For Google sign-in | — | Firebase messaging sender ID |
+| `VITE_FIREBASE_APP_ID` | For Google sign-in | — | Firebase web app ID |
 
 ## Docker Compose (`.env.docker`)
 

@@ -135,11 +135,98 @@ public class AuthService {
       throw new IllegalStateException("Invalid email or password");
     }
     Map<String, Object> u = rows.get(0);
-    if (!passwordEncoder.matches(password, (String) u.get("password"))) {
+    Object storedPassword = u.get("password");
+    if (storedPassword == null || storedPassword.toString().isBlank()) {
+      throw new IllegalStateException("This account uses Google sign-in. Please continue with Google.");
+    }
+    if (!passwordEncoder.matches(password, storedPassword.toString())) {
       throw new IllegalStateException("Invalid email or password");
     }
-    long id = ((Number) u.get("id")).longValue();
-    String role = (String) u.get("role");
+    return buildAuthResponse(
+        ((Number) u.get("id")).longValue(),
+        (String) u.get("name"),
+        (String) u.get("email"),
+        (String) u.get("role"));
+  }
+
+  @Transactional
+  public Map<String, Object> authenticateWithGoogle(String idToken, String role, FirebaseAuthService firebaseAuthService) {
+    var decoded = firebaseAuthService.verifyIdToken(idToken);
+    String uid = decoded.getUid();
+    String email = decoded.getEmail();
+    String name = decoded.getName();
+    if (email == null || email.isBlank()) {
+      throw new IllegalStateException("Google account has no email address");
+    }
+    String displayName = (name != null && !name.isBlank()) ? name : email.split("@")[0];
+
+    List<Map<String, Object>> byUid =
+        jdbc.queryForList(
+            "SELECT id, name, email, role FROM users WHERE firebase_uid = ?", uid);
+    if (!byUid.isEmpty()) {
+      Map<String, Object> u = byUid.get(0);
+      return buildAuthResponse(
+          ((Number) u.get("id")).longValue(),
+          (String) u.get("name"),
+          (String) u.get("email"),
+          (String) u.get("role"));
+    }
+
+    List<Map<String, Object>> byEmail =
+        jdbc.queryForList(
+            "SELECT id, name, email, role, firebase_uid FROM users WHERE email = ?", email);
+    if (!byEmail.isEmpty()) {
+      Map<String, Object> u = byEmail.get(0);
+      if (u.get("firebase_uid") == null) {
+        jdbc.update("UPDATE users SET firebase_uid = ? WHERE id = ?", uid, u.get("id"));
+      }
+      return buildAuthResponse(
+          ((Number) u.get("id")).longValue(),
+          (String) u.get("name"),
+          (String) u.get("email"),
+          (String) u.get("role"));
+    }
+
+    String effectiveRole = normalizeRole(role);
+    return registerGoogleUser(displayName, email, uid, effectiveRole);
+  }
+
+  private String normalizeRole(String role) {
+    if (role != null
+        && List.of(AppConstants.ROLE_RESTAURANT, AppConstants.ROLE_NGO, AppConstants.ROLE_VOLUNTEER)
+            .contains(role.toLowerCase())) {
+      return role.toLowerCase();
+    }
+    return AppConstants.ROLE_VOLUNTEER;
+  }
+
+  private Map<String, Object> registerGoogleUser(String name, String email, String firebaseUid, String role) {
+    GeneratedKeyHolder kh = new GeneratedKeyHolder();
+    try {
+      jdbc.update(
+          con -> {
+            PreparedStatement ps =
+                con.prepareStatement(
+                    "INSERT INTO users (name, email, password, firebase_uid, role) VALUES (?,?,?,?,?)",
+                    Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, name);
+            ps.setString(2, email);
+            ps.setNull(3, java.sql.Types.VARCHAR);
+            ps.setString(4, firebaseUid);
+            ps.setString(5, role);
+            return ps;
+          },
+          kh);
+    } catch (DataIntegrityViolationException e) {
+      throw new IllegalStateException("Email already registered");
+    }
+    Number key = kh.getKey();
+    long userId = key != null ? key.longValue() : 0;
+    createRoleProfile(userId, name, role);
+    return buildAuthResponse(userId, name, email, role);
+  }
+
+  private Map<String, Object> buildAuthResponse(long id, String name, String email, String role) {
     String token = jwtUtil.generateToken(id, role);
     return Map.of(
         "success", true,
@@ -147,8 +234,8 @@ public class AuthService {
         "data",
             Map.of(
                 "id", id,
-                "name", u.get("name"),
-                "email", u.get("email"),
+                "name", name,
+                "email", email,
                 "role", role,
                 "token", token));
   }

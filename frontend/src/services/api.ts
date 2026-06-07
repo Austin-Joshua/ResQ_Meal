@@ -45,6 +45,13 @@ export const authApi = {
         { email, password }
       )
     ),
+  loginWithGoogle: (idToken: string, role?: 'restaurant' | 'ngo' | 'volunteer') =>
+    wrap(
+      post<{ id: number; name: string; email: string; role: string; token: string }>(
+        endpoints.auth.google,
+        { idToken, role: role ?? 'volunteer' }
+      )
+    ),
   register: (data: {
     name: string;
     email: string;

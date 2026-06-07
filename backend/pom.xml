@@ -23,6 +23,7 @@
     <bucket4j.version>0.12.7</bucket4j.version>
     <netty-socketio.version>2.0.12</netty-socketio.version>
     <springdoc.version>2.5.0</springdoc.version>
+    <firebase-admin.version>9.2.0</firebase-admin.version>
   </properties>
 
   <dependencies>
@@ -65,6 +66,13 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-mysql</artifactId>
+    </dependency>
+
+    <!-- Firebase Admin (Google sign-in token verification) -->
+    <dependency>
+      <groupId>com.google.firebase</groupId>
+      <artifactId>firebase-admin</artifactId>
+      <version>${firebase-admin.version}</version>
     </dependency>
 
     <!-- Security / JWT -->

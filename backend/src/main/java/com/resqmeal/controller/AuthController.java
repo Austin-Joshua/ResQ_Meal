@@ -2,11 +2,13 @@ package com.resqmeal.controller;
 
 import com.resqmeal.common.AppConstants;
 import com.resqmeal.common.ApiResponse;
+import com.resqmeal.dto.request.GoogleAuthRequest;
 import com.resqmeal.dto.request.LoginRequest;
 import com.resqmeal.dto.request.RegisterRequest;
 import com.resqmeal.exception.DuplicateResourceException;
 import com.resqmeal.exception.UnauthorizedException;
 import com.resqmeal.service.AuthService;
+import com.resqmeal.service.FirebaseAuthService;
 import com.resqmeal.service.SecurityMonitoringService;
 import com.resqmeal.service.TokenBlacklistService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,14 +33,17 @@ public class AuthController {
   private final AuthService authService;
   private final SecurityMonitoringService securityMonitoringService;
   private final TokenBlacklistService tokenBlacklistService;
+  private final FirebaseAuthService firebaseAuthService;
 
   public AuthController(
       AuthService authService,
       SecurityMonitoringService securityMonitoringService,
-      TokenBlacklistService tokenBlacklistService) {
+      TokenBlacklistService tokenBlacklistService,
+      FirebaseAuthService firebaseAuthService) {
     this.authService = authService;
     this.securityMonitoringService = securityMonitoringService;
     this.tokenBlacklistService = tokenBlacklistService;
+    this.firebaseAuthService = firebaseAuthService;
   }
 
   @PostMapping("/register")
@@ -82,6 +87,36 @@ public class AuthController {
     } catch (IllegalStateException e) {
       securityMonitoringService.onFailedLogin(ip, email);
       throw new UnauthorizedException(e.getMessage());
+    }
+  }
+
+  @PostMapping("/google")
+  @Operation(summary = "Sign in or register with Google (Firebase ID token)")
+  public ResponseEntity<ApiResponse<Map<String, Object>>> google(
+      @Valid @RequestBody GoogleAuthRequest request, HttpServletRequest httpRequest) {
+    if (!firebaseAuthService.isAvailable()) {
+      throw new IllegalStateException(
+          "Google sign-in is not configured. Set FIREBASE_ENABLED and service account credentials.");
+    }
+    String ip = SecurityMonitoringService.clientIp(httpRequest);
+    try {
+      Map<String, Object> result =
+          authService.authenticateWithGoogle(
+              request.getIdToken(), request.getRole(), firebaseAuthService);
+      Map<String, Object> payload = extractAuthPayload(result);
+      Object idObj = payload.get("id");
+      if (idObj instanceof Number n) {
+        securityMonitoringService.onLoginSuccess(n.longValue(), ip);
+      }
+      return ApiResponse.okEntity(payload);
+    } catch (IllegalStateException e) {
+      if (e.getMessage() != null && e.getMessage().contains("already registered")) {
+        throw new DuplicateResourceException("Email already registered");
+      }
+      throw e;
+    } catch (UnauthorizedException e) {
+      securityMonitoringService.onFailedLogin(ip, "google");
+      throw e;
     }
   }
 
